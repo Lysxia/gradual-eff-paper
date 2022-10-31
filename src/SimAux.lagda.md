@@ -74,7 +74,7 @@ cast : ∀ {Γ Γ′ A B C} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ B} {r : A ≤ C
   → ≤commute p ±q r
   → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ p
     -------------------------------------------------------
-  → ∃[ W ] (Value W × (V′ ＠ ±q —↠ W) × (Γ≤ ⊢ V ≤ᴹ W ⦂ ⟨ E≤ ⟩ r))
+  → ∃[ W ] (Value W × (V′ ▷ ±q —↠ W) × (Γ≤ ⊢ V ≤ᴹ W ⦂ ⟨ E≤ ⟩ r))
 cast v v′ ±q e V≤V′ with split ±q in e′
 cast v v′ ±q e V≤V′ | id
     rewrite ≤ident ±q e′ e
@@ -112,12 +112,12 @@ catchup v (≤⇑ h V≤M′)
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
     =  V′ ⇑ h , v′ ⇑ h , ξ* ([ □ ]⇑ h) M′—↠V′ , ≤⇑ h V≤V′
-catchup v (≤＠ {M′ = M′} {±q = ±q} e V≤M′)
+catchup v (≤▷ {M′ = M′} {±q = ±q} e V≤M′)
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
     with cast v v′ ±q e V≤V′
 ... |  W , w , V⟨±q⟩—↠W , V≤W
-    =  W , w , (ξ* ([ □ ]＠ ±q) M′—↠V′ ++ V⟨±q⟩—↠W) , V≤W
+    =  W , w , (ξ* ([ □ ]▷ ±q) M′—↠V′ ++ V⟨±q⟩—↠W) , V≤W
 catchup (ƛ _) (wrap≤ e′ e ƛN≤ƛN′)
     =  _ , ƛ _ , (_ ∎) , wrap≤ e′ e ƛN≤ƛN′
 catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
@@ -125,7 +125,7 @@ catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
 catchup v (≤⟨⟩ V≤M)
     with catchup v V≤M
 ... | V′ , v′ , M′—↠V′ , V≤V′
-    = value v′ , revalue v′ , (ξ* ([ □ ]＠⟨ _ ⟩) M′—↠V′ ++ unit (castᵉ-value v′)) , ≤value v v′ V≤V′
+    = value v′ , revalue v′ , (ξ* ([ □ ]▷⟨ _ ⟩) M′—↠V′ ++ unit (castᵉ-value v′)) , ≤value v v′ V≤V′
 ```
 
 ## Substitution lemma
@@ -154,11 +154,11 @@ wrapβ : ∀ {Γ A B E A′ B′ E′ ∓s} {±t : ⟨ E ⟩ B =>ᶜ ⟨ E′ �
   → split ±p ≡ ∓s ⇒ ±t
   → (w : Value W)
     ---------------------------------------------------------------
-  → ƛ-wrap ∓s ±t V · W —→ V · (value w ＠ ∓s) ＠⟨ ±tᵉ ⟩ ＠ ±tᵛ
+  → ƛ-wrap ∓s ±t V · W —→ V · (value w ▷ ∓s) ▷⟨ ±tᵉ ⟩ ▷ ±tᵛ
 wrapβ {∓s = ∓s}{±t = ±t}{V = V}{W} e w  =
   let ⟨ ±tᵉ ⟩ ±tᵛ = ±t in
   subst
-    (λ X → ƛ-wrap ∓s ±t V · W —→ X · (value w ＠ ∓s) ＠⟨ ±tᵉ ⟩ ＠ ±tᵛ)
+    (λ X → ƛ-wrap ∓s ±t V · W —→ X · (value w ▷ ∓s) ▷⟨ ±tᵉ ⟩ ▷ ±tᵛ)
     (lift[] V (value w))
     (ξ □ (β w))
 ```
@@ -167,7 +167,7 @@ wrapβ {∓s = ∓s}{±t = ±t}{V = V}{W} e w  =
 
 ```
 simβ : ∀ {Γ Γ′ A A′ B B′ E E′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ⇒  ⟨ E ⟩ B ≤ A′ ⇒  ⟨ E′ ⟩ B′} {E≤ : E ≤ᵉ E′}
-    {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {N′ : Γ′ ▷ A′ ⊢ ⟨ E′ ⟩ B′} {W : Γ ⊢ ⟨ E ⟩ A} {W′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+    {N : Γ ⹁ A ⊢ ⟨ E ⟩ B} {N′ : Γ′ ⹁ A′ ⊢ ⟨ E′ ⟩ B′} {W : Γ ⊢ ⟨ E ⟩ A} {W′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
   → (w  : Value W)
   → (w′ : Value W′)
   → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ E≤ ⟩ p
@@ -180,7 +180,7 @@ simβ w w′ (ƛ≤ƛ N≤N′) W≤W′
 
 simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′} e′ e ƛN≤ƛN′) W≤W′
     rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (value w)
-    =  (ƛ N′) · W′ , (_ ∎) , ＠≤ (proj₂ (cod≤ e′ e)) (⟨⟩≤ (·≤· ƛN≤ƛN′ (＠≤ (dom≤ e′ e) (value≤ w w′ W≤W′))))
+    =  (ƛ N′) · W′ , (_ ∎) , ▷≤ (proj₂ (cod≤ e′ e)) (⟨⟩≤ (·≤· ƛN≤ƛN′ (▷≤ (dom≤ e′ e) (value≤ w w′ W≤W′))))
   where qq = (cod≤ e′ e)
 
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′
@@ -190,17 +190,17 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
     with simβ w w″ ƛN≤ƛN′ W≤W″
 ... |  M′ , [ƛN′]·W″—↠M′ , N[W]≤M′
     =  let ⟨ ±tᵉ ⟩ ±tᵛ = ±t in
-       (M′ ＠⟨ ±tᵉ ⟩ ＠ ±tᵛ) ,
+       (M′ ▷⟨ ±tᵉ ⟩ ▷ ±tᵛ) ,
        (begin
           ƛ-wrap ∓s ±t (ƛ N′) · W′
         —→⟨ wrapβ {V = ƛ N′} e′ w′ ⟩
-          ((ƛ N′) · (value w′ ＠ ∓s)) ＠⟨ ±tᵉ ⟩ ＠ ±tᵛ
-        —↠⟨ ξ* ([ [ (ƛ _) ·[ □ ] ]＠⟨ _ ⟩ ]＠ _) W′-—↠W″ ⟩
-          ((ƛ N′) · W″) ＠⟨ ±tᵉ ⟩ ＠ ±tᵛ
-        —↠⟨ ξ* ([ [ □ ]＠⟨ _ ⟩ ]＠ _) [ƛN′]·W″—↠M′ ⟩
-          M′ ＠⟨ ±tᵉ ⟩ ＠ ±tᵛ
+          ((ƛ N′) · (value w′ ▷ ∓s)) ▷⟨ ±tᵉ ⟩ ▷ ±tᵛ
+        —↠⟨ ξ* ([ [ (ƛ _) ·[ □ ] ]▷⟨ _ ⟩ ]▷ _) W′-—↠W″ ⟩
+          ((ƛ N′) · W″) ▷⟨ ±tᵉ ⟩ ▷ ±tᵛ
+        —↠⟨ ξ* ([ [ □ ]▷⟨ _ ⟩ ]▷ _) [ƛN′]·W″—↠M′ ⟩
+          M′ ▷⟨ ±tᵉ ⟩ ▷ ±tᵛ
         ∎) ,
-       (≤＠ (proj₂ (≤cod e′ e)) (≤⟨⟩ N[W]≤M′))
+       (≤▷ (proj₂ (≤cod e′ e)) (≤⟨⟩ N[W]≤M′))
 ```   
 
 ```
@@ -233,14 +233,14 @@ catchup-⟦perform⟧≤ v 𝐸 (≤⇑ g M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
     = Mk v′ V≤V′ (≤⇑ 𝐸≤𝐸′) ¬e//𝐸′ (ξ* ([ □ ]⇑ g) M′—↠𝐸V′)
-catchup-⟦perform⟧≤ v 𝐸 (≤＠ comm M≤) ¬e//𝐸
+catchup-⟦perform⟧≤ v 𝐸 (≤▷ comm M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
-    = Mk v′ V≤V′ (≤＠ comm 𝐸≤𝐸′) ¬e//𝐸′ (ξ* ([ □ ]＠ _) M′—↠𝐸V′)
+    = Mk v′ V≤V′ (≤▷ comm 𝐸≤𝐸′) ¬e//𝐸′ (ξ* ([ □ ]▷ _) M′—↠𝐸V′)
 catchup-⟦perform⟧≤ {e∈E = e∈E} v 𝐸 (≤⟨⟩ {E≤ = E≤} {±p = ±p} M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk {𝐸′ = 𝐸′} v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
-    = Mk v′ V≤V′ (≤⟨⟩ 𝐸≤𝐸′) (¬handled-＠⟨⟩ {±p = ±p} 𝐸′ (∈-≤ E≤ (¬handled-∈ 𝐸 ¬e//𝐸 e∈E)) ¬e//𝐸′) (ξ* ([ □ ]＠⟨ _ ⟩) M′—↠𝐸V′)
+    = Mk v′ V≤V′ (≤⟨⟩ 𝐸≤𝐸′) (¬handled-▷⟨⟩ {±p = ±p} 𝐸′ (∈-≤ E≤ (¬handled-∈ 𝐸 ¬e//𝐸 e∈E)) ¬e//𝐸′) (ξ* ([ □ ]▷⟨ _ ⟩) M′—↠𝐸V′)
 catchup-⟦perform⟧≤ v ([ 𝐸 ]· M) (·≤· N≤ M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 N≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ N′—↠𝐸V′
@@ -266,11 +266,11 @@ catchup-⟦perform⟧≤ v ([ 𝐸 ]⇑ g) (⇑≤⇑ .g M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
     = Mk v′ V≤V′ ([ 𝐸≤𝐸′ ]⇑ g) ¬e//𝐸′ (ξ* ([ □ ]⇑ g) M′—↠𝐸V′)
-catchup-⟦perform⟧≤ v ([ 𝐸 ]＠⟨⟩ .(⟨-⟩ _)) (＠≤ comm M≤) ¬e//𝐸
+catchup-⟦perform⟧≤ v ([ 𝐸 ]▷⟨⟩ .(⟨-⟩ _)) (▷≤ comm M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
-    = Mk v′ V≤V′ (＠≤ comm 𝐸≤𝐸′) ¬e//𝐸′ M′—↠𝐸V′
-catchup-⟦perform⟧≤ v ([ 𝐸 ]＠⟨⟩ .(⟨ _ ⟩-)) (⟨⟩≤ M≤) ¬e//𝐸
+    = Mk v′ V≤V′ (▷≤ comm 𝐸≤𝐸′) ¬e//𝐸′ M′—↠𝐸V′
+catchup-⟦perform⟧≤ v ([ 𝐸 ]▷⟨⟩ .(⟨ _ ⟩-)) (⟨⟩≤ M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ (¬e//𝐸 ∘ inj₂)
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
     = Mk v′ V≤V′ (⟨⟩≤ 𝐸≤𝐸′) ¬e//𝐸′ M′—↠𝐸V′

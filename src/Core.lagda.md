@@ -16,24 +16,19 @@ open import Data.List.Relation.Unary.All using (All; []; _∷_)
 open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Relation.Binary.PropositionalEquality
      using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst; inspect)
-     renaming ([_] to [[_]])
-open import Relation.Binary using (Decidable)
-open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Nullary.Product using (_×-dec_)
 ```
 
 * Contexts and Variables
 
 ```
-infixl 6 _▷_
+infixl 5 _⹁_
 
 data Context : Set where
   ∅   : Context
-  _▷_ : Context → Type → Context
+  _⹁_ : Context → Type → Context
 
 infix  4 _∋_
 infix  9 S_
@@ -42,12 +37,12 @@ data _∋_ : Context → Type → Set where
 
   Z : ∀ {Γ A}
       ----------
-    → Γ ▷ A ∋ A
+    → Γ ⹁ A ∋ A
 
   S_ : ∀ {Γ A B}
     → Γ ∋ A
       ---------
-    → Γ ▷ B ∋ A
+    → Γ ⹁ B ∋ A
 ```
 
 ```
@@ -68,8 +63,8 @@ infix  4 +_
 infix  4 -_
 ```
 
-
 Cast
+
 ```
 data _=>_ (A B : Type) : Set where
 
@@ -149,9 +144,9 @@ split (- p ⇑ g)  =  other
 ```
 infix  4 _⊢_
 infix  4 _⊢_➡_
-infixl 5 _＠_
-infixl 5 _＠⟨⟩_
-infixl 5 _＠⟨_⟩
+infixl 5 _▷_
+infixl 5 _▷⟨⟩_
+infixl 5 _▷⟨_⟩
 infix  6 _·_
 infix  6 _⦅_⦆_
 infix  8 `_
@@ -166,7 +161,7 @@ data _⊢_ : Context → Typeᶜ → Set where
     → Γ ⊢ ⟨ E ⟩ A
 
   ƛ_ :  ∀ {Γ E F B A}
-    → Γ ▷ A ⊢ ⟨ F ⟩ B
+    → Γ ⹁ A ⊢ ⟨ F ⟩ B
       ---------
     → Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ F ⟩ B)
 
@@ -212,14 +207,14 @@ data _⊢_ : Context → Typeᶜ → Set where
       ---------
     → Γ ⊢ Q
 
-  _＠⟨⟩_ : ∀ {Γ P Q}
+  _▷⟨⟩_ : ∀ {Γ P Q}
     → Γ ⊢ P
     → P =>ᵉᵛ Q
       ------
     → Γ ⊢ Q
 
 On-Perform : Context → Typeᶜ → List 𝔼 → Set
-On-Perform Γ Q Hooks = All (λ e → Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q) Hooks
+On-Perform Γ Q Hooks = All (λ e → Γ ⹁ request e ⹁ (response e ⇒ Q) ⊢ Q) Hooks
 
 record _⊢_➡_ Γ P Q where
   inductive
@@ -227,7 +222,7 @@ record _⊢_➡_ Γ P Q where
   field
     Hooks : List 𝔼
     Hooks-handled : P .effects ≡ (Hooks ++¿ Q .effects)
-    on-return : Γ ▷ P .returns ⊢ Q
+    on-return : Γ ⹁ P .returns ⊢ Q
     on-perform : On-Perform Γ Q Hooks
 
 open _⊢_➡_ public
@@ -235,8 +230,8 @@ open _⊢_➡_ public
 
 ```
 pattern perform e∈E M = perform- e∈E refl M
-pattern _＠_ M ±p = M ＠⟨⟩ ⟨-⟩ ±p
-pattern _＠⟨_⟩ M ±p = M ＠⟨⟩ ⟨ ±p ⟩-
+pattern _▷_ M ±p = M ▷⟨⟩ ⟨-⟩ ±p
+pattern _▷⟨_⟩ M ±p = M ▷⟨⟩ ⟨ ±p ⟩-
 ```
 
 ## Renaming maps, substitution maps, term maps
@@ -262,12 +257,12 @@ _→ʰ_ : Context → Context → Set
 
 Extension of renaming maps
 ```
-ren▷ : ∀ {Γ Δ A}
+ren⹁ : ∀ {Γ Δ A}
   → (Γ →ᴿ Δ)
     ----------------------------
-  → ((Γ ▷ A) →ᴿ (Δ ▷ A))
-ren▷ ρ Z      =  Z
-ren▷ ρ (S x)  =  S (ρ x)
+  → ((Γ ⹁ A) →ᴿ (Δ ⹁ A))
+ren⹁ ρ Z      =  Z
+ren⹁ ρ (S x)  =  S (ρ x)
 
 ren : ∀ {Γ Δ}
   → (Γ →ᴿ Δ)
@@ -276,39 +271,39 @@ ren : ∀ {Γ Δ}
 
 ren-on-perform : ∀ {Γ Δ} → (Γ →ᴿ Δ) → ∀ {Q Hooks} → On-Perform Γ Q Hooks → On-Perform Δ Q Hooks
 ren-on-perform ρ [] = []
-ren-on-perform ρ (M ∷ Ms) = ren (ren▷ (ren▷ ρ)) M ∷ ren-on-perform ρ Ms
+ren-on-perform ρ (M ∷ Ms) = ren (ren⹁ (ren⹁ ρ)) M ∷ ren-on-perform ρ Ms
 
 renʰ : ∀ {Γ Δ} → (Γ →ᴿ Δ) → (Γ →ʰ Δ)
 renʰ ρ H = record
   { Hooks = Hooks H
   ; Hooks-handled = Hooks-handled H
-  ; on-return = ren (ren▷ ρ) (on-return H)
+  ; on-return = ren (ren⹁ ρ) (on-return H)
   ; on-perform = ren-on-perform ρ (on-perform H) }
 
 ren ρ (` x)          = ` (ρ x)
-ren ρ (ƛ N)          =  ƛ (ren (ren▷ ρ) N)
+ren ρ (ƛ N)          =  ƛ (ren (ren⹁ ρ) N)
 ren ρ (L · M)        =  (ren ρ L) · (ren ρ M)
 ren ρ ($ k)          =  $ k
 ren ρ (L ⦅ _⊕_ ⦆ M)  =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
 ren ρ (M ⇑ g)        =  (ren ρ M) ⇑ g
-ren ρ (M ＠⟨⟩ ±p )     =  (ren ρ M) ＠⟨⟩ ±p
+ren ρ (M ▷⟨⟩ ±p )     =  (ren ρ M) ▷⟨⟩ ±p
 ren ρ blame          =  blame
 ren ρ (perform- e∈E eq M)  = perform- e∈E eq (ren ρ M)
 ren ρ (handle H M)   = handle (renʰ ρ H) (ren ρ M)
 
-lift : ∀ {Γ : Context} {A : Type} → Γ →ᵀ (Γ ▷ A)
+lift : ∀ {Γ : Context} {A : Type} → Γ →ᵀ (Γ ⹁ A)
 lift = ren S_
 ```
 
 ## Substitution
 
 ```
-sub▷ : ∀ {Γ Δ A}
+sub⹁ : ∀ {Γ Δ A}
   → (Γ →ˢ Δ)
     --------------------------
-  → ((Γ ▷ A) →ˢ (Δ ▷ A))
-sub▷ σ Z      =  ` Z
-sub▷ σ (S x)  =  lift (σ x)
+  → ((Γ ⹁ A) →ˢ (Δ ⹁ A))
+sub⹁ σ Z      =  ` Z
+sub⹁ σ (S x)  =  lift (σ x)
 
 sub : ∀ {Γ Δ : Context}
   → (Γ →ˢ Δ)
@@ -317,22 +312,22 @@ sub : ∀ {Γ Δ : Context}
 
 sub-on-perform : ∀ {Γ Δ} → (Γ →ˢ Δ) → ∀ {Q Hooks} → On-Perform Γ Q Hooks → On-Perform Δ Q Hooks
 sub-on-perform σ [] = []
-sub-on-perform σ (M ∷ Ms) = sub (sub▷ (sub▷ σ)) M ∷ sub-on-perform σ Ms
+sub-on-perform σ (M ∷ Ms) = sub (sub⹁ (sub⹁ σ)) M ∷ sub-on-perform σ Ms
 
 subʰ : ∀ {Γ Δ} → (Γ →ˢ Δ) → (Γ →ʰ Δ)
 subʰ σ H = record
   { Hooks = Hooks H
   ; Hooks-handled = Hooks-handled H
-  ; on-return = sub (sub▷ σ) (on-return H)
+  ; on-return = sub (sub⹁ σ) (on-return H)
   ; on-perform = sub-on-perform σ (on-perform H) }
 
 sub σ (` x)          =  σ x
-sub σ (ƛ  N)         =  ƛ (sub (sub▷ σ) N)
+sub σ (ƛ  N)         =  ƛ (sub (sub⹁ σ) N)
 sub σ (L · M)        =  (sub σ L) · (sub σ M)
 sub σ ($ k)          =  $ k
 sub σ (L ⦅ _⊕_ ⦆ M)  =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
 sub σ (M ⇑ g)        =  (sub σ M) ⇑ g
-sub σ (M ＠⟨⟩ ±p)     =  (sub σ M) ＠⟨⟩ ±p
+sub σ (M ▷⟨⟩ ±p)     =  (sub σ M) ▷⟨⟩ ±p
 sub σ blame          =  blame
 sub σ (perform- e∈E eq M) = perform- e∈E eq (sub σ M)
 sub ρ (handle H M)   = handle (subʰ ρ H) (sub ρ M)
@@ -340,15 +335,15 @@ sub ρ (handle H M)   = handle (subʰ ρ H) (sub ρ M)
 
 Special case of substitution, used in beta rule
 ```
-σ₀ : ∀ {Γ A} → (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ A) → (Γ ▷ A) →ˢ Γ
+σ₀ : ∀ {Γ A} → (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ A) → (Γ ⹁ A) →ˢ Γ
 σ₀ M Z      =  M
 σ₀ M (S x)  =  ` x
 
-_[_] : Γ ▷ A ⊢ P
+_[_] : Γ ⹁ A ⊢ P
      → (∀ {E} → Γ ⊢ ⟨ E ⟩ A)
        ---------
      → Γ ⊢ P
-_[_] {Γ} {A} N M =  sub {Γ ▷ A} {Γ} (σ₀ M) N
+_[_] {Γ} {A} N M =  sub {Γ ⹁ A} {Γ} (σ₀ M) N
 ```
 
 ## Composition and identity
@@ -356,12 +351,12 @@ _[_] {Γ} {A} N M =  sub {Γ ▷ A} {Γ} (σ₀ M) N
 Rename composed with rename
 
 ```
-ren∘ren▷ : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {ρ″ : Γ →ᴿ Γ″}
+ren∘ren⹁ : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {ρ″ : Γ →ᴿ Γ″}
   → (∀ {A} (x : Γ ∋ A) → ρ′ (ρ x) ≡ ρ″ x)
     --------------------------------------------------------------
-  → (∀ {B A} (x : Γ ▷ B ∋ A) → ren▷ ρ′ (ren▷ ρ x) ≡ ren▷ ρ″ x)
-ren∘ren▷ ρ∘ Z      =  refl
-ren∘ren▷ ρ∘ (S x)  =  cong S_ (ρ∘ x)
+  → (∀ {B A} (x : Γ ⹁ B ∋ A) → ren⹁ ρ′ (ren⹁ ρ x) ≡ ren⹁ ρ″ x)
+ren∘ren⹁ ρ∘ Z      =  refl
+ren∘ren⹁ ρ∘ (S x)  =  cong S_ (ρ∘ x)
 
 ren∘ren : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {ρ″ : Γ →ᴿ Γ″}
   → (∀ {A} (x : Γ ∋ A) → ρ′ (ρ x) ≡ ρ″ x)
@@ -373,7 +368,7 @@ ren∘ren-on-perform :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ�
     -------------------------------------------------
   → (∀ {Hooks Q} (H : On-Perform Γ Q Hooks) → ren-on-perform ρ′ (ren-on-perform ρ H) ≡ ren-on-perform ρ″ H)
 ren∘ren-on-perform ρ≡ [] = refl
-ren∘ren-on-perform ρ≡ (M ∷ Ms) = cong₂ _∷_ (ren∘ren (ren∘ren▷ (ren∘ren▷ ρ≡)) M) (ren∘ren-on-perform ρ≡ Ms)
+ren∘ren-on-perform ρ≡ (M ∷ Ms) = cong₂ _∷_ (ren∘ren (ren∘ren⹁ (ren∘ren⹁ ρ≡)) M) (ren∘ren-on-perform ρ≡ Ms)
 
 ren∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {ρ″ : Γ →ᴿ Γ″}
   → (∀ {A} (x : Γ ∋ A) → ρ′ (ρ x) ≡ ρ″ x)
@@ -381,35 +376,35 @@ ren∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ′ →ᴿ
   → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → renʰ ρ′ (renʰ ρ H) ≡ renʰ ρ″ H)
 ren∘renʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
-  (ren∘ren (ren∘ren▷ ρ≡) (on-return H)) (ren∘ren-on-perform ρ≡ (on-perform H))
+  (ren∘ren (ren∘ren⹁ ρ≡) (on-return H)) (ren∘ren-on-perform ρ≡ (on-perform H))
 
 ren∘ren ρ≡ (` x)          =  cong `_ (ρ≡ x)
-ren∘ren ρ≡ (ƛ N)          =  cong ƛ_ (ren∘ren (ren∘ren▷ ρ≡) N)
+ren∘ren ρ≡ (ƛ N)          =  cong ƛ_ (ren∘ren (ren∘ren⹁ ρ≡) N)
 ren∘ren ρ≡ (L · M)        =  cong₂ _·_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ ($ k)          =  refl
 ren∘ren ρ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ (M ⇑ g)        =  cong (_⇑ g) (ren∘ren ρ≡ M)
-ren∘ren ρ≡ (M ＠⟨⟩ ±p )     =  cong (_＠⟨⟩ ±p) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ (M ▷⟨⟩ ±p )     =  cong (_▷⟨⟩ ±p) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ blame          =  refl
 ren∘ren ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (ren∘ren ρ≡ M)
 ren∘ren {ρ = ρ} {ρ′ = ρ′} ρ≡ (handle H M) = cong₂ handle (ren∘renʰ {ρ = ρ} {ρ′ = ρ′} ρ≡ H) (ren∘ren ρ≡ M)
 
 lift∘ren : ∀ {Γ Δ A B} (ρ : Γ →ᴿ Δ) (M : Γ ⊢ B)
-  → lift {A = A} (ren ρ M) ≡ ren (ren▷ ρ) (lift {A = A} M)
+  → lift {A = A} (ren ρ M) ≡ ren (ren⹁ ρ) (lift {A = A} M)
 lift∘ren {Γ} ρ M  =  trans (ren∘ren ρ≡₁ M) (sym (ren∘ren ρ≡₂ M))
   where
   ρ≡₁ : ∀ {A} (x : Γ ∋ A) → S (ρ x) ≡ S (ρ x)
   ρ≡₁ x = refl
-  ρ≡₂ : ∀ {A} (x : Γ ∋ A) → ren▷ ρ (S x) ≡ S (ρ x)
+  ρ≡₂ : ∀ {A} (x : Γ ∋ A) → ren⹁ ρ (S x) ≡ S (ρ x)
   ρ≡₂ Z     = refl
   ρ≡₂ (S x) = refl
 
-sub∘ren▷ : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
+sub∘ren⹁ : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
     ----------------------------------------------------------
-  → (∀ {E B A} (x : Γ ▷ B ∋ A) → sub▷ σ′ {E} (ren▷ ρ x) ≡ sub▷ σ″ x)
-sub∘ren▷ σ≡ Z      =  refl
-sub∘ren▷ σ≡ (S x)  =  cong (ren S_) (σ≡ x)
+  → (∀ {E B A} (x : Γ ⹁ B ∋ A) → sub⹁ σ′ {E} (ren⹁ ρ x) ≡ sub⹁ σ″ x)
+sub∘ren⹁ σ≡ Z      =  refl
+sub∘ren⹁ σ≡ (S x)  =  cong (ren S_) (σ≡ x)
 
 sub∘ren : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
@@ -421,7 +416,7 @@ sub∘ren-on-perform :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ�
     -------------------------------------------------
   → (∀ {Hooks Q} (H : On-Perform Γ Q Hooks) → sub-on-perform σ′ (ren-on-perform ρ H) ≡ sub-on-perform σ″ H)
 sub∘ren-on-perform ρ≡ [] = refl
-sub∘ren-on-perform ρ≡ (M ∷ Ms) = cong₂ _∷_ (sub∘ren (sub∘ren▷ (sub∘ren▷ ρ≡)) M) (sub∘ren-on-perform ρ≡ Ms)
+sub∘ren-on-perform ρ≡ (M ∷ Ms) = cong₂ _∷_ (sub∘ren (sub∘ren⹁ (sub∘ren⹁ ρ≡)) M) (sub∘ren-on-perform ρ≡ Ms)
 
 sub∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
@@ -429,29 +424,29 @@ sub∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ 
   → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → subʰ σ′ (renʰ ρ H) ≡ subʰ σ″ H)
 sub∘renʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
-  (sub∘ren (sub∘ren▷ ρ≡) (on-return H))
+  (sub∘ren (sub∘ren⹁ ρ≡) (on-return H))
   (sub∘ren-on-perform ρ≡ (on-perform H))
 
 sub∘ren σ≡ (` x)          =  σ≡ x
-sub∘ren σ≡ (ƛ N)          =  cong ƛ_ (sub∘ren (sub∘ren▷ σ≡) N)
+sub∘ren σ≡ (ƛ N)          =  cong ƛ_ (sub∘ren (sub∘ren⹁ σ≡) N)
 sub∘ren σ≡ (L · M)        =  cong₂ _·_ (sub∘ren σ≡ L) (sub∘ren σ≡ M)
 sub∘ren σ≡ ($ k)          =  refl
 sub∘ren σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (sub∘ren σ≡ L) (sub∘ren σ≡ M)
 sub∘ren σ≡ (M ⇑ g)        =  cong (_⇑ g) (sub∘ren σ≡ M)
-sub∘ren σ≡ (M ＠⟨⟩ ±p)     =  cong (_＠⟨⟩ ±p) (sub∘ren σ≡ M)
+sub∘ren σ≡ (M ▷⟨⟩ ±p)     =  cong (_▷⟨⟩ ±p) (sub∘ren σ≡ M)
 sub∘ren σ≡ blame          =  refl
 sub∘ren ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (sub∘ren ρ≡ M)
 sub∘ren {ρ = ρ} {σ′ = σ′} ρ≡ (handle H M)   = cong₂ handle (sub∘renʰ {ρ = ρ} {σ′ = σ′} ρ≡ H) (sub∘ren ρ≡ M)
 
-ren∘sub▷ : ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
+ren∘sub⹁ : ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (σ {E} x) ≡ σ″ x)
     -------------------------------------------------------------------
-  → (∀ {E B A} (x : Γ ▷ B ∋ A) → ren (ren▷ ρ′) (sub▷ σ {E} x) ≡ sub▷ σ″ x)
-ren∘sub▷ σ≡ Z      =  refl
-ren∘sub▷ {Γ′ = Γ′} {σ = σ} {ρ′ = ρ′} σ≡ {B = B} (S x)  =
+  → (∀ {E B A} (x : Γ ⹁ B ∋ A) → ren (ren⹁ ρ′) (sub⹁ σ {E} x) ≡ sub⹁ σ″ x)
+ren∘sub⹁ σ≡ Z      =  refl
+ren∘sub⹁ {Γ′ = Γ′} {σ = σ} {ρ′ = ρ′} σ≡ {B = B} (S x)  =
     trans (trans (ren∘ren ρ∘₁ (σ x)) (sym (ren∘ren ρ∘₂ (σ x)))) (cong (ren S_) (σ≡ x))
   where
-  ρ∘₁ : ∀ {A} (x : Γ′ ∋ A) → ren▷ {A = B} ρ′ (S_ x) ≡ S (ρ′ x)
+  ρ∘₁ : ∀ {A} (x : Γ′ ∋ A) → ren⹁ {A = B} ρ′ (S_ x) ≡ S (ρ′ x)
   ρ∘₁ x = refl
 
   ρ∘₂ : ∀ {A} (x : Γ′ ∋ A) → S_ {B = B} (ρ′ x) ≡ S (ρ′ x)
@@ -467,7 +462,7 @@ ren∘sub-on-perform :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ˢ Γ′} {ρ′ : Γ�
     -------------------------------------------------
   → (∀ {Hooks Q} (H : On-Perform Γ Q Hooks) → ren-on-perform ρ′ (sub-on-perform ρ H) ≡ sub-on-perform ρ″ H)
 ren∘sub-on-perform ρ≡ [] = refl
-ren∘sub-on-perform ρ≡ (M ∷ Ms) = cong₂ _∷_ (ren∘sub (ren∘sub▷ (ren∘sub▷ ρ≡)) M) (ren∘sub-on-perform ρ≡ Ms)
+ren∘sub-on-perform ρ≡ (M ∷ Ms) = cong₂ _∷_ (ren∘sub (ren∘sub⹁ (ren∘sub⹁ ρ≡)) M) (ren∘sub-on-perform ρ≡ Ms)
 
 ren∘subʰ :  ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (σ {E} x) ≡ σ″ x)
@@ -475,27 +470,27 @@ ren∘subʰ :  ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ 
   → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → renʰ ρ′ (subʰ σ H) ≡ subʰ σ″ H)
 ren∘subʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
-  (ren∘sub (ren∘sub▷ ρ≡) (on-return H))
+  (ren∘sub (ren∘sub⹁ ρ≡) (on-return H))
   (ren∘sub-on-perform ρ≡ (on-perform H))
 
 ren∘sub σ≡ (` x)          =  σ≡ x
-ren∘sub σ≡ (ƛ N)          =  cong ƛ_ (ren∘sub (ren∘sub▷ σ≡) N)
+ren∘sub σ≡ (ƛ N)          =  cong ƛ_ (ren∘sub (ren∘sub⹁ σ≡) N)
 ren∘sub σ≡ (L · M)        =  cong₂ _·_ (ren∘sub σ≡ L) (ren∘sub σ≡ M)
 ren∘sub σ≡ ($ k)          =  refl
 ren∘sub σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (ren∘sub σ≡ L) (ren∘sub σ≡ M)
 ren∘sub σ≡ (M ⇑ g)        =  cong (_⇑ g) (ren∘sub σ≡ M)
-ren∘sub σ≡ (M ＠⟨⟩ ±p)     =  cong (_＠⟨⟩ ±p) (ren∘sub σ≡ M)
+ren∘sub σ≡ (M ▷⟨⟩ ±p)     =  cong (_▷⟨⟩ ±p) (ren∘sub σ≡ M)
 ren∘sub σ≡ blame          =  refl
 ren∘sub ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (ren∘sub ρ≡ M)
 ren∘sub ρ≡ (handle H M)   = cong₂ handle (ren∘subʰ ρ≡ H) (ren∘sub ρ≡ M)
 
 lift∘sub : ∀ {Γ Δ A B} (σ : Γ →ˢ Δ) (M : Γ ⊢ B)
-  → lift {A = A} (sub σ M) ≡ sub (sub▷ σ) (lift {A = A} M)
+  → lift {A = A} (sub σ M) ≡ sub (sub⹁ σ) (lift {A = A} M)
 lift∘sub {Γ} σ M  =  trans (ren∘sub σ≡₁ M) (sym (sub∘ren σ≡₂ M))
   where
   σ≡₁ : ∀ {A E} (x : Γ ∋ A) → lift (σ {E} x) ≡ lift (σ x)
   σ≡₁ x = refl
-  σ≡₂ : ∀ {A E} (x : Γ ∋ A) → sub▷ σ {E} (S x) ≡ lift (σ x)
+  σ≡₂ : ∀ {A E} (x : Γ ∋ A) → sub⹁ σ {E} (S x) ≡ lift (σ x)
   σ≡₂ Z     = refl
   σ≡₂ (S x) = refl
 ```
@@ -518,12 +513,12 @@ Idʰ {Γ} θ  =  ∀ {P Q} (H : Γ ⊢ P ➡ Q) → θ H ≡ H
 Id-on-perform : ∀ {Γ} → (θ : ∀ {Hooks Q} → On-Perform Γ Q Hooks → On-Perform Γ Q Hooks) → Set
 Id-on-perform {Γ} θ  =  ∀ {Hooks Q} (H : On-Perform Γ Q Hooks) → θ H ≡ H
 
-renId▷ : ∀ {Γ} {ρ : Γ →ᴿ Γ}
+renId⹁ : ∀ {Γ} {ρ : Γ →ᴿ Γ}
   → Idᴿ {Γ} ρ
     ----------------------------
-  → ∀ {A} → Idᴿ {Γ ▷ A} (ren▷ ρ)
-renId▷ ρId Z                    =  refl
-renId▷ ρId (S x) rewrite ρId x  =  refl
+  → ∀ {A} → Idᴿ {Γ ⹁ A} (ren⹁ ρ)
+renId⹁ ρId Z                    =  refl
+renId⹁ ρId (S x) rewrite ρId x  =  refl
 
 renId : ∀ {Γ} {ρ : Γ →ᴿ Γ}
   → Idᴿ ρ
@@ -535,32 +530,32 @@ renId-on-perform : ∀ {Γ} {ρ : Γ →ᴿ Γ}
     -------------
   → Id-on-perform (ren-on-perform ρ)
 renId-on-perform ρId [] = refl
-renId-on-perform ρId (M ∷ Ms) = cong₂ _∷_ (renId (renId▷ (renId▷ ρId)) M) (renId-on-perform ρId Ms)
+renId-on-perform ρId (M ∷ Ms) = cong₂ _∷_ (renId (renId⹁ (renId⹁ ρId)) M) (renId-on-perform ρId Ms)
 
 renIdʰ : ∀ {Γ} {ρ : Γ →ᴿ Γ}
   → Idᴿ ρ
     -------------
   → Idʰ (renʰ ρ)
-renIdʰ ρId H = cong₂ (λ M Ns → record { on-return = M ; on-perform = Ns }) (renId (renId▷ ρId) (on-return H)) (renId-on-perform ρId (on-perform H))
+renIdʰ ρId H = cong₂ (λ M Ns → record { on-return = M ; on-perform = Ns }) (renId (renId⹁ ρId) (on-return H)) (renId-on-perform ρId (on-perform H))
   where open _⊢_➡_ H
 
 renId ρId (` x) rewrite ρId x                               =  refl
-renId ρId (ƛ M) rewrite renId (renId▷ ρId) M                =  refl
+renId ρId (ƛ M) rewrite renId (renId⹁ ρId) M                =  refl
 renId ρId (L · M) rewrite renId ρId L | renId ρId M         =  refl
 renId ρId ($ k)                                             =  refl
 renId ρId (L ⦅ _⊕_ ⦆ M) rewrite renId ρId L | renId ρId M   =  refl
 renId ρId (M ⇑ g) rewrite renId ρId M                       =  refl
-renId ρId (M ＠⟨⟩ ±p) rewrite renId ρId M                   =  refl
+renId ρId (M ▷⟨⟩ ±p) rewrite renId ρId M                   =  refl
 renId ρId blame                                             =  refl
 renId ρId (perform- e∈E eq M) rewrite renId ρId M           =  refl
 renId ρId (handle H M) rewrite renIdʰ ρId H | renId ρId M   = refl
 
-subId▷ : ∀ {Γ} {σ : Γ →ˢ Γ}
+subId⹁ : ∀ {Γ} {σ : Γ →ˢ Γ}
   → Idˢ {Γ} σ
     ----------------------------
-  → ∀ {A} → Idˢ {Γ ▷ A} (sub▷ σ)
-subId▷ σId Z                    =  refl
-subId▷ σId {A} {E} (S x) rewrite σId {E} x  =  refl
+  → ∀ {A} → Idˢ {Γ ⹁ A} (sub⹁ σ)
+subId⹁ σId Z                    =  refl
+subId⹁ σId {A} {E} (S x) rewrite σId {E} x  =  refl
 
 subId : ∀ {Γ} {σ : Γ →ˢ Γ}
   → Idˢ σ
@@ -572,7 +567,7 @@ subId-on-perform : ∀ {Γ} {ρ : Γ →ˢ Γ}
     -------------
   → Id-on-perform (sub-on-perform ρ)
 subId-on-perform ρId [] = refl
-subId-on-perform ρId (M ∷ Ms) = cong₂ _∷_ (subId (subId▷ (subId▷ ρId)) M) (subId-on-perform ρId Ms)
+subId-on-perform ρId (M ∷ Ms) = cong₂ _∷_ (subId (subId⹁ (subId⹁ ρId)) M) (subId-on-perform ρId Ms)
 
 subIdʰ : ∀ {Γ} {σ : Γ →ˢ Γ}
   → Idˢ σ
@@ -580,17 +575,17 @@ subIdʰ : ∀ {Γ} {σ : Γ →ˢ Γ}
   → Idʰ (subʰ σ)
 subIdʰ ρId H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
-  (subId (subId▷ ρId) (on-return H))
+  (subId (subId⹁ ρId) (on-return H))
   (subId-on-perform ρId (on-perform H))
   where open _⊢_➡_ H
 
 subId σId {⟨ E ⟩ _} (` x) rewrite σId {E} x                 =  refl
-subId σId (ƛ M) rewrite subId (subId▷ σId) M                =  refl
+subId σId (ƛ M) rewrite subId (subId⹁ σId) M                =  refl
 subId σId (L · M) rewrite subId σId L | subId σId M         =  refl
 subId σId ($ k)                                             =  refl
 subId σId (L ⦅ _⊕_ ⦆ M) rewrite subId σId L | subId σId M   =  refl
 subId σId (M ⇑ g) rewrite subId σId M                       =  refl
-subId σId (M ＠⟨⟩ ±p) rewrite subId σId M                   =  refl
+subId σId (M ▷⟨⟩ ±p) rewrite subId σId M                   =  refl
 subId σId blame                                             =  refl
 subId σId (perform- e∈E eq M) rewrite subId σId M           =  refl
 subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   = refl
@@ -602,7 +597,7 @@ subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   = refl
 data Value {Γ E} : Γ ⊢ ⟨ E ⟩ A → Set where
 
   ƛ_ :
-      (N : Γ ▷ A ⊢ ⟨ F ⟩ B)
+      (N : Γ ⹁ A ⊢ ⟨ F ⟩ B)
       ---------------
     → Value (ƛ N)
 
@@ -641,7 +636,7 @@ ren-val : ∀ {Γ Δ E A} {V : Γ ⊢ ⟨ E ⟩ A}
   → Value V
     ------------------
   → Value (ren ρ V)
-ren-val ρ (ƛ N)    =  ƛ (ren (ren▷ ρ) N)
+ren-val ρ (ƛ N)    =  ƛ (ren (ren⹁ ρ) N)
 ren-val ρ ($ k)    =  $ k
 ren-val ρ (V ⇑ g)  =  (ren-val ρ V) ⇑ g
 ```
@@ -653,7 +648,7 @@ sub-val : ∀ {Γ Δ A} {V : Γ ⊢ ⟨ ε ⟩ A}
   → Value V
     ------------------
   → Value (sub σ V)
-sub-val σ (ƛ N)    =  ƛ (sub (sub▷ σ) N)
+sub-val σ (ƛ N)    =  ƛ (sub (sub⹁ σ) N)
 sub-val σ ($ k)    =  $ k
 sub-val σ (V ⇑ g)  =  (sub-val σ V) ⇑ g
 ```
@@ -662,7 +657,7 @@ sub-val σ (V ⇑ g)  =  (sub-val σ V) ⇑ g
 
 ```
 infix  5 [_]⇑_
-infix  5 [_]＠⟨⟩_ [_]＠⟨_⟩ [_]＠_
+infix  5 [_]▷⟨⟩_ [_]▷⟨_⟩ [_]▷_
 infix  6 [_]·_
 infix  6 _·[_]
 infix  6 [_]⦅_⦆_
@@ -705,7 +700,7 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
       --------------
     → Frame Γ C (⟨ E ⟩ ★)
 
-  [_]＠⟨⟩_ : ∀ {A B}
+  [_]▷⟨⟩_ : ∀ {A B}
     → (𝐸 : Frame Γ C A)
     → (±p : A =>ᵉᵛ B)
       -------------
@@ -724,8 +719,8 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
       -----------
     → Frame Γ C Q
 
-pattern [_]＠⟨_⟩ 𝐸 ±p = [ 𝐸 ]＠⟨⟩ ⟨ ±p ⟩-
-pattern [_]＠_ 𝐸 ±p = [ 𝐸 ]＠⟨⟩ ⟨-⟩ ±p
+pattern [_]▷⟨_⟩ 𝐸 ±p = [ 𝐸 ]▷⟨⟩ ⟨ ±p ⟩-
+pattern [_]▷_ 𝐸 ±p = [ 𝐸 ]▷⟨⟩ ⟨-⟩ ±p
 pattern ′perform_[_] e 𝐸 = ″perform e [ 𝐸 ] refl
 ```
 
@@ -738,7 +733,7 @@ _⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
 ([ 𝐸 ]⦅ _⊕_ ⦆ N) ⟦ M ⟧  =  𝐸 ⟦ M ⟧ ⦅ _⊕_ ⦆ N
 (v ⦅ _⊕_ ⦆[ 𝐸 ]) ⟦ N ⟧  =  raw-value v ⦅ _⊕_ ⦆ 𝐸 ⟦ N ⟧
 ([ 𝐸 ]⇑ g) ⟦ M ⟧        =  𝐸 ⟦ M ⟧ ⇑ g
-([ 𝐸 ]＠⟨⟩ ±p) ⟦ M ⟧    =  (𝐸 ⟦ M ⟧) ＠⟨⟩ ±p
+([ 𝐸 ]▷⟨⟩ ±p) ⟦ M ⟧    =  (𝐸 ⟦ M ⟧) ▷⟨⟩ ±p
 (″perform e∈E [ 𝐸 ] eq) ⟦ M ⟧ = perform- e∈E eq (𝐸 ⟦ M ⟧)
 (′handle H [ 𝐸 ]) ⟦ M ⟧ = handle H (𝐸 ⟦ M ⟧)
 ```
@@ -752,7 +747,7 @@ _∘∘_ : ∀{Γ A B C} → Frame Γ B C → Frame Γ A B → Frame Γ A C
 ([ 𝐸 ]⦅ _⊕_ ⦆ N) ∘∘ 𝐹  =  [ 𝐸 ∘∘ 𝐹 ]⦅ _⊕_ ⦆ N
 (v ⦅ _⊕_ ⦆[ 𝐸 ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ 𝐸 ∘∘ 𝐹 ]
 ([ 𝐸 ]⇑ g) ∘∘ 𝐹        =  [ 𝐸 ∘∘ 𝐹 ]⇑ g
-([ 𝐸 ]＠⟨⟩ ±p) ∘∘ 𝐹     =  [ 𝐸 ∘∘ 𝐹 ]＠⟨⟩ ±p
+([ 𝐸 ]▷⟨⟩ ±p) ∘∘ 𝐹     =  [ 𝐸 ∘∘ 𝐹 ]▷⟨⟩ ±p
 (″perform e∈E [ 𝐸 ] eq) ∘∘ 𝐹 = ″perform e∈E [ 𝐸 ∘∘ 𝐹 ] eq
 (′handle H [ 𝐸 ]) ∘∘ 𝐹  =  ′handle H [ 𝐸 ∘∘ 𝐹 ]
 ```
@@ -771,7 +766,7 @@ Composition and plugging
 ∘∘-lemma ([ 𝐸 ]⦅ _⊕_ ⦆ N) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma (v ⦅ _⊕_ ⦆[ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma ([ 𝐸 ]⇑ g) 𝐹 M        rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma ([ 𝐸 ]＠⟨⟩ ±p) 𝐹 M    rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma ([ 𝐸 ]▷⟨⟩ ±p) 𝐹 M    rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma (″perform e∈E [ 𝐸 ] eq) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma (′handle H [ 𝐸 ]) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ```
@@ -784,13 +779,13 @@ renᶠ ρ (v ·[ 𝐸 ]) = ren-val ρ v ·[ renᶠ ρ 𝐸 ]
 renᶠ ρ ([ 𝐸 ]⦅ f ⦆ M) = [ renᶠ ρ 𝐸 ]⦅ f ⦆ ren ρ M
 renᶠ ρ (v ⦅ f ⦆[ 𝐸 ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ 𝐸 ]
 renᶠ ρ ([ 𝐸 ]⇑ g) = [ renᶠ ρ 𝐸 ]⇑ g
-renᶠ ρ ([ 𝐸 ]＠⟨⟩ ±p) = [ renᶠ ρ 𝐸 ]＠⟨⟩ ±p
+renᶠ ρ ([ 𝐸 ]▷⟨⟩ ±p) = [ renᶠ ρ 𝐸 ]▷⟨⟩ ±p
 renᶠ ρ (″perform e∈E [ 𝐸 ] eq) = ″perform e∈E [ renᶠ ρ 𝐸 ] eq
 renᶠ ρ (′handle H [ 𝐸 ]) = ′handle (renʰ ρ H) [ renᶠ ρ 𝐸 ]
 
-liftᶠ : Frame Γ P Q → Frame (Γ ▷ A) P Q
+liftᶠ : Frame Γ P Q → Frame (Γ ⹁ A) P Q
 liftᶠ = renᶠ S_
 
-liftʰ : Γ ⊢ P ➡ Q → Γ ▷ A ⊢ P ➡ Q
+liftʰ : Γ ⊢ P ➡ Q → Γ ⹁ A ⊢ P ➡ Q
 liftʰ = renʰ S_
 ```

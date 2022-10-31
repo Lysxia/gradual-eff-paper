@@ -1,3 +1,4 @@
+```
 module Utils where
 
 open import Function.Base using (_∘_; flip)
@@ -102,3 +103,4 @@ map-⊆-refl {Cs = Ds} {As = Bs} = aux ⊆-refl (λ _ → refl)
 
 Star-snoc : ∀ {ℓ ℓ₁} {I : Set ℓ} {T : Rel I ℓ₁} → ∀ {x y z} → Star T x y → T y z -> Star T x z
 Star-snoc steps step = steps ◅◅ Star.return step
+```
