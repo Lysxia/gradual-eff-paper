@@ -22,11 +22,6 @@ open import Relation.Nullary.Product using (_×-dec_)
 ## Base types
 
 ```
-pattern _,,_ M N = M , N
-
-w : ℕ × ℕ
-w = 1 ,, 2
-
 data Base : Set where
   ′ℕ : Base
   ′𝔹 : Base

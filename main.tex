@@ -1,0 +1,130 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% JFP Specifics 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% save the original kernel definitions
+
+\let\latexdocument\document
+\let\latexenddocument\enddocument
+\documentclass[acmsmall,screen,prologue,dvipsnames]{acmart}
+%%% recover the original definitions
+\let\document\latexdocument
+\let\enddocument\latexenddocument
+
+\bibliographystyle{ACM-Reference-Format}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Agda tools
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% wrap texttt lines
+\sloppy
+
+\usepackage{xspace}
+
+% Choose the correct font for Unicode
+\usepackage{fontspec}
+
+\setmonofont[Scale=0.9]{DejaVu mononoki Symbola Droid}
+
+\usepackage{bbm}
+\usepackage{ucs}
+
+
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz-cd}
+\usepackage{fancyvrb}
+\usepackage{src_tex/agda}
+
+\newenvironment{myDisplay}
+ {\VerbatimEnvironment
+ \begin{verbatim}
+ }
+ {\end{verbatim}
+ }
+
+\def\tightlist{}  % pandoc output uses this command
+
+% Setup Agda fonts
+% https://lists.chalmers.se/pipermail/agda/2016/008662.html
+\renewcommand{\AgdaCodeStyle}{\small}
+% Use special font families without TeX ligatures for Agda code. (This
+% code is inspired by a comment by Enrico Gregorio/egreg:
+% https://tex.stackexchange.com/a/103078.) 
+\newfontfamily{\AgdaSerifFont}{DejaVu Serif}
+\newfontfamily{\AgdaSansSerifFont}{DejaVu Sans}
+\newfontfamily{\AgdaTypewriterFont}{DejaVu mononoki Symbola Droid}
+\newfontfamily{\DejaVuSerif}{DejaVu Serif}
+\newfontfamily{\Cardo}{Cardo}
+
+% Fallbacks for unsupported planes
+% https://blog.michael.franzl.name/2014/12/10/xelatex-unicode-font-fallback-unsupported-characters/
+% \usepackage{ucharclasses}
+% \setTransitionTo{MathematicalAlphanumericSymbols}{\DejaVuSerif}
+% \setTransitionTo{MiscellaneousMathematicalSymbolsB}{\Cardo}
+
+\renewcommand{\AgdaFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaKeywordFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaStringFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaCommentFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaBoundFontStyle}[1]{\textit{\AgdaTypewriterFont{}#1}}
+
+% hyperref should be loaded last
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, filecolor=black, urlcolor=black}
+
+
+\newcommand{\blue}[1]{{\color{blue}#1}}
+\newcommand{\red}[1]{{\color{red}#1}}
+\newcommand{\RubineRed}[1]{{\color{RubineRed}#1}}
+\newcommand{\WildStrawberry}[1]{{\color{WildStrawberry}#1}}
+
+\author[L. Xia]{Li-yao Xia}
+\email{ly.xia@ed.ac.uk}
+\affiliation{
+  \institution{University of Edinburgh}
+  \city{Edinburgh}\country{United Kingdom}
+}
+
+% Latex seems to expect the author list abbreviation here...
+\author[P. Wadler]{Philip Wadler}
+\email{wadler@inf.ed.ac.uk}
+\affiliation{
+  \institution{University of Edinburgh}
+  \city{Edinburgh}\country{United Kingdom}
+}
+
+\title{Formalizing gradual algebraic effects in Agda}
+
+\begin{document}
+
+\maketitle[T]
+
+\section{Types}
+
+\input{src_tex/Type}
+
+\section{Syntax}
+
+\input{src_tex/Core}
+
+\section{Operational semantics}
+
+\input{src_tex/Progress}
+
+\section{Graduality}
+
+\subsection{Precision on terms}
+
+\input{src_tex/Prec}
+
+\subsection{Simulation proof}
+
+\input{src_tex/SimAux}
+\input{src_tex/Sim}
+
+\section*{Appendix}
+
+\input{src_tex/Utils}
+
+\bibliography{references}
+
+\end{document}
