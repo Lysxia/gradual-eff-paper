@@ -86,7 +86,7 @@ $(src_lagda_tex)/%.lagda.tex : $(SRC)/%.lagda.md $(FILTERS)/codeblocks.lua
 	--filter=pandoc-latex-environment \
 	-o $@
 
-AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex)
+AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex) --only-scope-checking
 
 # run agda under same directory with lagda.tex	
 $(src_tex)/%.tex : $(src_lagda_tex)/%.lagda.tex 

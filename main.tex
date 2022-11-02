@@ -54,6 +54,7 @@
 % https://tex.stackexchange.com/a/103078.) 
 \newfontfamily{\AgdaSerifFont}{DejaVu Serif}
 \newfontfamily{\AgdaSansSerifFont}{DejaVu Sans}
+\newfontfamily{\AgdaMonoFont}{DejaVu Sans Mono}
 \newfontfamily{\AgdaTypewriterFont}{DejaVu mononoki Symbola Droid}
 \newfontfamily{\DejaVuSerif}{DejaVu Serif}
 \newfontfamily{\Cardo}{Cardo}
@@ -64,11 +65,12 @@
 % \setTransitionTo{MathematicalAlphanumericSymbols}{\DejaVuSerif}
 % \setTransitionTo{MiscellaneousMathematicalSymbolsB}{\Cardo}
 
+\renewcommand{\AgdaSpace}{\texttt{\AgdaMonoFont{} }}
 \renewcommand{\AgdaFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
-\renewcommand{\AgdaKeywordFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
-\renewcommand{\AgdaStringFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaKeywordFontStyle}[1]{{\AgdaMonoFont{}#1}}
+\renewcommand{\AgdaStringFontStyle}[1]{{\AgdaMonoFont{}#1}}
 \renewcommand{\AgdaCommentFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
-\renewcommand{\AgdaBoundFontStyle}[1]{\textit{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaBoundFontStyle}[1]{\AgdaTypewriterFont{}#1}
 
 % hyperref should be loaded last
 \usepackage{hyperref}
