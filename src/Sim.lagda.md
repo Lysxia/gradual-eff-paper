@@ -189,7 +189,7 @@ gg M≤M′ M—↠V v
 ```
 
 
-## Example
+## Example {#example-sim}
 
 In our running example, we showed how to increment two and its
 imprecise equivalent, and computed the reduction sequences for each,

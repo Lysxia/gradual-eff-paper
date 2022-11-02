@@ -6,6 +6,9 @@ module Type where
 open import Utils
 ```
 
+The module `Utils` reexports the standard library and exports some additional
+general lemmas. It is in the \Cref{sec:appendix}.
+
 ## Base types
 
 ```

@@ -28,6 +28,9 @@
 \usepackage{bbm}
 \usepackage{ucs}
 
+\usepackage[capitalize, nameinlink]{cleveref}
+\newcommand{\crefrangeconjunction}{--}
+\newcommand{\creflastconjunction}{, and~}
 
 %\usepackage[dvipsnames]{xcolor}
 \usepackage{tikz-cd}
@@ -98,6 +101,9 @@
 
 \maketitle[T]
 
+This is a formalization of a calculus with algebraic effects,
+based on Core Eff~\citep{bauer2015programming}, and gradual types~\citep{siek2015}.
+
 \input{src_tex/Type}
 \input{src_tex/Core}
 \input{src_tex/Progress}
@@ -105,7 +111,9 @@
 \input{src_tex/SimAux}
 \input{src_tex/Sim}
 
-\section*{Appendix}
+\appendix
+\section{Appendix}
+\label{sec:appendix}
 
 \input{src_tex/Utils}
 

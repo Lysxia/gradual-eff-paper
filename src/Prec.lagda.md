@@ -522,7 +522,7 @@ reflʰ H = record
     refl-on-perform (M ∷ Ms) = (refl , id , refl , refl , reflᴹ M) ∷ refl-on-perform Ms
 ```
 
-## Renaming
+## Renaming {#renaming-prec}
 
 Precision on renamings
 
@@ -640,7 +640,7 @@ lift≤ʰ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′
 lift≤ʰ = ren≤ʰ S≤S 
 ```
 
-## Substitution
+## Substitution {#substitution-prec}
 
 Extension
 ```
@@ -754,7 +754,7 @@ $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
 ⌈ M ⦅ _⊕_ ⦆ N ⌉≤  =  ⦅⦆≤⦅⦆★ _⊕_ ⌈ M ⌉≤ ⌈ N ⌉≤
 ```
 
-## Example
+## Example {#example-prec}
 
 ```
 inc≤inc★ : ∅ ⊢ inc ≤ᴹ inc★ ⦂ ⟨ ε≤¿ ⟩ ℕ⇒ℕ≤★
