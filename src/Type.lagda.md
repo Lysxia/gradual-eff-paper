@@ -1,4 +1,6 @@
-# Types
+# Types and effects
+
+We define types, effects, and the *precision* relation on types.
 
 ```
 module Type where
@@ -11,13 +13,14 @@ general lemmas. It is in the \Cref{sec:appendix}.
 
 ## Base types
 
+Base types are primitive data types such as numbers and booleans.
 ```
 data Base : Set where
   ′ℕ : Base
   ′𝔹 : Base
 ```
 
-Interpretation of base types into Agda types.
+The `rep` function interprets base types into Agda types.
 ```
 rep : Base → Set
 rep ′ℕ  =  ℕ
@@ -35,17 +38,38 @@ _≡$?_ : (ι : Base) → (ι′ : Base) → Dec (ι ≡ ι′)
 
 ## Effects
 
-```
-𝔼 = String
+Algebraic effects are names that a program may call, submitting
+a request with some arguments, expecting some result in response.
 
+We represent those names simply as strings.
+```
+𝔼 : Set
+𝔼 = String
+```
+
+A type-and-effect system keeps track of the names that a computation may
+call. We represent such a set of names concretely as a list.
+In our gradual system, effects may also be checked dynamically,
+assigning them the dynamic effect `¿`.
+
+TODO: fix the naming. What to call `e : 𝔼`, `es : List 𝔼`, and `E : Effs`?
+Also `Effs` is a terrible name.
+```
 infix 7 ¡_
 
 data Effs : Set where
-  ¡_ : List String → Effs
+  ¡_ : List 𝔼 → Effs
   ¿ : Effs
+```
 
+Pattern synonym for the empty effect (a computation which calls no names).
+```
 pattern ε = ¡ []
+```
 
+Consistent membership: for a static effect `¡ E`, this is just list
+membership. The dynamic effect statically accepts any effect `e` as a member.
+```
 infix 4 _∈¿_
 
 data _∈¿_ (e : 𝔼) : Effs → Set where
