@@ -52,7 +52,7 @@ call. We represent such a set of names concretely as a list.
 In our gradual system, effects may also be checked dynamically,
 assigning them the dynamic effect `¿`.
 
-TODO: fix the naming. What to call `e : 𝔼`, `es : List 𝔼`, and `E : Effs`?
+TODO: fix the naming. What to call `e : 𝔼` (names?), `es : List 𝔼`, and `E : Effs`?
 Also `Effs` is a terrible name.
 ```
 infix 7 ¡_
@@ -67,8 +67,11 @@ Pattern synonym for the empty effect (a computation which calls no names).
 pattern ε = ¡ []
 ```
 
-Consistent membership: for a static effect `¡ E`, this is just list
-membership. The dynamic effect statically accepts any effect `e` as a member.
+Consistent membership lifts the membership relation `_∈_` from lists (static
+effect rows) to gradual effect rows.
+The dynamic effect row statically accepts any effect `e` as a member.
+
+TODO: Compare with~\cite{sekiyama2019gradual}
 ```
 infix 4 _∈¿_
 
@@ -158,13 +161,13 @@ private
 
 ```
 data Ground : Type → Set where
-  $_  :
-       (ι : Base)
+  $_
+    :  (ι : Base)
        ------------
-     → Ground ($ ι)
+    →  Ground ($ ι)
 
-  ★⇒★ :
-       --------------
+  ★⇒★
+    :  --------------
        Ground (★ ⇒ ⟨ ¿ ⟩ ★)
 ```
 

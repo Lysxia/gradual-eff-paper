@@ -1,4 +1,4 @@
-# The Gradual Guarantee
+# Gradual Guarantee
 
 ## Precision on terms
 
