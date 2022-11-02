@@ -99,10 +99,22 @@
 
 \begin{document}
 
-\maketitle[T]
+\maketitle
+
+\section{Introduction}
 
 This is a formalization of a calculus with algebraic effects,
 based on Core Eff~\citep{bauer2015programming}, and gradual types~\citep{siek2015}.
+
+\Cref{types}~defines types and the precision relation on types.
+\Cref{syntax}~defines the syntax of terms.
+\Cref{operational-semantics}~defines the operational semantics, and proves progress;
+through the Curry-Howard isomorphism, this proof doubles as an evaluator.
+\Cref{gradual-guarantee}~proves the gradual guarantee:
+
+\paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
+and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
+is less precise than $V$ ($M' \to V' \wedge V \le V'$).
 
 \input{src_tex/Type}
 \input{src_tex/Core}
