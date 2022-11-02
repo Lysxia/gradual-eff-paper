@@ -1,3 +1,18 @@
+% Code borrowed from my compilers colleagues for building a draft version with comments in the margin
+\def\paperversiondraft{draft} \def\paperversionblind{normal}
+\def\paperversioncameraIEEE{cameraIEEE}
+
+% % If no draft paper-version is requested, compile in 'normal' mode
+\ifx\paperversion\paperversiondraft
+   \def\ClassReview{review,}
+\else
+  \ifx\paperversion\paperversioncameraIEEE
+  \else
+    \def\paperversion{normal}
+  \fi
+   \def\ClassReview{}
+\fi
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % JFP Specifics 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5,7 +20,7 @@
 
 \let\latexdocument\document
 \let\latexenddocument\enddocument
-\documentclass[acmsmall,screen,prologue,dvipsnames]{acmart}
+\documentclass[\ClassReview acmsmall,screen,prologue,dvipsnames,style=authoryear]{acmart}
 %%% recover the original definitions
 \let\document\latexdocument
 \let\enddocument\latexenddocument
@@ -19,7 +34,149 @@
 % wrap texttt lines
 \sloppy
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN draft version config
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{colortbl}
+\usepackage{xargs}
+\usepackage{lipsum}
+\usepackage[textsize=tiny]{todonotes}
+\usepackage{xparse}
+\usepackage{xifthen, xstring}
+\usepackage[normalem]{ulem}
 \usepackage{xspace}
+\usepackage{marginnote}
+\usepackage{etoolbox}
+\usepackage{subcaption}
+% \usepackage{algorithmicx}
+
+\makeatletter
+\font\uwavefont=lasyb10 scaled 652
+
+\newcommand\colorwave[1][blue]{\bgroup\markoverwith{\lower3\p@\hbox{\uwavefont\textcolor{#1}{\char58}}}\ULon}
+\makeatother
+
+\ifx\paperversion\paperversiondraft
+\newcommand\createtodoauthor[2]{%
+\def\tmpdefault{emptystring}
+\expandafter\newcommand\csname #1\endcsname[2][\tmpdefault]{\def\tmp{##1}\ifthenelse{\equal{\tmp}{\tmpdefault}}
+   {\todo[linecolor=#2,backgroundcolor=#2,bordercolor=#2]{\textbf{#1:} ##2}}
+   {\ifthenelse{\equal{##2}{}}{\colorwave[#2]{##1}\xspace}{\todo[linecolor=#2,backgroundcolor=#2,bordercolor=#2]{\textbf{#1:} ##2}\colorwave[#2]{##1}}}}
+\expandafter\newcommand\csname #1f\endcsname[2][\tmpdefault]{
+	\smash{\marginnote{
+		\todo[inline,linecolor=#2,backgroundcolor=#2,bordercolor=#2]{\textbf{#1 (Figure):} ##2}}}
+   }
+}
+%
+\else
+\newcommand\createtodoauthor[2]{%
+\expandafter\newcommand\csname #1\endcsname[2][]{##1}%
+\expandafter\newcommand\csname #1f\endcsname[2][]{##1}%
+}%
+\fi
+
+% Broaden margins to make room for todo notes
+\makeatletter
+\patchcmd{\@addmarginpar}{\ifodd\c@page}{\ifodd\c@page\@tempcnta\m@ne}{}{}
+\makeatother
+\ifx\paperversion\paperversiondraft
+  \makeatletter
+  \if@ACM@journal
+    \geometry{asymmetric}
+    \paperwidth=\dimexpr \paperwidth + 3.5cm\relax
+    \oddsidemargin=\dimexpr\oddsidemargin + 0cm\relax
+    \evensidemargin=\dimexpr\evensidemargin + 0cm\relax
+    \marginparwidth=\dimexpr \marginparwidth + 3cm\relax
+    \setlength{\marginparwidth}{4.6cm}
+    % This makeatletter box helps to move notes to the right
+    \makeatletter
+    \long\def\@mn@@@marginnote[#1]#2[#3]{%
+      \begingroup
+        \ifmmode\mn@strut\let\@tempa\mn@vadjust\else
+          \if@inlabel\leavevmode\fi
+          \ifhmode\mn@strut\let\@tempa\mn@vadjust\else\let\@tempa\mn@vlap\fi
+        \fi
+        \@tempa{%
+          \vbox to\z@{%
+            \vss
+            \@mn@margintest
+            \if@reversemargin\if@tempswa
+                \@tempswafalse
+              \else
+                \@tempswatrue
+            \fi\fi
+            %\if@tempswa
+              \rlap{%
+                \if@mn@verbose
+                  \PackageInfo{marginnote}{xpos seems to be \@mn@currxpos}%
+                \fi
+                \begingroup
+                  \ifx\@mn@currxpos\relax\else\ifx\@mn@currxpos\@empty\else
+                      \kern-\dimexpr\@mn@currxpos\relax
+                  \fi\fi
+                  \ifx\@mn@currpage\relax
+                    \let\@mn@currpage\@ne
+                  \fi
+                  \if@twoside\ifodd\@mn@currpage\relax
+                      \kern\oddsidemargin
+                    \else
+                      \kern\evensidemargin
+                    \fi
+                  \else
+                    \kern\oddsidemargin
+                  \fi
+                  \kern 1in
+                \endgroup
+                \kern\marginnotetextwidth\kern\marginparsep
+                \vbox to\z@{\kern\marginnotevadjust\kern #3
+                  \vbox to\z@{%
+                    \hsize\marginparwidth
+                    \linewidth\hsize
+                    \kern-\parskip
+                    \marginfont\raggedrightmarginnote\strut\hspace{\z@}%
+                    \ignorespaces#2\endgraf
+                    \vss}%
+                  \vss}%
+              }%
+          }%
+        }%
+      \endgroup
+    }
+    \makeatother
+  \else
+    \paperwidth=\dimexpr \paperwidth + 6cm\relax
+    \oddsidemargin=\dimexpr\oddsidemargin + 3cm\relax
+    \evensidemargin=\dimexpr\evensidemargin + 3cm\relax
+    \marginparwidth=\dimexpr \marginparwidth + 3cm\relax
+    \setlength{\marginparwidth}{4.6cm}
+  \fi
+  \makeatother
+\fi
+
+% We use the following color scheme
+%
+% This scheme is both print-friendly and colorblind safe for
+% up to four colors (including the red tones makes it not
+% colorblind safe any more)
+%
+% https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=4
+
+\definecolor{pairedNegOneLightGray}{HTML}{cacaca}
+\definecolor{pairedNegTwoDarkGray}{HTML}{827b7b}
+\definecolor{pairedOneLightBlue}{HTML}{a6cee3}
+\definecolor{pairedTwoDarkBlue}{HTML}{1f78b4}
+\definecolor{pairedThreeLightGreen}{HTML}{b2df8a}
+\definecolor{pairedFourDarkGreen}{HTML}{33a02c}
+\definecolor{pairedFiveLightRed}{HTML}{fb9a99}
+\definecolor{pairedSixDarkRed}{HTML}{e31a1c}
+\definecolor{yellow}{HTML}{ffcc80}
+\definecolor{lavender}{HTML}{e3aaec}
+
+\createtodoauthor{pw}{yellow}
+\createtodoauthor{lyx}{lavender}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END draft version config
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Choose the correct font for Unicode
 \usepackage{fontspec}

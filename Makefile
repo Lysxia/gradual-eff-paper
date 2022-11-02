@@ -19,19 +19,26 @@ latex_files := $(patsubst $(SRC)/%.lagda.md,$(src_tex)/%.tex,$(lagda_md_files))
 html_files := $(patsubst $(SRC)/%.lagda.md,html/%.html,$(lagda_md_files))
 agda_sty := $(src_tex)/agda.sty
 
-all: pdf # html
+all: draft.pdf pdf # html
 all_lagda_tex: $(transpiled_files)
 all_latex: $(latex_files)
 
 main_pdf := $(build_latex)/$(addsuffix .pdf,$(FILENAME))
+draft_pdf := $(build_latex)/draft.pdf
 
 .PHONY : pdf
 pdf: all_lagda_tex all_latex $(main_pdf)
-	ln -sfT $(main_pdf) main.pdf
+
+LATEXMK_OPTS := -quiet -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelatex
 
 # A pdf for the whole book
 $(main_pdf): main.tex $(latex_files) $(agda_sty) references.bib
-	latexmk -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelatex $<
+	latexmk $(LATEXMK_OPTS) $<
+	ln -sfT $(main_pdf) main.pdf
+
+draft.pdf: draft.tex main.tex $(latex_files) $(agda_sty) references.bib
+	latexmk $(LATEXMK_OPTS) $<
+	ln -sfT $(draft_pdf) draft.pdf
 
 .PHONY : html
 html: $(html_files) html/$(addsuffix .html,$(FILENAME)) 
@@ -75,13 +82,12 @@ markdown/%.lagda.md : $(SRC)/%.lagda.md \
 	--lua-filter=$(FILTERS)/citations-tex.lua \
 	-o $@
 
-
 # from https://stackoverflow.com/questions/48267813/makefile-compile-objects-to-different-directory-and-build-from-there
 # make a different directory for lagda.tex
 $(src_lagda_tex)/%.lagda.tex : $(SRC)/%.lagda.md $(FILTERS)/codeblocks.lua
 	@echo "Transpiling $< into $@"
 	@mkdir -p '$(@D)'
-	pandoc $<   --indented-code-classes=default \
+	pandoc $< --indented-code-classes=default \
 	--lua-filter=$(FILTERS)/codeblocks.lua \
 	--filter=pandoc-latex-environment \
 	-o $@
