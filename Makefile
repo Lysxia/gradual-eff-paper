@@ -6,7 +6,7 @@
 # path for lagda markdown source file
 SRC := src
 # path for lua-filters
-FILTERS := ../agda-tools/pandoc-filters
+FILTERS := pandoc-filters
 # filename of the final output file
 FILENAME := main
 
