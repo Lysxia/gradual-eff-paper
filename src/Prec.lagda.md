@@ -1,3 +1,7 @@
+# Graduality
+
+## Precision on terms
+
 Simple Blame Calculus with proof relevant casts.
 Uses polarity to unify upcasts and downcasts.
 Uses nested evaluation contexts.
@@ -7,28 +11,13 @@ Siek, Thiemann, and Wadler
 ```
 module Prec where
 
-open import Data.Fin.Base using (toℕ)
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Nat.Properties using (suc-injective)
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
-open import Data.Unit using (⊤; tt)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.List using (_∷_)
-open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
-open import Data.List.Relation.Unary.Any as Any using (here; there)
-import Data.List.Membership.DecPropositional as ListMem
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
-open import Relation.Binary.PropositionalEquality
-     using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst)
-open import Relation.Nullary using (¬_; Dec; yes; no; _because_; ofʸ; ofⁿ)
-open import Relation.Nullary.Sum using (_⊎-dec_)
-open import Relation.Binary using (Decidable)
-
-open import Utils using (_∈_)
+open import Utils
 open import Type
 open import Core as Core hiding (On-Perform)
 open import Progress
+
+import Data.List.Relation.Unary.All as All
+import Data.List.Relation.Unary.Any as Any
 ```
 
 
@@ -230,8 +219,9 @@ module _ {A : Set} {F G : A → Set} (R : ∀ {a} → F a → G a → Set) where
   All₂′ : ∀  {as bs} → All F as → All G bs → Set
   All₂′ = All₂ λ {a} {b} x y → Σ (a ≡ b) λ{ refl → R x y }
 
-module _ {A : Set} {_≟_ : Decidable (_≡_ {A = A})} {F G : A → Set} {R : ∀ {a} → F a → G a → Set} where
-  open ListMem _≟_ using (_∈?_)
+module _ {A : Set} ⦃ DecEq-A : DecEq A ⦄ {F G : A → Set} {R : ∀ {a} → F a → G a → Set} where
+  open import Data.Fin.Base using (toℕ)
+  open import Data.Nat.Properties using (suc-injective)
 
   lookup-All₂′-index : ∀ {as bs} {xs : All F as} {ys : All G bs} {a}
       → (a∈as : a ∈ as)
@@ -387,6 +377,8 @@ record _⊢_≤_⦂_➡_ Γ≤ {P P′ Q Q′} H H′ P≤ Q≤ where
   field
     on-return : Γ≤ ⹁ returns P≤ ⊢ on-return H ≤ᴹ on-return H′ ⦂ Q≤
     on-perform : On-Perform Γ≤ Q≤ (on-perform H) (on-perform H′)
+
+open _⊢_≤_⦂_➡_ public
 ```
 
 ```

@@ -1,21 +1,13 @@
+## Proof of the Gradual Guarantee
+
 ```
 module SimAux where
 
-open import Utils using (_∈_; _≟_)
-open import Function.Base using (_∘_)
-open import Data.Unit using (tt)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import Data.Sum.Base using (inj₁; inj₂)
-open import Relation.Binary.PropositionalEquality
-     using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst; inspect)
-open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Utils
 open import Type
 open import Core
 open import Progress
 open import Prec
-
-open _⊢_≤_⦂_➡_
 ```
 
 ```
@@ -84,11 +76,11 @@ cast (ƛ _) (ƛ _) ±q e ƛN≤ƛN′ | ∓s ⇒ ±t
 cast v v′ (+ q ⇑ g) refl V≤V′ | other
     with cast v v′ (+ q) refl V≤V′
 ... |  W′ , w , V′+—↠W′ , V≤W′
-    =  (W′ ⇑ g) , (w ⇑ g) , (unit (expand v′ g) ++ ξ* ([ □ ]⇑ g) V′+—↠W′) , ≤⇑ g V≤W′
+    =  (W′ ⇑ g) , (w ⇑ g) , (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′+—↠W′) , ≤⇑ g V≤W′
 cast v (v′ ⇑ g) (- q ⇑ .g) refl (≤⇑ .g  V≤V′) | other
     with cast v v′ (- q) refl V≤V′
 ... |  W′ , w′ , V′-—↠W′ , V≤W′
-    =  W′ , w′ , (unit (collapse v′ g) ++ V′-—↠W′) , V≤W′
+    =  W′ , w′ , (unit (collapse v′ g) ++↠ V′-—↠W′) , V≤W′
 ```
 
 ## Catch up lemma
@@ -117,7 +109,7 @@ catchup v (≤▷ {M′ = M′} {±q = ±q} e V≤M′)
 ... |  V′ , v′ , M′—↠V′ , V≤V′
     with cast v v′ ±q e V≤V′
 ... |  W , w , V⟨±q⟩—↠W , V≤W
-    =  W , w , (ξ* ([ □ ]▷ ±q) M′—↠V′ ++ V⟨±q⟩—↠W) , V≤W
+    =  W , w , (ξ* ([ □ ]▷ ±q) M′—↠V′ ++↠ V⟨±q⟩—↠W) , V≤W
 catchup (ƛ _) (wrap≤ e′ e ƛN≤ƛN′)
     =  _ , ƛ _ , (_ ∎) , wrap≤ e′ e ƛN≤ƛN′
 catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
@@ -125,7 +117,7 @@ catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
 catchup v (≤⟨⟩ V≤M)
     with catchup v V≤M
 ... | V′ , v′ , M′—↠V′ , V≤V′
-    = value v′ , revalue v′ , (ξ* ([ □ ]▷⟨ _ ⟩) M′—↠V′ ++ unit (castᵉ-value v′)) , ≤value v v′ V≤V′
+    = value v′ , revalue v′ , (ξ* ([ □ ]▷⟨ _ ⟩) M′—↠V′ ++↠ unit (castᵉ-value v′)) , ≤value v v′ V≤V′
 ```
 
 ## Substitution lemma
@@ -207,7 +199,7 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
 Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
   → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ➡ Q≤
   → Hooks H ≡ Hooks H′
-Hooks-≤ H≤ = All₂′-≡ {_≟_ = _≟_} (on-perform H≤)
+Hooks-≤ H≤ = All₂′-≡ (on-perform H≤)
 
 data CatchupPerform {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′} (P≤ : P ≤ᶜ P′) {E} e (𝐸 : Frame Γ (⟨ E ⟩ response e) P) (V : Γ ⊢ ⟨ E ⟩ request e) (M′ : Γ′ ⊢ P′) : Set where
   Mk : ∀ {E′} {E≤ : E ≤ᵉ E′} {e∈E′ : e ∈¿ E′} {V′}
@@ -250,7 +242,7 @@ catchup-⟦perform⟧≤ v (w ·[ 𝐸 ]) (·≤· N≤ M≤) ¬e//𝐸
 ... | W′ , w′ , N′—↠W′ , W≤
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
-    = Mk v′ V≤V′ ((w , w′ , W≤) ·[ 𝐸≤𝐸′ ]) ¬e//𝐸′ (ξ* ([ □ ]· _) N′—↠W′ ++ ξ* (w′ ·[ □ ]) M′—↠𝐸V′)
+    = Mk v′ V≤V′ ((w , w′ , W≤) ·[ 𝐸≤𝐸′ ]) ¬e//𝐸′ (ξ* ([ □ ]· _) N′—↠W′ ++↠ ξ* (w′ ·[ □ ]) M′—↠𝐸V′)
 catchup-⟦perform⟧≤ v ([ 𝐸 ]⦅ f ⦆ N) (⦅⦆≤⦅⦆ .f M≤ N≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′
@@ -261,7 +253,7 @@ catchup-⟦perform⟧≤ v (w ⦅ f ⦆[ 𝐸 ]) (⦅⦆≤⦅⦆ .f M≤ N≤) 
   with catchup-⟦perform⟧≤ v 𝐸 N≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ N′—↠𝐸V′
     = Mk v′ V≤V′ ((w , w′ , W≤) ⦅ f ⦆[ 𝐸≤𝐸′ ]) ¬e//𝐸′
-         (ξ* ([ □ ]⦅ f ⦆ _) M′—↠W′ ++ ξ* (w′ ⦅ f ⦆[ □ ]) N′—↠𝐸V′)
+         (ξ* ([ □ ]⦅ f ⦆ _) M′—↠W′ ++↠ ξ* (w′ ⦅ f ⦆[ □ ]) N′—↠𝐸V′)
 catchup-⟦perform⟧≤ v ([ 𝐸 ]⇑ g) (⇑≤⇑ .g M≤) ¬e//𝐸
   with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸
 ... | Mk v′ V≤V′ 𝐸≤𝐸′ ¬e//𝐸′ M′—↠𝐸V′

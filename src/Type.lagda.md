@@ -1,22 +1,9 @@
+# Types
+
 ```
 module Type where
 
 open import Utils
-
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.List.Base using (List; []; _++_)
-open import Data.String using (String)
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
-open import Data.Unit using (⊤; tt)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
-open import Relation.Binary.PropositionalEquality
-     using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst; inspect)
-     renaming ([_] to [[_]])
-open import Relation.Binary using (Decidable)
-open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Nullary.Product using (_×-dec_)
 ```
 
 ## Base types

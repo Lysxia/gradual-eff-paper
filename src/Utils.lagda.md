@@ -1,16 +1,18 @@
 ```
 module Utils where
 
-open import Function.Base using (_∘_; flip)
-open import Data.Empty using (⊥)
-open import Data.Unit.Base using (⊤)
+open import Function.Base using (_∘_; flip) public
+open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹) public
+open import Data.Empty using (⊥; ⊥-elim) public
+open import Data.Unit.Base using (⊤; tt) public
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Fin.Properties using (≡-isDecEquivalence)
-open import Data.Nat.Base using (ℕ; zero; suc)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_) public
 import Data.Nat.Properties as Nat
-open import Data.List.Base as List using (List; []; _∷_)
+open import Data.List.Base as List using (List; []; _∷_; _++_) public
 open import Data.List.Membership.Propositional as List using (_∈_) public
-open import Data.List.Relation.Unary.Any as Any using (here; there)
+open import Data.List.Relation.Unary.All as All using (All; []; _∷_) public
+open import Data.List.Relation.Unary.Any as Any using (here; there) public
 open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_) public
 open import Data.List.Relation.Binary.Subset.Propositional.Properties using (⊆-refl) public
 import Data.List.Relation.Binary.Equality.DecPropositional as List using (_≡?_)
@@ -18,14 +20,14 @@ import Data.List.Membership.DecPropositional as List using (_∈?_)
 open import Data.Vec.Base as Vec using (Vec; []; _∷_)
 open import Data.Vec.Relation.Binary.Pointwise.Inductive as VecPw using (Pointwise; []; _∷_)
 import Data.Vec.Relation.Binary.Equality.DecPropositional as Vec
-open import Data.Product using (_×_; _,_)
-open import Data.String as String using (String)
-open import Relation.Nullary using (Dec; yes; no)
-open import Relation.Nullary.Product using (_×-dec_)
+open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax) public
+open import Data.String as String using (String) public
+open import Data.Sum using (_⊎_; inj₁; inj₂) public
+open import Relation.Nullary using (¬_; Dec; yes; no) public
+open import Relation.Nullary.Product using (_×-dec_) public
 open import Relation.Nullary.Decidable.Core using (map′)
-open import Relation.Nullary.Product using (_×-dec_)
-open import Relation.Binary using (REL; Rel; Decidable)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong₂)
+open import Relation.Binary using (REL; Rel; Decidable) public
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; trans; sym; cong; cong₂; subst) public
 open import Relation.Binary.Structures using () renaming (IsDecEquivalence to IDE)
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive as Star using (Star; _◅_; _◅◅_) renaming (ε to refl)
 

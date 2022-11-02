@@ -7,19 +7,12 @@ Siek, Thiemann, and Wadler
 ```
 module Sim where
 
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import Relation.Binary.PropositionalEquality
-     using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst; inspect)
-
-open import Utils using (_≟_)
+open import Utils
 open import Type
 open import Core
 open import Progress
 open import Prec
 open import SimAux
-
-open _⊢_≤_⦂_➡_
 ```
 
 ## Term precision is a simulation (Gradual Guarantee)
@@ -42,7 +35,7 @@ sim (·≤· V≤L′ M≤M′) (ξ (v ·[ E ]) M↦N)
 ... |  V′ , v′ , L′—↠V′ , V≤V′
     with sim M≤M′ (ξ E M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
-    =  V′ · N′ , (ξ* ([ □ ]· _) L′—↠V′ ++ ξ* (v′ ·[ □ ]) M′—↠N′) , ·≤· V≤V′ N≤N′
+    =  V′ · N′ , (ξ* ([ □ ]· _) L′—↠V′ ++↠ ξ* (v′ ·[ □ ]) M′—↠N′) , ·≤· V≤V′ N≤N′
 sim (·≤· ƛN≤L′ W≤M′) (ξ □ (β w))
     with catchup (ƛ _) ƛN≤L′
 ... |  ƛ N′ , v′ , L′—↠ƛN′ , ƛN≤ƛN′
@@ -50,7 +43,7 @@ sim (·≤· ƛN≤L′ W≤M′) (ξ □ (β w))
 ... |  W′ , w′ , M′—↠W′ , W≤W′
     with simβ w w′ ƛN≤ƛN′ W≤W′
 ... |  M′ , ƛN′·W′—↠M′ , N[V]≤M′
-    =  M′ , (ξ* ([ □ ]· _) L′—↠ƛN′ ++ ξ* (v′ ·[ □ ]) M′—↠W′ ++ ƛN′·W′—↠M′) , N[V]≤M′
+    =  M′ , (ξ* ([ □ ]· _) L′—↠ƛN′ ++↠ ξ* (v′ ·[ □ ]) M′—↠W′ ++↠ ƛN′·W′—↠M′) , N[V]≤M′
 sim ($≤$ k) M—→N
     =  ⊥-elim (value-irreducible ($ _) M—→N)
 sim (⦅⦆≤⦅⦆ _⊕_ L≤L′ M≤M′) (ξ ([ E ]⦅ ._⊕_ ⦆ _) L↦N)
@@ -62,13 +55,13 @@ sim (⦅⦆≤⦅⦆ _⊕_ V≤L′ M≤M′) (ξ (v ⦅ ._⊕_ ⦆[ E ]) M↦N)
 ... |  V′ , v′ , L′—↠V′ , V≤V′
     with sim M≤M′ (ξ E M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
-    =  V′ ⦅ _⊕_ ⦆ N′ , (ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠V′ ++ ξ* (v′ ⦅ _⊕_ ⦆[ □ ]) M′—↠N′) , ⦅⦆≤⦅⦆ _⊕_ V≤V′ N≤N′
+    =  V′ ⦅ _⊕_ ⦆ N′ , (ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠V′ ++↠ ξ* (v′ ⦅ _⊕_ ⦆[ □ ]) M′—↠N′) , ⦅⦆≤⦅⦆ _⊕_ V≤V′ N≤N′
 sim (⦅⦆≤⦅⦆ _⊕_ V≤L′ W≤M′) (ξ □ δ)
     with catchup ($ _) V≤L′
 ... |  $ k , $ .k , L′—↠V′ , ($≤$ .k)
     with catchup ($ _) W≤M′
 ... |  $ k′ , $ .k′ , M′—↠W′ , ($≤$ .k′)
-    =  $ (k ⊕ k′) , (ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠V′ ++ ξ* ($ k ⦅ _⊕_ ⦆[ □ ]) M′—↠W′ ++ unit δ) , $≤$ (k ⊕ k′)
+    =  $ (k ⊕ k′) , (ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠V′ ++↠ ξ* ($ k ⦅ _⊕_ ⦆[ □ ]) M′—↠W′ ++↠ unit δ) , $≤$ (k ⊕ k′)
 sim (⇑≤⇑ g M≤M′) (ξ □ M↦N)
     =  ⊥-elim (box-irreducible g M↦N)
 sim (⇑≤⇑ g M≤M′) (ξ ([ E ]⇑ .g) M↦N)
@@ -150,12 +143,12 @@ sim (handle≤handle H≤ M≤) (ξ (′handle _ [ 𝐸 ]) M↦N)
 sim (handle≤handle H≤ V≤M′) (ξ □ (handle-value v))
     with catchup v V≤M′
 ... | V′ , v′ , M′—↠V′ , V≤V′
-    = _ , (ξ* (′handle _ [ □ ]) M′—↠V′ ++ unit (handle-value v′))
+    = _ , (ξ* (′handle _ [ □ ]) M′—↠V′ ++↠ unit (handle-value v′))
         , []≤[] (on-return H≤) (value≤value v v′ V≤V′)
 sim (handle≤handle H≤ M≤) (ξ □ (handle-perform {𝐸 = 𝐸} v ¬e//𝐸 eq))
-    with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸 | lookup-All₂′ {_≟_ = _≟_} (on-perform H≤) eq
+    with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸 | lookup-All₂′ (on-perform H≤) eq
 ... | Mk v′ V≤V′ 𝐸≤ ¬e//𝐸′ M′—↠N′ | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
-    = _ , (ξ* (′handle _ [ □ ]) M′—↠N′ ++ unit (handle-perform v′ ¬e//𝐸′ eq′))
+    = _ , (ξ* (′handle _ [ □ ]) M′—↠N′ ++↠ unit (handle-perform v′ ¬e//𝐸′ eq′))
         , []≤[] ([]≤[] HM′≤ (ƛ≤ƛ (handle≤handle (lift≤ʰ (lift≤ʰ (subst (_ ⊢ _ ≤ _ ⦂ _ ➡_) (sym cod≡) H≤)))
                                                 (⟦⟧≤⟦⟧ (lift≤ᶠ (lift≤ᶠ 𝐸≤)) (`≤` (subst (λ A → _ ⹁ A ⊢ _ ≤ˣ _ ⦂ _) (sym dom≡) Z≤Z))))))
                 (value≤value v v′ V≤V′)
@@ -176,7 +169,7 @@ sim* L≤L′ (L —→⟨ L—→M ⟩ M—↠N)
 ... |  M′ , L′—↠M′ , M≤M′
     with sim* M≤M′ M—↠N
 ... |  N′ , M′—↠N′ , N≤N′
-    =  N′ , (L′—↠M′ ++ M′—↠N′) , N≤N′
+    =  N′ , (L′—↠M′ ++↠ M′—↠N′) , N≤N′
 ```
 
 The gradual guarantee for reduction to a value.
@@ -192,7 +185,7 @@ gg M≤M′ M—↠V v
 ... |  N′ , M′—↠N′ , V≤N′
     with catchup v V≤N′
 ... |  V′ , v′ , N′—↠V′ , V≤V′
-    =  V′ , v′ , (M′—↠N′ ++ N′—↠V′) , V≤V′
+    =  V′ , v′ , (M′—↠N′ ++↠ N′—↠V′) , V≤V′
 ```
 
 

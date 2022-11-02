@@ -1,3 +1,5 @@
+# Operational Semantics
+
 ```
 {-# OPTIONS --show-implicit #-}
 module Progress where
@@ -6,23 +8,8 @@ open import Utils
 open import Type
 open import Core
 
-open import Function using (_∘_)
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.List.Base using (List; [])
-open import Data.List.Relation.Unary.All as All
+import Data.List.Relation.Unary.All as All
 import Data.List.Relation.Unary.Any.Properties as Any
-open import Data.String using (String)
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
-open import Data.Unit using (⊤; tt)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
-open import Relation.Binary.PropositionalEquality
-     using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst; inspect)
-open import Relation.Binary using (Decidable)
-open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Nullary.Decidable using (⌊_⌋; True; toWitness; fromWitness)
-open import Relation.Nullary.Product using (_×-dec_)
 ```
 
 ```
@@ -201,7 +188,7 @@ pattern ξ E M—→N = ξξ E refl refl M—→N
 ## Reflexive and transitive closure of reduction
 
 ```
-infixr 1 _++_
+infixr 1 _++↠_
 infix  1 begin_
 infix  2 _—↠_
 infixr 2 _—→⟨_⟩_
@@ -241,9 +228,9 @@ Apply ξ to each element of a sequence
 
 Concatenate two sequences.
 ```
-_++_ : ∀ {Γ A} {L M N : Γ ⊢ A} → L —↠ M → M —↠ N → L —↠ N
-(M ∎) ++ M—↠N                =  M—↠N
-(L —→⟨ L—→M ⟩ M—↠N) ++ N—↠P  =  L —→⟨ L—→M ⟩ (M—↠N ++ N—↠P)
+_++↠_ : ∀ {Γ A} {L M N : Γ ⊢ A} → L —↠ M → M —↠ N → L —↠ N
+(M ∎) ++↠ M—↠N                =  M—↠N
+(L —→⟨ L—→M ⟩ M—↠N) ++↠ N—↠P  =  L —→⟨ L—→M ⟩ (M—↠N ++↠ N—↠P)
 ```
 
 Alternative notation for sequence concatenation.
@@ -253,7 +240,7 @@ _—↠⟨_⟩_ : ∀ {Γ A} (L : Γ ⊢ A) {M N : Γ ⊢ A}
   → M —↠ N
     ---------
   → L —↠ N
-L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++ M—↠N
+L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++↠ M—↠N
 ```
 
 ## Irreducible terms

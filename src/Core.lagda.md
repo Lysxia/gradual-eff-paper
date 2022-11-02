@@ -1,3 +1,5 @@
+# Syntax
+
 Simple Blame Calculus with proof relevant casts.
 Uses polarity to unify upcasts and downcasts.
 Uses nested evaluation contexts.
@@ -9,19 +11,9 @@ module Core where
 
 open import Utils
 open import Type
-
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.List.Base using (List; [])
-open import Data.List.Relation.Unary.All using (All; []; _∷_)
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
-open import Data.Unit using (⊤; tt)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Relation.Binary.PropositionalEquality
-     using (_≡_; _≢_; refl; trans; sym; cong; cong₂; cong-app; subst; inspect)
 ```
 
-* Contexts and Variables
+## Contexts and Variables
 
 ```
 infixl 5 _⹁_
