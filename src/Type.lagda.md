@@ -50,7 +50,7 @@ We represent those names simply as strings.
 A type-and-effect system keeps track of the names that a computation may
 call. We represent such a set of names concretely as a list.
 In our gradual system, effects may also be checked dynamically,
-assigning them the dynamic effect `¿`.
+assigning them the dynamic effect `☆`.
 
 \lyx{fix the naming. What to call `e : 𝔼` (names?), `es : List 𝔼`, and `E : Effs`?
 Also `Effs` is a terrible name.}
@@ -59,7 +59,7 @@ infix 7 ¡_
 
 data Effs : Set where
   ¡_ : List 𝔼 → Effs
-  ¿ : Effs
+  ☆ : Effs
 ```
 
 Pattern synonym for the empty effect (a computation which calls no names).
@@ -73,15 +73,28 @@ The dynamic effect row statically accepts any effect `e` as a member.
 
 \lyx{Compare with~\cite{sekiyama2019gradual,schwerter2016gradual}}
 ```
-infix 4 _∈¿_
+infix 4 _∈☆_
 
-data _∈¿_ (e : 𝔼) : Effs → Set where
-  ¡_ : ∀ {E} → e ∈ E → e ∈¿ ¡ E
-  ¿  : e ∈¿ ¿
+data _∈☆_ (e : 𝔼) : Effs → Set where
+  ¡_ : ∀ {E} → e ∈ E → e ∈☆ ¡ E
+  ☆  : e ∈☆ ☆
+```
 
-_++¿_ : List 𝔼 → Effs → Effs
-E ++¿ ¿ = ¿
-E ++¿ (¡ F) = ¡ (E ++ F)
+List concatenation `_++_` is similarly lifted to gradual effect rows:
+extending the dynamic effect yields back the dynamic effect.
+```
+_++☆_ : List 𝔼 → Effs → Effs
+E ++☆ ☆ = ☆
+E ++☆ (¡ F) = ¡ (E ++ F)
+```
+
+Decision procedure for `_∈☆_`.
+```
+_∈☆?_ : Decidable _∈☆_
+e ∈☆? ☆ = yes ☆
+e ∈☆? (¡ E) with e ∈? E
+... | yes e∈E = yes (¡ e∈E)
+... | no ¬e∈E = no λ{ (¡ e∈E) → ¬e∈E e∈E }
 ```
 
 ## Types
@@ -90,21 +103,41 @@ E ++¿ (¡ F) = ¡ (E ++ F)
 infixr 7 _⇒_
 infix  8 $_
 infix 7 ⟨_⟩_
+```
 
+We distinguish computations from the values they return, assigning them different notions
+of types: computation types `Typeᶜ` \lyx{or CType?} and value types `Type`.
+They are defined mutually recursively, so we declare the type of one before defining the other.
+```
 record Typeᶜ : Set
+```
 
+A value type can be the dynamic type `★` for values whose type will be known at run time.
+The base type `$_` is for primitives. And the function type has a domain which is a value type
+and a codomain which is a computation type: when a function is applied, it may perform effects.
+```
 data Type : Set where
   ★ : Type
   $_ : (ι : Base) → Type
   _⇒_ : (A : Type) → (P : Typeᶜ) → Type
+```
 
+Computation types are pairs of an effect row and a value type,
+respectively describing the effects that a computation may perform,
+and the values that it may return.
+
+```
 record Typeᶜ where
   inductive
   constructor ⟨_⟩_
   field
     effects : Effs
     returns : Type
+```
 
+Having defined types, we can assign signatures to effects, which are their
+input and output types, also called requests and responses.
+```
 𝔼-sig : 𝔼 → Type × Type
 𝔼-sig "get" = ($ ′𝔹 , $ ′ℕ)
 𝔼-sig "put" = ($ ′ℕ , $ ′𝔹)
@@ -122,12 +155,12 @@ Decision procedure for equality of types.
 infix 4 _≡ᵉ?_ _≡ᶜ?_ _≡?_
 
 _≡ᵉ?_ : Decidable {A = Effs} _≡_
-¿ ≡ᵉ? ¿ = yes refl
+☆ ≡ᵉ? ☆ = yes refl
 ¡ E ≡ᵉ? ¡ F with E ≟ F
 ... | yes refl = yes refl
 ... | no ¬≡ = no λ{ refl → ¬≡ refl }
-¡ _ ≡ᵉ? ¿ = no λ()
-¿ ≡ᵉ? ¡ _ = no λ()
+¡ _ ≡ᵉ? ☆ = no λ()
+☆ ≡ᵉ? ¡ _ = no λ()
 
 _≡ᶜ?_ : (P Q : Typeᶜ) → Dec (P ≡ Q)
 
@@ -149,16 +182,26 @@ _≡?_ : (A : Type) → (B : Type) → Dec (A ≡ B)
 ⟨ E ⟩ A ≡ᶜ? ⟨ F ⟩ B with E ≡ᵉ? F ×-dec A ≡? B
 ... | yes (refl , refl) = yes refl
 ... | no ¬≡×≡ = no λ{ refl → ¬≡×≡ (refl , refl) }
-
-private
-  variable
-    A A′ B G : Type
-    P P′ Q Q′ : Typeᶜ
-    E E′ F : Effs
 ```
+
+Gradual types let us control how much information about the program's
+behavior we want to keep track of at compile time or at run time.
+There is an ordering of types, called *precision*, with `★` at the top
+and completely static types at the bottom, with no occurrences of `★`.
+Intuitively, more precise types provide more static information,
+while less precise types give more flexibility in exchange for more
+run-time checks. We define precision in the rest of this section.
 
 ## Ground types
 
+One early dimension to consider in designing a gradual type system is whether
+types are compared *deeply* or *shallowly* at run time. Deep type comparisons
+are known to break the gradual guarantee, so we will go with shallow type
+comparisons. *Ground types* are those that reflect exactly the information learned
+from such a shallow comparison. We only look at the first type constructor
+of a type, so the type is either a base type `$_` or a function type `_⇒_`,
+and in the latter case we don't learn anything about the domain or codomain,
+so the most precise type describing what we know is `★ ⇒ ⟨ ☆ ⟩ ★`.
 ```
 data Ground : Type → Set where
   $_
@@ -168,7 +211,7 @@ data Ground : Type → Set where
 
   ★⇒★
     :  --------------
-       Ground (★ ⇒ ⟨ ¿ ⟩ ★)
+       Ground (★ ⇒ ⟨ ☆ ⟩ ★)
 ```
 
 Extract type from evidence that it is ground
@@ -195,7 +238,7 @@ Decision procedure for whether a type is ground.
 Ground? : ∀(A : Type) → Dec (Ground A)
 Ground? ★                                 =  no λ ()
 Ground? ($ ι)                             =  yes ($ ι)
-Ground? (A ⇒ B) with A ≡? ★   | B ≡ᶜ? ⟨ ¿ ⟩ ★
+Ground? (A ⇒ B) with A ≡? ★   | B ≡ᶜ? ⟨ ☆ ⟩ ★
 ...                | yes refl | yes refl  =  yes ★⇒★
 ...                | no  A≢★  | _         =  no  λ{★⇒★ → A≢★ refl}
 ...                | _        | no  B≢★   =  no  λ{★⇒★ → B≢★ refl}
@@ -206,31 +249,67 @@ Ground? (A ⇒ B) with A ≡? ★   | B ≡ᶜ? ⟨ ¿ ⟩ ★
 ```
 infix 4 _≤_ _≤ᵉ_ _≤ᶜ_
 infixl 5 _⇑_
+```
 
+Precision orders types by how much static information they
+tell us about their values.
+
+The dynamic effect row `☆` is less precise than any static effect row `¡ E`.
+\lyx{If we really wanted to treat lists as set, this should also allow reordering.}
+```
 data _≤ᵉ_ : (_ _ : Effs) → Set where
-  id : E ≤ᵉ E
-  ¡≤¿ : ∀ {E} → ¡ E ≤ᵉ ¿
+  id : ∀ {E} → E ≤ᵉ E
+  ¡≤☆ : ∀ {E} → ¡ E ≤ᵉ ☆
+```
 
+Since computation types and value types are mutually recursive, their
+respective precision relations are also mutually recursive. We declare
+the signature of one before defining the other.
+```
 record _≤ᶜ_ (_ _ : Typeᶜ) : Set
+```
 
+A staple of gradual typing is that the function type is covariant in both domain and codomain
+with respect to precision.
+```
 data _≤_ : Type → Type → Set where
 
-  id : ∀ {A}
-      -----
-    → A ≤ A
+  _⇒_ : ∀ {A P A′ P′}
+    → A ≤ A′
+    → P ≤ᶜ P′
+      ---------------
+    → A ⇒ P ≤ A′ ⇒ P′
+```
 
+The dynamic type `★` is less precise than all types. However, following the principle
+that run-time type comparisons will be shallow, when we compare an arbitrary type `A` with `★`,
+we look at the first constructor, represented by a ground type `G`, and further comparisons
+are done by comparing the components of `A` with those of `G` (which are necessarily `★` or `☆`).
+```
   _⇑_ : ∀ {A G}
     → A ≤ G
     → Ground G
       -----
     → A ≤ ★
+```
 
-  _⇒_ : ∀ {A B A′ B′}
-    → A ≤ A′
-    → B ≤ᶜ B′
-      ---------------
-    → A ⇒ B ≤ A′ ⇒ B′
+The reflexivity of `_≤_` includes the fact that base types `$_` are related
+only to themselves. In fact, we could ensure that `A ≤ B` is a singleton
+by restricting the `id` rule to base types. Although this would simplify some proofs,
+we view this uniqueness as an artifact of the simple type system being formalized.
+It is generally useful for coercions (which we will represent as proofs of precision)
+to have non-trivial structure, for purposes both practical---an identity
+coercion which can be immediately discarded enables better performance---and
+theoretical---with polymorphism, derivations of precisions tend to not be unique.
+```
+  id : ∀ {A}
+      -----
+    → A ≤ A
+```
 
+Precision between computation types composes precision between their effect and
+value components.
+```
 record _≤ᶜ_ P Q where
   inductive
   constructor ⟨_⟩_
@@ -254,37 +333,41 @@ cod (p ⇒ q)  =  q
 The use of these two functions is reminiscent of some gradually-typed
 source languages, where one defines
 
+```txt
     dom ★        =  ★
     dom (A ⇒ B)  =  A
 
     cod ★        =  ★
     cod (A ⇒ B)  =  B
+```
 
 and has a typing rules resembling
 
+```txt
     Γ ⊢ L : A
     Γ ⊢ M : dom A
     ------------------
     Γ ⊢ L · M : cod A
+```
 
-Our dom and cod will play a similar role when we define the
+Our `dom` and `cod` will play a similar role when we define the
 precedence rules for abstraction and application.
 
-Lemma. Every ground type is more precise than ★.
+Lemma. Every ground type is more precise than `★`.
 ```
 G≤★ : ∀ {G} → Ground G → G ≤ ★
 G≤★ ($ ι)  =  id ⇑ $ ι
 G≤★ ★⇒★    =  (id ⇒ ⟨ id ⟩ id) ⇑ ★⇒★
 ```
 
-Lemma. ★ is not more precise than any ground type.
+Lemma. `★` is not more precise than any ground type.
 ```
 ¬★≤G : ∀ {G} → Ground G → ¬ (★ ≤ G)
 ¬★≤G ($ ι) ()
 ¬★≤G ★⇒★   ()
 ```
 
-Lemma. ★ is least precise.
+Lemma. `★` is least precise.
 ```
 ★≤ : ∀ {A} → ★ ≤ A → A ≡ ★
 ★≤ {★} p  =  refl
@@ -292,39 +375,40 @@ Lemma. ★ is least precise.
 ★≤ {A ⇒ B} ()
 ```
 
+Lemma. Every effect row is more precise than `☆`.
 ```
-E≤¿ : ∀ {E} → E ≤ᵉ ¿
-E≤¿ {¿} = id
-E≤¿ {¡ E} = ¡≤¿
+E≤☆ : ∀ {E} → E ≤ᵉ ☆
+E≤☆ {☆} = id
+E≤☆ {¡ E} = ¡≤☆
 ```
 
-Lemma. Every type is more precise that ★. (Not true in general.)
+Lemma. Every type is more precise than `★`. (Not true in general.)\lyx{?}
 ```
 A≤★ : ∀ {A} → A ≤ ★
 A≤★ {★}      =  id
 A≤★ {$ ι}    =  id ⇑ $ ι
-A≤★ {A ⇒ B}  =  (A≤★ ⇒ ⟨ E≤¿ ⟩ A≤★) ⇑ ★⇒★
+A≤★ {A ⇒ B}  =  (A≤★ ⇒ ⟨ E≤☆ ⟩ A≤★) ⇑ ★⇒★
 ```
 
-Lemma. Every type is either ★ or more precise than a ground type. (Not true in general.)
+Lemma. Every type is either `★` or more precise than a ground type. (Not true in general.)
 ```
 ★⊎G : ∀ A → (A ≡ ★) ⊎ ∃[ G ](Ground G × A ≤ G)
 ★⊎G ★        =  inj₁ refl
 ★⊎G ($ ι)    =  inj₂ ($ ι , $ ι , id)
-★⊎G (A ⇒ B)  =  inj₂ (★ ⇒ ⟨ ¿ ⟩ ★ , ★⇒★ , A≤★ ⇒ ⟨ E≤¿ ⟩ A≤★)
+★⊎G (A ⇒ B)  =  inj₂ (★ ⇒ ⟨ ☆ ⟩ ★ , ★⇒★ , A≤★ ⇒ ⟨ E≤☆ ⟩ A≤★)
 ```
 
-Lemma. If a type is more precise than a ground type, it is not ★.
+Lemma. If a type is more precise than a ground type, it is not `★`.
 ```
 ≢★ : ∀ {A G} → Ground G → A ≤ G → A ≢ ★
 ≢★ g A≤G A≡★ rewrite A≡★ = ¬★≤G g A≤G
 ```
 
-Lemma. ≤ is transitive
+Lemma. `_≤_` is transitive. This lemma gives the composition in the category of types and precision.
 ```
 _⨟ᵉ_ : ∀ {A B C} → A ≤ᵉ B → B ≤ᵉ C → A ≤ᵉ C
 d ⨟ᵉ id = d
-id ⨟ᵉ ¡≤¿ = ¡≤¿
+id ⨟ᵉ ¡≤☆ = ¡≤☆
 
 _⨟ᶜ_ : ∀ {A B C} → A ≤ᶜ B → B ≤ᶜ C → A ≤ᶜ C
 _⨟_ : ∀ {A B C} → A ≤ B → B ≤ C → A ≤ C
@@ -339,7 +423,7 @@ Lemmas. Left and right identity.
 ```
 left-idᵉ : ∀ {A B} → (p : A ≤ᵉ B) → id ⨟ᵉ p ≡ p
 left-idᵉ id = refl
-left-idᵉ ¡≤¿ = refl
+left-idᵉ ¡≤☆ = refl
 
 left-idᶜ : ∀ {A B} → (p : A ≤ᶜ B) → (⟨ id ⟩ id) ⨟ᶜ p ≡ p
 
@@ -361,7 +445,7 @@ Lemma. Associativity.
 assocᵉ : ∀ {A B C D} (p : A ≤ᵉ B) (q : B ≤ᵉ C) (r : C ≤ᵉ D)
   → (p ⨟ᵉ q) ⨟ᵉ r ≡ p ⨟ᵉ (q ⨟ᵉ r)
 assocᵉ p q id = refl
-assocᵉ id id ¡≤¿ = refl
+assocᵉ id id ¡≤☆ = refl
 
 assocᶜ : ∀ {A B C D} (p : A ≤ᶜ B) (q : B ≤ᶜ C) (r : C ≤ᶜ D)
   → (p ⨟ᶜ q) ⨟ᶜ r ≡ p ⨟ᶜ (q ⨟ᶜ r)
@@ -378,7 +462,7 @@ assocᶜ (⟨ d ⟩ p) (⟨ e ⟩ q) (⟨ f ⟩ r)
   rewrite assocᵉ d e f | assoc p q r = refl
 ```
 
-## Lemma. dom and cod are functors
+Lemma. `dom` and `cod` are functors.
 
 ```
 dom-⨟ : ∀ {A B A′ B′ A″ B″} (p : A ⇒ B ≤ A′ ⇒ B′) (q : A′ ⇒ B′ ≤  A″ ⇒ B″)
@@ -408,11 +492,11 @@ Decision procedure for precision.
 infix 4 _≤?_ _≤ᵉ?_ _≤ᶜ?_
 
 _≤ᵉ?_ : Decidable _≤ᵉ_
-_ ≤ᵉ? ¿ = yes E≤¿
+_ ≤ᵉ? ☆ = yes E≤☆
 ¡ E ≤ᵉ? ¡ F with E ≟ F
 ... | yes refl = yes id
 ... | no ¬≡ = no λ{ id → ¬≡ refl }
-¿ ≤ᵉ? ¡ _ = no λ()
+☆ ≤ᵉ? ¡ _ = no λ()
 
 _≤ᶜ?_ : Decidable _≤ᶜ_
 
@@ -425,7 +509,7 @@ _≤?_ : (A : Type) → (B : Type) → Dec (A ≤ B)
 ...                     | yes refl               =  yes id
 ...                     | no  ι≢ι′               =  no  λ{id → ι≢ι′ refl}
 ($ ι) ≤? (A ⇒ B)                                 =  no (λ ())
-(A ⇒ B) ≤? ★         with A ≤? ★ ×-dec B ≤ᶜ? (⟨ ¿ ⟩ ★)
+(A ⇒ B) ≤? ★         with A ≤? ★ ×-dec B ≤ᶜ? (⟨ ☆ ⟩ ★)
 ...                     | yes (A≤★ , B≤★) = yes ((A≤★ ⇒ B≤★) ⇑ ★⇒★)
 ...                     | no  ¬≤          = no  λ{((A≤★ ⇒ B≤★) ⇑ ★⇒★) → ¬≤ (A≤★ , B≤★);
                                                   (id ⇑ ★⇒★)          → ¬≤ (id , ⟨ id ⟩ id)}
@@ -440,16 +524,9 @@ _≤?_ : (A : Type) → (B : Type) → Dec (A ≤ B)
 ... | no ¬≤ = no λ{ (⟨ E≤ ⟩ A≤) → ¬≤ (E≤ , A≤) }
 ```
 
+Lemma. Consistent membership is preserved by decreases in precision.
 ```
-_∈¿?_ : Decidable _∈¿_
-e ∈¿? ¿ = yes ¿
-e ∈¿? (¡ E) with e ∈? E
-... | yes e∈E = yes (¡ e∈E)
-... | no ¬e∈E = no λ{ (¡ e∈E) → ¬e∈E e∈E }
-```
-
-```
-∈-≤ : ∀ {e} → E ≤ᵉ F → e ∈¿ E → e ∈¿ F
+∈-≤ : ∀ {E F e} → E ≤ᵉ F → e ∈☆ E → e ∈☆ F
 ∈-≤ id e∈E = e∈E
-∈-≤ ¡≤¿ _ = ¿
+∈-≤ ¡≤☆ _ = ☆
 ```

@@ -187,7 +187,7 @@ data _⊢_ : Context → Typeᶜ → Set where
 
   -- Fording (response e ≡ A) helps pattern matching.
   perform- : ∀ {e}
-    → e ∈¿ E
+    → e ∈☆ E
     → response e ≡ A
     → Γ ⊢ ⟨ E ⟩ request e
       --------------------
@@ -213,7 +213,7 @@ record _⊢_➡_ Γ P Q where
   open Typeᶜ
   field
     Hooks : List 𝔼
-    Hooks-handled : P .effects ≡ (Hooks ++¿ Q .effects)
+    Hooks-handled : P .effects ≡ (Hooks ++☆ Q .effects)
     on-return : Γ ⹁ P .returns ⊢ Q
     on-perform : On-Perform Γ Q Hooks
 
@@ -699,7 +699,7 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
     → Frame Γ C B
 
   ″perform_[_]_ : ∀ {e}
-    → e ∈¿ E
+    → e ∈☆ E
     → Frame Γ C (⟨ E ⟩ request e)
     → ∀ {A}
     → response e ≡ A

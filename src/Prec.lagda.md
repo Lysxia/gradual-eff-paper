@@ -108,8 +108,8 @@ commute≤ (- p) q r  =  p ⨟ r ≡ q
 commute≤ᵉ : ∀ {A B C} (±p : A =>ᵉ B) (q : B ≤ᵉ C) (r : A ≤ᵉ C) → Set
 {-
 commute≤ᵉ id q r  =  q ≡ r
-commute≤ᵉ +¿ q r  =  ⊤  -- TODO
-commute≤ᵉ -¿ q r  =  ⊤  -- TODO
+commute≤ᵉ +☆ q r  =  ⊤  -- TODO
+commute≤ᵉ -☆ q r  =  ⊤  -- TODO
 -}
 commute≤ᵉ p q r  =  ⊤
 
@@ -356,7 +356,7 @@ data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ
       -----------------------------------------------------
     → Γ≤ ⊢ ƛ N ≤ᴹ ƛ-wrap ∓s ±t (ƛ N′) ⦂ ⟨ E≤ ⟩ r
 
-  perform≤perform : ∀ {E E′ e} {e∈E : e ∈¿ E} {e∈E′ : e ∈¿ E′} {A}
+  perform≤perform : ∀ {E E′ e} {e∈E : e ∈☆ E} {e∈E′ : e ∈☆ E′} {A}
                       {E≤ : E ≤ᵉ E′} {M M′}
     → {eq : response e ≡ A}
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id
@@ -713,13 +713,13 @@ Preservation of precision under substitution, special case for beta
 ## Relating a term to its type erasure
 
 ```
-ƛ≤ƛ★ : ∀ {Γ Γ′ A B E F F′ N N′} {Γ≤ : Γ ≤ᴳ Γ′} {F≤ : F ≤ᵉ F′} {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ¿ ⟩ ★}
+ƛ≤ƛ★ : ∀ {Γ Γ′ A B E F F′ N N′} {Γ≤ : Γ ≤ᴳ Γ′} {F≤ : F ≤ᵉ F′} {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ☆ ⟩ ★}
   → Γ≤ ⹁ dom p ⊢ N ≤ᴹ N′ ⦂ cod p
     ----------------------------
   → Γ≤ ⊢ ƛ N ≤ᴹ ƛ★ N′ ⦂ ⟨ F≤ ⟩ (p ⇑ ★⇒★)
 ƛ≤ƛ★ N≤N′ = ≤▷ refl (ƛ≤ƛ N≤N′)
 
-·≤·★ : ∀ {Γ Γ′ A B E L L′ M M′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ¿ ⟩ ★}
+·≤·★ : ∀ {Γ Γ′ A B E L L′ M M′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ☆ ⟩ ★}
     (let ⟨ E≤ ⟩ _ = cod p)
   → Γ≤ ⊢ L ≤ᴹ L′ ⦂ ⟨ E≤ ⟩ (p ⇑ ★⇒★)
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ dom p
@@ -727,10 +727,10 @@ Preservation of precision under substitution, special case for beta
   → Γ≤ ⊢ L · M ≤ᴹ L′ ·★ M′ ⦂ cod p
 ·≤·★ L≤L′ M≤M′ = ·≤· (≤▷ refl L≤L′) M≤M′
 
-$≤$★ : ∀ {Γ Γ′ E ι} {Γ≤ : Γ ≤ᴳ Γ′} {E≤ : E ≤ᵉ ¿} (k : rep ι) → Γ≤ ⊢ $ k ≤ᴹ $★ k ⦂ ⟨ E≤ ⟩ (ι ≤★)
+$≤$★ : ∀ {Γ Γ′ E ι} {Γ≤ : Γ ≤ᴳ Γ′} {E≤ : E ≤ᵉ ☆} (k : rep ι) → Γ≤ ⊢ $ k ≤ᴹ $★ k ⦂ ⟨ E≤ ⟩ (ι ≤★)
 $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
 
-⦅⦆≤⦅⦆★ : ∀ {Γ Γ′ E ι ι′ ι″ M M′ N N′} {Γ≤ : Γ ≤ᴳ Γ′} {E≤ : E ≤ᵉ ¿}
+⦅⦆≤⦅⦆★ : ∀ {Γ Γ′ E ι ι′ ι″ M M′ N N′} {Γ≤ : Γ ≤ᴳ Γ′} {E≤ : E ≤ᵉ ☆}
   → (_⊕_ : rep ι → rep ι′ → rep ι″)
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ (ι ≤★)
   → Γ≤ ⊢ N ≤ᴹ N′ ⦂ ⟨ E≤ ⟩ (ι′ ≤★)
@@ -746,7 +746,7 @@ $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
 ⌈ Z ⌉≤ˣ          =  Z≤Z
 ⌈ S x ⌉≤ˣ        =  S≤S ⌈ x ⌉≤ˣ
 
-⌈_⌉≤ : ∀ {Γ E A} {M : Γ ⊢ ⟨ E ⟩ A} → (m : Static M) → ⌈ Γ ⌉≤ᴳ ⊢ M ≤ᴹ ⌈ m ⌉ ⦂ ⟨ E≤¿ ⟩ A≤★
+⌈_⌉≤ : ∀ {Γ E A} {M : Γ ⊢ ⟨ E ⟩ A} → (m : Static M) → ⌈ Γ ⌉≤ᴳ ⊢ M ≤ᴹ ⌈ m ⌉ ⦂ ⟨ E≤☆ ⟩ A≤★
 ⌈ ` x ⌉≤         =  `≤` ⌈ x ⌉≤ˣ
 ⌈ ƛ N ⌉≤         =  ƛ≤ƛ★ ⌈ N ⌉≤
 ⌈ L · M ⌉≤       =  ·≤·★ ⌈ L ⌉≤ ⌈ M ⌉≤
@@ -757,16 +757,16 @@ $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
 ## Example {#example-prec}
 
 ```
-inc≤inc★ : ∅ ⊢ inc ≤ᴹ inc★ ⦂ ⟨ ε≤¿ ⟩ ℕ⇒ℕ≤★
+inc≤inc★ : ∅ ⊢ inc ≤ᴹ inc★ ⦂ ⟨ ε≤☆ ⟩ ℕ⇒ℕ≤★
 inc≤inc★ = ⌈ Inc ⌉≤
 
-inc≤inc★′ : ∅ ⊢ inc ≤ᴹ inc★′ ⦂ ⟨ ε≤¿ ⟩ ℕ⇒ℕ≤★
+inc≤inc★′ : ∅ ⊢ inc ≤ᴹ inc★′ ⦂ ⟨ ε≤☆ ⟩ ℕ⇒ℕ≤★
 inc≤inc★′ = ≤▷ refl (≤⟨⟩ (reflᴹ inc))
 
-inc2≤inc★2★ : ∅ ⊢ inc · ($ 2) ≤ᴹ inc★ ·★ ($★ 2) ⦂ ⟨ ε≤¿ ⟩ ℕ≤★
+inc2≤inc★2★ : ∅ ⊢ inc · ($ 2) ≤ᴹ inc★ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
 inc2≤inc★2★ = ⌈ Inc · ($ 2) ⌉≤
 
-inc2≤inc★′2★ : ∅ ⊢ inc · ($ 2) ≤ᴹ inc★′ ·★ ($★ 2) ⦂ ⟨ ε≤¿ ⟩ ℕ≤★
+inc2≤inc★′2★ : ∅ ⊢ inc · ($ 2) ≤ᴹ inc★′ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
 inc2≤inc★′2★ = ·≤·★ inc≤inc★′ ($≤$★ 2)
 ```
 
@@ -845,7 +845,7 @@ data _⊢_⇒ᶠ_∋_≤_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤E′ ⟩ A≤ ∋ 𝐸 ≤ [ 𝐸′ ]▷⟨ F′=>E′ ⟩
 
   ″perform_[_]_ : ∀ {e} {𝐸 𝐸′}
-    → ((e∈E , e∈E′) : e ∈¿ E × e ∈¿ E′)
+    → ((e∈E , e∈E′) : e ∈☆ E × e ∈☆ E′)
     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ 𝐸 ≤ 𝐸′
     → ∀ {A}
     → (eq : response e ≡ A)
