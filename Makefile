@@ -19,7 +19,7 @@ latex_files := $(patsubst $(SRC)/%.lagda.md,$(src_tex)/%.tex,$(lagda_md_files))
 html_files := $(patsubst $(SRC)/%.lagda.md,html/%.html,$(lagda_md_files))
 agda_sty := $(src_tex)/agda.sty
 
-all: draft.pdf pdf # html
+all: pdf draft # html
 all_lagda_tex: $(transpiled_files)
 all_latex: $(latex_files)
 
@@ -28,6 +28,7 @@ draft_pdf := $(build_latex)/draft.pdf
 
 .PHONY : pdf
 pdf: all_lagda_tex all_latex $(main_pdf)
+draft: all_lagda_tex all_latex draft.pdf
 
 LATEXMK_OPTS := -quiet -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelatex
 
