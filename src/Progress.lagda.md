@@ -372,7 +372,7 @@ progress (cast {Q = ⟨ F ⟩ _} ±p M)
         with e ∈☆? F
 ...     | yes e∈F = performing (`cast ±p [ 𝐸 ]) e∈E v (¬handled-▷⟨⟩ {±p = ±p} 𝐸 e∈F ¬e//𝐸)
 ...     | no  ¬∈  = step (ξ □ (castᵉ-blame ¬∈ ¬e//𝐸 v refl))
-progress (cast ±p M)
+progress (cast ±p M) 
     | done v
         with progress± v ±p
 ...     | _ , V⟨±p⟩↦N                        = step (ξ □ V⟨±p⟩↦N)
@@ -474,7 +474,7 @@ pattern  ƛ★_ N          =  cast (+ ⟨ id ⟩ ★⇒★≤★) (ƛ N)
 pattern  _·★_ L M       =  (cast (- ⟨ id ⟩ ★⇒★≤★) L) · M
 pattern  $★_ {ι = ι} k  =  $ k ⇑ $ ι
 pattern  _⦅_⦆★_ {ι = ι} {ι′} {ι″} M _⊕_ N
-  =  cast (+ ⟨ id ⟩ (ι″ ≤★)) (cast (- ⟨ id ⟩ (ι ≤★)) M ⦅ _⊕_ ⦆ cast (- ⟨ id ⟩ (ι′ ≤★)) N)
+  =  cast (+ ⟨ id ⟩ (ι″ ≤★)) (cast (- ⟨ id ⟩ (ι ≤★)) M ⦅ _⊕_ ⦆ cast (- ⟨ id ⟩ (ι′ ≤★)) N) 
 
 data Static {Γ E} : (Γ ⊢ ⟨ E ⟩ A) → Set where
 

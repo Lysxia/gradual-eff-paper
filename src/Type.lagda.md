@@ -443,7 +443,7 @@ left-idᶜ (⟨ d ⟩ p) rewrite left-idᵉ d | left-id p = refl
 ```
 
 ```
-right-id : ∀ {A B} → (p : A ≤ B) → p ⨟ id {B} ≡ p
+right-id : ∀ {A B} → (p : A ≤ B) → p ⨟ id ≡ p
 right-id p  =  refl
 ```
 
