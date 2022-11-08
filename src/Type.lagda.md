@@ -262,6 +262,13 @@ data _≤ᵉ_ : (_ _ : Effs) → Set where
   ¡≤☆ : ∀ {E} → ¡ E ≤ᵉ ☆
 ```
 
+`☆` is the least precise element in `Effs`.
+```
+≤☆ : ∀ {E} → E ≤ᵉ ☆
+≤☆ {☆} = id
+≤☆ {¡ _} = ¡≤☆
+```
+
 Since computation types and value types are mutually recursive, their
 respective precision relations are also mutually recursive. We declare
 the signature of one before defining the other.

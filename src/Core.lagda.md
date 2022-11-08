@@ -49,53 +49,31 @@ private
 ## Casts
 
 ```
-infix  6 _=>_ _=>ᵉᵛ_ _=>ᵉ_
-infix  6 _==>_
-infix  4 +_
-infix  4 -_
+infix  6 _=>_ _=>ᶜ_ _=>ᵉ_ _==>_
+infix  4 +_ -_
 ```
 
 Cast
 
 ```
-data _=>_ (A B : Type) : Set where
+data ± {S : Set} (_<_ : S → S → Set) (A B : S) : Set where
 
-  +_ : A ≤ B
+  +_ : A < B
       ------
-     → A => B
+     → ± _<_ A B
 
-  -_ : B ≤ A
+  -_ : B < A
       ------
-     → A => B
+     → ± _<_ A B
 
-data _=>ᵉ_ (E F : Effs) : Set where
+_=>_ : Type → Type → Set
+_=>_ = ± _≤_
 
-  +_ : E ≤ᵉ F
-       -------
-     → E =>ᵉ F
+_=>ᶜ_ : Typeᶜ → Typeᶜ → Set
+_=>ᶜ_ = ± _≤ᶜ_
 
-  -_ : F ≤ᵉ E
-       -------
-     → E =>ᵉ F
-
--- This is a trick to decompose the parameters
--- in the definition of a record.
-module _ (P Q : Typeᶜ) (let ⟨ E ⟩ A = P ; ⟨ F ⟩ B = Q) where
-  infix 6 _=>ᶜ_
-  record _=>ᶜ_ : Set where
-    constructor ⟨_⟩_
-    field
-      effects : E =>ᵉ F
-      returns : A => B
-
--- The two types of casts are kept separate
--- because they have different roles in the operational semantics.
--- This avoid quantifying on extra variables for the casts that are irrelevant
--- to a given reduction rule.
-
-data _=>ᵉᵛ_ : (_ _ : Typeᶜ) → Set where
-  ⟨_⟩- : E =>ᵉ F → ⟨ E ⟩ A =>ᵉᵛ ⟨ F ⟩ A
-  ⟨-⟩_ : A =>  B → ⟨ E ⟩ A =>ᵉᵛ ⟨ E ⟩ B
+_=>ᵉ_ : Effs → Effs → Set
+_=>ᵉ_ = ± _≤ᵉ_
 ```
 
 Decomposing a cast
@@ -116,19 +94,31 @@ data _==>_ : Type → Type → Set where
       -------
     → A ==> B
 
-+ᶜ_ : P ≤ᶜ Q → P =>ᶜ Q
-+ᶜ (⟨ E≤ ⟩ p) = ⟨ + E≤ ⟩ (+ p)
-
--ᶜ_ : Q ≤ᶜ P → P =>ᶜ Q
--ᶜ (⟨ E≤ ⟩ p) = ⟨ - E≤ ⟩ (- p)
-
 split : ∀ {A B} → A => B → A ==> B
 split (+ id)     =  id
 split (- id)     =  id
-split (+ s ⇒ t)  =  (- s) ⇒ (+ᶜ t)
-split (- s ⇒ t)  =  (+ s) ⇒ (-ᶜ t)
+split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
+split (- s ⇒ t)  =  (+ s) ⇒ (- t)
 split (+ p ⇑ g)  =  other
 split (- p ⇑ g)  =  other
+```
+
+```
+separate : ∀ {E F A B}
+  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
+     -----------------------
+  →  E =>ᵉ F × A => B
+separate (+ ⟨ E≤F ⟩ A≤B)  =  (+ E≤F) , (+ A≤B)
+separate (- ⟨ F≤E ⟩ B≤A)  =  (- F≤E) , (- B≤A)
+```
+
+```
+splitᶜ : ∀ {E F A B}
+  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
+     -----------------------
+  →  A ==> B
+splitᶜ = split ∘ proj₂ ∘ separate
+
 ```
 
 ## Terms
@@ -136,9 +126,6 @@ split (- p ⇑ g)  =  other
 ```
 infix  4 _⊢_
 infix  4 _⊢_➡_
-infixl 5 _▷_
-infixl 5 _▷⟨⟩_
-infixl 5 _▷⟨_⟩
 infix  6 _·_
 infix  6 _⦅_⦆_
 infix  8 `_
@@ -199,9 +186,9 @@ data _⊢_ : Context → Typeᶜ → Set where
       ---------
     → Γ ⊢ Q
 
-  _▷⟨⟩_ : ∀ {Γ P Q}
+  cast : ∀ {Γ P Q}
+    → P =>ᶜ Q
     → Γ ⊢ P
-    → P =>ᵉᵛ Q
       ------
     → Γ ⊢ Q
 
@@ -222,8 +209,6 @@ open _⊢_➡_ public
 
 ```
 pattern perform e∈E M = perform- e∈E refl M
-pattern _▷_ M ±p = M ▷⟨⟩ ⟨-⟩ ±p
-pattern _▷⟨_⟩ M ±p = M ▷⟨⟩ ⟨ ±p ⟩-
 ```
 
 ## Renaming maps, substitution maps, term maps
@@ -272,16 +257,16 @@ renʰ ρ H = record
   ; on-return = ren (ren⹁ ρ) (on-return H)
   ; on-perform = ren-on-perform ρ (on-perform H) }
 
-ren ρ (` x)          = ` (ρ x)
-ren ρ (ƛ N)          =  ƛ (ren (ren⹁ ρ) N)
-ren ρ (L · M)        =  (ren ρ L) · (ren ρ M)
-ren ρ ($ k)          =  $ k
-ren ρ (L ⦅ _⊕_ ⦆ M)  =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
-ren ρ (M ⇑ g)        =  (ren ρ M) ⇑ g
-ren ρ (M ▷⟨⟩ ±p )     =  (ren ρ M) ▷⟨⟩ ±p
-ren ρ blame          =  blame
-ren ρ (perform- e∈E eq M)  = perform- e∈E eq (ren ρ M)
-ren ρ (handle H M)   = handle (renʰ ρ H) (ren ρ M)
+ren ρ (` x)                =  ` (ρ x)
+ren ρ (ƛ N)                =  ƛ (ren (ren⹁ ρ) N)
+ren ρ (L · M)              =  (ren ρ L) · (ren ρ M)
+ren ρ ($ k)                =  $ k
+ren ρ (L ⦅ _⊕_ ⦆ M)        =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
+ren ρ (M ⇑ g)              =  (ren ρ M) ⇑ g
+ren ρ (cast ±p M)          =  cast ±p (ren ρ M)
+ren ρ blame                =  blame
+ren ρ (perform- e∈E eq M)  =  perform- e∈E eq (ren ρ M)
+ren ρ (handle H M)         =  handle (renʰ ρ H) (ren ρ M)
 
 lift : ∀ {Γ : Context} {A : Type} → Γ →ᵀ (Γ ⹁ A)
 lift = ren S_
@@ -313,16 +298,16 @@ subʰ σ H = record
   ; on-return = sub (sub⹁ σ) (on-return H)
   ; on-perform = sub-on-perform σ (on-perform H) }
 
-sub σ (` x)          =  σ x
-sub σ (ƛ  N)         =  ƛ (sub (sub⹁ σ) N)
-sub σ (L · M)        =  (sub σ L) · (sub σ M)
-sub σ ($ k)          =  $ k
-sub σ (L ⦅ _⊕_ ⦆ M)  =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
-sub σ (M ⇑ g)        =  (sub σ M) ⇑ g
-sub σ (M ▷⟨⟩ ±p)     =  (sub σ M) ▷⟨⟩ ±p
-sub σ blame          =  blame
-sub σ (perform- e∈E eq M) = perform- e∈E eq (sub σ M)
-sub ρ (handle H M)   = handle (subʰ ρ H) (sub ρ M)
+sub σ (` x)                =  σ x
+sub σ (ƛ  N)               =  ƛ (sub (sub⹁ σ) N)
+sub σ (L · M)              =  (sub σ L) · (sub σ M)
+sub σ ($ k)                =  $ k
+sub σ (L ⦅ _⊕_ ⦆ M)        =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
+sub σ (M ⇑ g)              =  (sub σ M) ⇑ g
+sub σ (cast ±p M)          =  cast ±p (sub σ M)
+sub σ blame                =  blame
+sub σ (perform- e∈E eq M)  =  perform- e∈E eq (sub σ M)
+sub ρ (handle H M)         =  handle (subʰ ρ H) (sub ρ M)
 ```
 
 Special case of substitution, used in beta rule
@@ -370,15 +355,15 @@ ren∘renʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
   (ren∘ren (ren∘ren⹁ ρ≡) (on-return H)) (ren∘ren-on-perform ρ≡ (on-perform H))
 
-ren∘ren ρ≡ (` x)          =  cong `_ (ρ≡ x)
-ren∘ren ρ≡ (ƛ N)          =  cong ƛ_ (ren∘ren (ren∘ren⹁ ρ≡) N)
-ren∘ren ρ≡ (L · M)        =  cong₂ _·_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
-ren∘ren ρ≡ ($ k)          =  refl
-ren∘ren ρ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
-ren∘ren ρ≡ (M ⇑ g)        =  cong (_⇑ g) (ren∘ren ρ≡ M)
-ren∘ren ρ≡ (M ▷⟨⟩ ±p )     =  cong (_▷⟨⟩ ±p) (ren∘ren ρ≡ M)
-ren∘ren ρ≡ blame          =  refl
-ren∘ren ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ (` x)                =  cong `_ (ρ≡ x)
+ren∘ren ρ≡ (ƛ N)                =  cong ƛ_ (ren∘ren (ren∘ren⹁ ρ≡) N)
+ren∘ren ρ≡ (L · M)              =  cong₂ _·_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ ($ k)                =  refl
+ren∘ren ρ≡ (L ⦅ _⊕_ ⦆ M)        =  cong₂ _⦅ _⊕_ ⦆_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ (M ⇑ g)              =  cong (_⇑ g) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ (cast ±p M)          =  cong (cast ±p) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ blame                =  refl
+ren∘ren ρ≡ (perform- e∈E eq M)  =  cong (perform- e∈E eq) (ren∘ren ρ≡ M)
 ren∘ren {ρ = ρ} {ρ′ = ρ′} ρ≡ (handle H M) = cong₂ handle (ren∘renʰ {ρ = ρ} {ρ′ = ρ′} ρ≡ H) (ren∘ren ρ≡ M)
 
 lift∘ren : ∀ {Γ Δ A B} (ρ : Γ →ᴿ Δ) (M : Γ ⊢ B)
@@ -425,7 +410,7 @@ sub∘ren σ≡ (L · M)        =  cong₂ _·_ (sub∘ren σ≡ L) (sub∘ren �
 sub∘ren σ≡ ($ k)          =  refl
 sub∘ren σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (sub∘ren σ≡ L) (sub∘ren σ≡ M)
 sub∘ren σ≡ (M ⇑ g)        =  cong (_⇑ g) (sub∘ren σ≡ M)
-sub∘ren σ≡ (M ▷⟨⟩ ±p)     =  cong (_▷⟨⟩ ±p) (sub∘ren σ≡ M)
+sub∘ren σ≡ (cast ±p M)     =  cong (cast ±p) (sub∘ren σ≡ M)
 sub∘ren σ≡ blame          =  refl
 sub∘ren ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (sub∘ren ρ≡ M)
 sub∘ren {ρ = ρ} {σ′ = σ′} ρ≡ (handle H M)   = cong₂ handle (sub∘renʰ {ρ = ρ} {σ′ = σ′} ρ≡ H) (sub∘ren ρ≡ M)
@@ -471,7 +456,7 @@ ren∘sub σ≡ (L · M)        =  cong₂ _·_ (ren∘sub σ≡ L) (ren∘sub �
 ren∘sub σ≡ ($ k)          =  refl
 ren∘sub σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (ren∘sub σ≡ L) (ren∘sub σ≡ M)
 ren∘sub σ≡ (M ⇑ g)        =  cong (_⇑ g) (ren∘sub σ≡ M)
-ren∘sub σ≡ (M ▷⟨⟩ ±p)     =  cong (_▷⟨⟩ ±p) (ren∘sub σ≡ M)
+ren∘sub σ≡ (cast ±p M)    =  cong (cast ±p) (ren∘sub σ≡ M)
 ren∘sub σ≡ blame          =  refl
 ren∘sub ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (ren∘sub ρ≡ M)
 ren∘sub ρ≡ (handle H M)   = cong₂ handle (ren∘subʰ ρ≡ H) (ren∘sub ρ≡ M)
@@ -537,7 +522,7 @@ renId ρId (L · M) rewrite renId ρId L | renId ρId M         =  refl
 renId ρId ($ k)                                             =  refl
 renId ρId (L ⦅ _⊕_ ⦆ M) rewrite renId ρId L | renId ρId M   =  refl
 renId ρId (M ⇑ g) rewrite renId ρId M                       =  refl
-renId ρId (M ▷⟨⟩ ±p) rewrite renId ρId M                   =  refl
+renId ρId (cast ±p M) rewrite renId ρId M                   =  refl
 renId ρId blame                                             =  refl
 renId ρId (perform- e∈E eq M) rewrite renId ρId M           =  refl
 renId ρId (handle H M) rewrite renIdʰ ρId H | renId ρId M   = refl
@@ -577,7 +562,7 @@ subId σId (L · M) rewrite subId σId L | subId σId M         =  refl
 subId σId ($ k)                                             =  refl
 subId σId (L ⦅ _⊕_ ⦆ M) rewrite subId σId L | subId σId M   =  refl
 subId σId (M ⇑ g) rewrite subId σId M                       =  refl
-subId σId (M ▷⟨⟩ ±p) rewrite subId σId M                   =  refl
+subId σId (cast ±p M) rewrite subId σId M                   =  refl
 subId σId blame                                             =  refl
 subId σId (perform- e∈E eq M) rewrite subId σId M           =  refl
 subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   = refl
@@ -608,16 +593,16 @@ data Value {Γ E} : Γ ⊢ ⟨ E ⟩ A → Set where
 
 Extract term from evidence that it is a value.
 ```
-raw-value : ∀ {Γ P} {V : Γ ⊢ P} → Value V → Γ ⊢ P
-raw-value {V = V} _ = V
+value : ∀ {Γ P} {V : Γ ⊢ P} → Value V → Γ ⊢ P
+value {V = V} _ = V
 
-value : ∀ {Γ A} {V : Γ ⊢ ⟨ E ⟩ A}
+gvalue : ∀ {Γ A} {V : Γ ⊢ ⟨ E ⟩ A}
   → (v : Value V)
     -------------
   → ∀ {F} → Γ ⊢ ⟨ F ⟩ A
-value (ƛ N)  =  ƛ N
-value ($ k)  =  $ k
-value (V ⇑ g) = value V ⇑ g
+gvalue (ƛ N)  =  ƛ N
+gvalue ($ k)  =  $ k
+gvalue (V ⇑ g) = gvalue V ⇑ g
 ```
 
 
@@ -649,7 +634,7 @@ sub-val σ (V ⇑ g)  =  (sub-val σ V) ⇑ g
 
 ```
 infix  5 [_]⇑_
-infix  5 [_]▷⟨⟩_ [_]▷⟨_⟩ [_]▷_
+infix  5 `cast_[_]
 infix  6 [_]·_
 infix  6 _·[_]
 infix  6 [_]⦅_⦆_
@@ -692,11 +677,11 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
       --------------
     → Frame Γ C (⟨ E ⟩ ★)
 
-  [_]▷⟨⟩_ : ∀ {A B}
-    → (𝐸 : Frame Γ C A)
-    → (±p : A =>ᵉᵛ B)
+  `cast_[_] : ∀ {P Q}
+    → (±p : P =>ᶜ Q)
+    → (𝐸 : Frame Γ C P)
       -------------
-    → Frame Γ C B
+    → Frame Γ C Q
 
   ″perform_[_]_ : ∀ {e}
     → e ∈☆ E
@@ -711,8 +696,6 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
       -----------
     → Frame Γ C Q
 
-pattern [_]▷⟨_⟩ 𝐸 ±p = [ 𝐸 ]▷⟨⟩ ⟨ ±p ⟩-
-pattern [_]▷_ 𝐸 ±p = [ 𝐸 ]▷⟨⟩ ⟨-⟩ ±p
 pattern ′perform_[_] e 𝐸 = ″perform e [ 𝐸 ] refl
 ```
 
@@ -721,11 +704,11 @@ The plug function inserts an expression into the hole of a frame.
 _⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
 □ ⟦ M ⟧                 =  M
 ([ 𝐸 ]· M) ⟦ L ⟧        =  𝐸 ⟦ L ⟧ · M
-(v ·[ 𝐸 ]) ⟦ M ⟧        =  raw-value v · 𝐸 ⟦ M ⟧
+(v ·[ 𝐸 ]) ⟦ M ⟧        =  value v · 𝐸 ⟦ M ⟧
 ([ 𝐸 ]⦅ _⊕_ ⦆ N) ⟦ M ⟧  =  𝐸 ⟦ M ⟧ ⦅ _⊕_ ⦆ N
-(v ⦅ _⊕_ ⦆[ 𝐸 ]) ⟦ N ⟧  =  raw-value v ⦅ _⊕_ ⦆ 𝐸 ⟦ N ⟧
+(v ⦅ _⊕_ ⦆[ 𝐸 ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ 𝐸 ⟦ N ⟧
 ([ 𝐸 ]⇑ g) ⟦ M ⟧        =  𝐸 ⟦ M ⟧ ⇑ g
-([ 𝐸 ]▷⟨⟩ ±p) ⟦ M ⟧    =  (𝐸 ⟦ M ⟧) ▷⟨⟩ ±p
+(`cast ±p [ 𝐸 ]) ⟦ M ⟧  =  cast ±p (𝐸 ⟦ M ⟧)
 (″perform e∈E [ 𝐸 ] eq) ⟦ M ⟧ = perform- e∈E eq (𝐸 ⟦ M ⟧)
 (′handle H [ 𝐸 ]) ⟦ M ⟧ = handle H (𝐸 ⟦ M ⟧)
 ```
@@ -739,7 +722,7 @@ _∘∘_ : ∀{Γ A B C} → Frame Γ B C → Frame Γ A B → Frame Γ A C
 ([ 𝐸 ]⦅ _⊕_ ⦆ N) ∘∘ 𝐹  =  [ 𝐸 ∘∘ 𝐹 ]⦅ _⊕_ ⦆ N
 (v ⦅ _⊕_ ⦆[ 𝐸 ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ 𝐸 ∘∘ 𝐹 ]
 ([ 𝐸 ]⇑ g) ∘∘ 𝐹        =  [ 𝐸 ∘∘ 𝐹 ]⇑ g
-([ 𝐸 ]▷⟨⟩ ±p) ∘∘ 𝐹     =  [ 𝐸 ∘∘ 𝐹 ]▷⟨⟩ ±p
+(`cast ±p [ 𝐸 ]) ∘∘ 𝐹     =  `cast ±p [ 𝐸 ∘∘ 𝐹 ]
 (″perform e∈E [ 𝐸 ] eq) ∘∘ 𝐹 = ″perform e∈E [ 𝐸 ∘∘ 𝐹 ] eq
 (′handle H [ 𝐸 ]) ∘∘ 𝐹  =  ′handle H [ 𝐸 ∘∘ 𝐹 ]
 ```
@@ -758,7 +741,7 @@ Composition and plugging
 ∘∘-lemma ([ 𝐸 ]⦅ _⊕_ ⦆ N) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma (v ⦅ _⊕_ ⦆[ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma ([ 𝐸 ]⇑ g) 𝐹 M        rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma ([ 𝐸 ]▷⟨⟩ ±p) 𝐹 M    rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma (`cast ±p [ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma (″perform e∈E [ 𝐸 ] eq) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ∘∘-lemma (′handle H [ 𝐸 ]) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
 ```
@@ -771,7 +754,7 @@ renᶠ ρ (v ·[ 𝐸 ]) = ren-val ρ v ·[ renᶠ ρ 𝐸 ]
 renᶠ ρ ([ 𝐸 ]⦅ f ⦆ M) = [ renᶠ ρ 𝐸 ]⦅ f ⦆ ren ρ M
 renᶠ ρ (v ⦅ f ⦆[ 𝐸 ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ 𝐸 ]
 renᶠ ρ ([ 𝐸 ]⇑ g) = [ renᶠ ρ 𝐸 ]⇑ g
-renᶠ ρ ([ 𝐸 ]▷⟨⟩ ±p) = [ renᶠ ρ 𝐸 ]▷⟨⟩ ±p
+renᶠ ρ (`cast ±p [ 𝐸 ]) = `cast ±p [ renᶠ ρ 𝐸 ]
 renᶠ ρ (″perform e∈E [ 𝐸 ] eq) = ″perform e∈E [ renᶠ ρ 𝐸 ] eq
 renᶠ ρ (′handle H [ 𝐸 ]) = ′handle (renʰ ρ H) [ renᶠ ρ 𝐸 ]
 
