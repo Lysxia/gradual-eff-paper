@@ -147,6 +147,52 @@ liftʰ : ∀ {Γ P Q A} → Γ ⊢ P ➡ Q → Γ ▷ A ⊢ P ➡ Q
 liftʰ = renʰ S_
 ```
 
+Decomposing a cast
+```
+infix 6 _==>_
+
+data _==>_ : Type → Type → Set where
+
+  id : ∀ {A}
+      -------
+    → A ==> A
+
+  _⇒_ : ∀ {A A′ P P′}
+    → A′ => A
+    → P =>ᶜ P′
+      -----------------
+    → A ⇒ P ==> A′ ⇒ P′
+
+  other : ∀ {A B}
+      -------
+    → A ==> B
+
+split : ∀ {A B} → A => B → A ==> B
+split (+ id)     =  id
+split (- id)     =  id
+split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
+split (- s ⇒ t)  =  (+ s) ⇒ (- t)
+split (+ p ⇑ g)  =  other
+split (- p ⇑ g)  =  other
+```
+
+```
+separate : ∀ {E F A B}
+  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
+     -----------------------
+  →  E =>ᵉ F × A => B
+separate (+ ⟨ E≤F ⟩ A≤B)  =  (+ E≤F) , (+ A≤B)
+separate (- ⟨ F≤E ⟩ B≤A)  =  (- F≤E) , (- B≤A)
+```
+
+```
+splitᶜ : ∀ {E F A B}
+  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
+     -----------------------
+  →  A ==> B
+splitᶜ = split ∘ proj₂ ∘ separate
+```
+
 ```
 private
   variable

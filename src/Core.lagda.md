@@ -7,7 +7,13 @@ open import Utils
 open import Type
 ```
 
+In this section, we define the syntax of the calculus,
+renaming, substitution, and prove some related lemmas.
+
 ## Contexts and Variables
+
+The context is represented as a snoc list of types,
+and variables are de Bruijn indices, indexing into that list.
 
 ```
 infixl 5 _▷_
@@ -31,35 +37,37 @@ data _∋_ : Context → Type → Set where
     → Γ ▷ B ∋ A
 ```
 
-```
-private
-  variable
-    A A′ B G : Type
-    P P′ Q Q′ : Typeᶜ
-    E E′ F : Effs
-    Γ : Context
-```
-
 ## Casts
 
 ```
-infix  6 _=>_ _=>ᶜ_ _=>ᵉ_ _==>_
+infix  6 _=>_ _=>ᶜ_ _=>ᵉ_
 infix  4 +_ -_
 ```
 
-Cast
+Casts are either upcasts (reducing precision, \eg{} casting from `$ ι`
+to `★`) or downcasts (increasing precision). We define notions of
+casts for the different precision relations `_≤_`, `_≤ᶜ_`, `_≤ᵉ_`
+uniformly as their symmetric closures.
+
+Given any relation `_<_`, the relation `± _<_` is its symmetric closure:
+the smallest symmetric relation containing `_<_`.
 
 ```
 data ± {S : Set} (_<_ : S → S → Set) (A B : S) : Set where
 
-  +_ : A < B
-      ------
-     → ± _<_ A B
+  +_  : A < B
+        ---------
+      → ± _<_ A B
 
-  -_ : B < A
-      ------
-     → ± _<_ A B
+  -_  : B < A
+        ---------
+      → ± _<_ A B
+```
 
+The types of casts for value types, computation types, and effect types
+are the symmetric closures of their respective precision relations.
+
+```
 _=>_ : Type → Type → Set
 _=>_ = ± _≤_
 
@@ -70,51 +78,6 @@ _=>ᵉ_ : Effs → Effs → Set
 _=>ᵉ_ = ± _≤ᵉ_
 ```
 
-Decomposing a cast
-```
-data _==>_ : Type → Type → Set where
-
-  id : ∀ {A}
-      -------
-    → A ==> A
-
-  _⇒_ : ∀ {A A′ B B′}
-    → A′ => A
-    → B =>ᶜ B′
-      -----------------
-    → A ⇒ B ==> A′ ⇒ B′
-
-  other : ∀ {A B}
-      -------
-    → A ==> B
-
-split : ∀ {A B} → A => B → A ==> B
-split (+ id)     =  id
-split (- id)     =  id
-split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
-split (- s ⇒ t)  =  (+ s) ⇒ (- t)
-split (+ p ⇑ g)  =  other
-split (- p ⇑ g)  =  other
-```
-
-```
-separate : ∀ {E F A B}
-  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
-     -----------------------
-  →  E =>ᵉ F × A => B
-separate (+ ⟨ E≤F ⟩ A≤B)  =  (+ E≤F) , (+ A≤B)
-separate (- ⟨ F≤E ⟩ B≤A)  =  (- F≤E) , (- B≤A)
-```
-
-```
-splitᶜ : ∀ {E F A B}
-  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
-     -----------------------
-  →  A ==> B
-splitᶜ = split ∘ proj₂ ∘ separate
-
-```
-
 ## Terms
 
 ```
@@ -123,28 +86,61 @@ infix  4 _⊢_➡_
 infix  6 _·_
 infix  6 _⦅_⦆_
 infix  8 `_
+```
 
+The type of terms `_⊢_` is defined recursively with the type of handlers
+`_⊢_➡_`, which we pre-declare here.
+
+```
 record _⊢_➡_ (Γ : Context) (P Q : Typeᶜ) : Set
+```
 
+The data type `Γ ⊢ P` represents a term of computation type `P` in context `Γ`.
+The first five typing rules are standard (variables, abstraction, application,
+constants, and primitive operators). Then three typing rules are dedicated to
+graduality (casts, boxes, and blame), and two to algebraic effects (operations
+and handlers).
+
+```
 data _⊢_ : Context → Typeᶜ → Set where
+```
 
-  `_ : ∀ {Γ A}
-    → Γ ∋ A
-      -----
-    → Γ ⊢ ⟨ E ⟩ A
+A variable is a de Bruijn index into the context.
+Variables are to be substituted with values (hence they have value types),
+so they perform no effects, and thus impose no constraint on the effect row `E`.
 
+```
+  `_ : ∀ {Γ E A}
+    →  Γ ∋ A
+       -----
+    →  Γ ⊢ ⟨ E ⟩ A
+```
+
+Abstractions are values, so they impose no constraint on the outer effect row `E`,
+while the body of the function is typed in another row `F`.
+
+```
   ƛ_ :  ∀ {Γ E F B A}
-    → Γ ▷ A ⊢ ⟨ F ⟩ B
-      ---------
-    → Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ F ⟩ B)
+    →  Γ ▷ A ⊢ ⟨ F ⟩ B
+       ---------
+    →  Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ F ⟩ B)
+```
 
+Applications ensure that the effect row of the function matches the ambient one `E`.
+
+```
   _·_ : ∀ {Γ E A B}
     → Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)
     → Γ ⊢ ⟨ E ⟩ A
       ---------
     → Γ ⊢ ⟨ E ⟩ B
+```
 
-  $_ : ∀ {ι}
+Primitive constants (`true`, `false`, `n ∈ ℕ`)
+and operators (`_||_`, `_+_`).
+
+```
+  $_ : ∀ {Γ E ι}
     → rep ι
       -------
     → Γ ⊢ ⟨ E ⟩ ($ ι)
@@ -155,37 +151,81 @@ data _⊢_ : Context → Typeᶜ → Set where
     → Γ ⊢ ⟨ E ⟩ ($ ι′)
       ----------------------
     → Γ ⊢ ⟨ E ⟩ ($ ι″)
+```
 
-  _⇑_ : ∀ {Γ G E}
-    → Γ ⊢ ⟨ E ⟩ G
-    → Ground G
-      -----
-    → Γ ⊢ ⟨ E ⟩ ★
+A cast between computation types `P` to `Q` checks
+during run time that the inner computation, of type `P`,
+behaves like a computation of type `Q`: the operations
+performed by the inner computation must belong to the effect row
+of `Q`, and the resulting value is to be wrapped or unwrapped
+according to the return type of `Q`.
 
-  blame : ∀ {Γ A}
-      -----
-    → Γ ⊢ A
+Note how casts looks similar to handlers (defined below).
 
-  -- Fording (response e ≡ A) helps pattern matching.
-  perform- : ∀ {e}
-    → e ∈☆ E
-    → response e ≡ A
-    → Γ ⊢ ⟨ E ⟩ request e
-      --------------------
-    → Γ ⊢ ⟨ E ⟩ A
-
-  handle :
-      Γ ⊢ P ➡ Q
-    → Γ ⊢ P
-      ---------
-    → Γ ⊢ Q
-
+```
   cast : ∀ {Γ P Q}
     → P =>ᶜ Q
     → Γ ⊢ P
       ------
     → Γ ⊢ Q
+```
 
+A \emph{box} `M ⇑ g` constructs a value of the dynamic type `★`:
+it is a pair of a typed term `M` and a ``tag'' `g` which is to be
+inspected by run-time downcasts.
+It is generated by casts to `★`.
+
+```
+  _⇑_ : ∀ {Γ G E}
+    → Γ ⊢ ⟨ E ⟩ G
+    → Ground G
+      -----
+    → Γ ⊢ ⟨ E ⟩ ★
+```
+
+When a cast fails, it raises `blame`.
+
+```
+  blame : ∀ {Γ A}
+      -----
+    → Γ ⊢ A
+```
+
+A computation `perform e M` performs an operation `e` with arguments (request) `M`,
+returning a response of type `response e`.
+
+```
+  -- Fording (response e ≡ A) helps pattern matching.
+  perform- : ∀ {Γ E e A}
+    → e ∈☆ E
+    → response e ≡ A
+    → Γ ⊢ ⟨ E ⟩ request e
+      --------------------
+    → Γ ⊢ ⟨ E ⟩ A
+```
+
+Whereas functions are essentially maps between value types,
+handlers are maps between computation types `P ➡ Q`,
+whose syntax is defined below.
+
+```
+  handle : ∀ {Γ P Q}
+    →  Γ ⊢ P ➡ Q
+    →  Γ ⊢ P
+       ---------
+    →  Γ ⊢ Q
+```
+
+A handler consists of: a list of operations it handles (`Hooks`),
+which will be subtracted from the effects of the inner computation
+(`Hooks-handled`); a \emph{return clause}, which is a continuation
+to be called when the inner computation returns a value; and
+a list of \emph{operation clauses}, one for every operation in `Hooks`.
+
+The type of operation clauses is given by the auxiliary definition `On-Perform`.
+`All` is the type of list indexed by lists.
+
+```
 On-Perform : Context → Typeᶜ → List 𝔼 → Set
 On-Perform Γ Q Hooks = All (λ e → Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q) Hooks
 
@@ -201,6 +241,7 @@ record _⊢_➡_ Γ P Q where
 open _⊢_➡_ public
 ```
 
+A pattern synonym to hide the equality argument in `perform-`.
 ```
 pattern perform e∈E M = perform- e∈E refl M
 ```
@@ -209,20 +250,31 @@ pattern perform e∈E M = perform- e∈E refl M
 
 ```
 infix 4 _→ᴿ_ _→ˢ_ _→ᵀ_ _→ʰ_
+```
 
+Renaming maps: maps from variables to variables in another context.
+```
 _→ᴿ_ : Context → Context → Set
 Γ →ᴿ Δ = ∀ {A} → Γ ∋ A → Δ ∋ A
+```
 
+Substitution maps: maps from variables to terms in another context.
+```
 _→ˢ_ : Context → Context → Set
 Γ →ˢ Δ = ∀ {E A} → Γ ∋ A → Δ ⊢ ⟨ E ⟩ A
+```
 
+Term maps: maps from terms to terms, changing their context.
+```
 _→ᵀ_ : Context → Context → Set
 Γ →ᵀ Δ = ∀ {A} → Γ ⊢ A → Δ ⊢ A
+```
 
+Handler maps: maps from handlers to handlers, changing their context.
+```
 _→ʰ_ : Context → Context → Set
 Γ →ʰ Δ = ∀ {P Q} → Γ ⊢ P ➡ Q → Δ ⊢ P ➡ Q
 ```
-
 
 ## Renaming
 
@@ -310,11 +362,12 @@ Special case of substitution, used in beta rule
 σ₀ M Z      =  M
 σ₀ M (S x)  =  ` x
 
-_[_] : Γ ▷ A ⊢ P
-     → (∀ {E} → Γ ⊢ ⟨ E ⟩ A)
-       ---------
-     → Γ ⊢ P
-_[_] {Γ} {A} N M =  sub {Γ ▷ A} {Γ} (σ₀ M) N
+_[_] : ∀ {Γ P A}
+     →  Γ ▷ A ⊢ P
+     →  (∀ {E} → Γ ⊢ ⟨ E ⟩ A)
+        ---------
+     →  Γ ⊢ P
+_[_] {Γ} {P} {A} N M =  sub {Γ ▷ A} {Γ} (σ₀ M) N
 ```
 
 ## Composition and identity
@@ -565,23 +618,23 @@ subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   = refl
 ## Values
 
 ```
-data Value {Γ E} : Γ ⊢ ⟨ E ⟩ A → Set where
+data Value {Γ E} : ∀ {A} → Γ ⊢ ⟨ E ⟩ A → Set where
 
-  ƛ_ :
-      (N : Γ ▷ A ⊢ ⟨ F ⟩ B)
-      ---------------
-    → Value (ƛ N)
+  ƛ_ : ∀ {F A B}
+    →  (N : Γ ▷ A ⊢ ⟨ F ⟩ B)
+       ---------------
+    →  Value (ƛ N)
 
-  $_ : ∀{ι}
-    → (k : rep ι)
-      -------------------
-    → Value ($ k)
+  $_ : ∀ {ι}
+    →  (k : rep ι)
+       -------------------
+    →  Value ($ k)
 
   _⇑_ : ∀{G}{V : Γ ⊢ ⟨ E ⟩ G}
-    → (v : Value V)
-    → (g : Ground G)
-      ------------------
-    → Value (V ⇑ g)
+    →  (v : Value V)
+    →  (g : Ground G)
+       ------------------
+    →  Value (V ⇑ g)
 ```
 
 
@@ -590,7 +643,7 @@ Extract term from evidence that it is a value.
 value : ∀ {Γ P} {V : Γ ⊢ P} → Value V → Γ ⊢ P
 value {V = V} _ = V
 
-gvalue : ∀ {Γ A} {V : Γ ⊢ ⟨ E ⟩ A}
+gvalue : ∀ {Γ E A} {V : Γ ⊢ ⟨ E ⟩ A}
   → (v : Value V)
     -------------
   → ∀ {F} → Γ ⊢ ⟨ F ⟩ A
