@@ -12,6 +12,141 @@ import Data.List.Relation.Unary.All as All
 import Data.List.Relation.Unary.Any.Properties as Any
 ```
 
+## Frames
+
+```
+infix  5 [_]⇑_
+infix  5 `cast_[_]
+infix  6 [_]·_
+infix  6 _·[_]
+infix  6 [_]⦅_⦆_
+infix  6 _⦅_⦆[_]
+infix  7 _⟦_⟧
+
+data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
+
+  □ : Frame Γ C C
+
+  [_]·_ : ∀ {E A B}
+    →  (𝐸 : Frame Γ C (⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)))
+    →  (M : Γ ⊢ ⟨ E ⟩ A)
+       ---------------
+    →  Frame Γ C (⟨ E ⟩ B)
+
+  _·[_] : ∀ {E A B}{V : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)}
+    →  (v : Value V)
+    →  (𝐸 : Frame Γ C (⟨ E ⟩ A))
+       ----------------
+    →  Frame Γ C (⟨ E ⟩ B)
+
+  [_]⦅_⦆_ : ∀ {E ι ι′ ι″}
+    →  (𝐸 : Frame Γ C (⟨ E ⟩ ($ ι)))
+    →  (_⊕_ : rep ι → rep ι′ → rep ι″)
+    →  (N : Γ ⊢ ⟨ E ⟩ ($ ι′))
+       ------------------
+    →  Frame Γ C (⟨ E ⟩ ($ ι″))
+
+  _⦅_⦆[_] : ∀ {E ι ι′ ι″}{V : Γ ⊢ ⟨ E ⟩ $ ι}
+    →  (v : Value V)
+    →  (_⊕_ : rep ι → rep ι′ → rep ι″)
+    →  (𝐸 : Frame Γ C (⟨ E ⟩ ($ ι′)))
+       -------------------
+    →  Frame Γ C (⟨ E ⟩ ($ ι″))
+
+  [_]⇑_ : ∀ {E G}
+    →  (𝐸 : Frame Γ C (⟨ E ⟩ G))
+    →  (g : Ground G)
+       --------------
+    →  Frame Γ C (⟨ E ⟩ ★)
+
+  `cast_[_] : ∀ {P Q}
+    →  (±p : P =>ᶜ Q)
+    →  (𝐸 : Frame Γ C P)
+       -------------
+    →  Frame Γ C Q
+
+  ″perform_[_]_ : ∀ {E e}
+    →  e ∈☆ E
+    →  Frame Γ C (⟨ E ⟩ request e)
+    →  ∀ {A}
+    →  response e ≡ A
+    →  Frame Γ C (⟨ E ⟩ A)
+
+  ′handle_[_] : ∀ {P Q}
+    →  Γ ⊢ P ➡ Q
+    →  Frame Γ C P
+       -----------
+    →  Frame Γ C Q
+
+pattern ′perform_[_] e 𝐸 = ″perform e [ 𝐸 ] refl
+```
+
+The plug function inserts an expression into the hole of a frame.
+```
+_⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
+□ ⟦ M ⟧                 =  M
+([ 𝐸 ]· M) ⟦ L ⟧        =  𝐸 ⟦ L ⟧ · M
+(v ·[ 𝐸 ]) ⟦ M ⟧        =  value v · 𝐸 ⟦ M ⟧
+([ 𝐸 ]⦅ _⊕_ ⦆ N) ⟦ M ⟧  =  𝐸 ⟦ M ⟧ ⦅ _⊕_ ⦆ N
+(v ⦅ _⊕_ ⦆[ 𝐸 ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ 𝐸 ⟦ N ⟧
+([ 𝐸 ]⇑ g) ⟦ M ⟧        =  𝐸 ⟦ M ⟧ ⇑ g
+(`cast ±p [ 𝐸 ]) ⟦ M ⟧  =  cast ±p (𝐸 ⟦ M ⟧)
+(″perform e∈E [ 𝐸 ] eq) ⟦ M ⟧ = perform- e∈E eq (𝐸 ⟦ M ⟧)
+(′handle H [ 𝐸 ]) ⟦ M ⟧ = handle H (𝐸 ⟦ M ⟧)
+```
+
+Composition of two frames
+```
+_∘∘_ : ∀{Γ A B C} → Frame Γ B C → Frame Γ A B → Frame Γ A C
+□ ∘∘ 𝐹                 =  𝐹
+([ 𝐸 ]· M) ∘∘ 𝐹        =  [ 𝐸 ∘∘ 𝐹 ]· M
+(v ·[ 𝐸 ]) ∘∘ 𝐹        =  v ·[ 𝐸 ∘∘ 𝐹 ]
+([ 𝐸 ]⦅ _⊕_ ⦆ N) ∘∘ 𝐹  =  [ 𝐸 ∘∘ 𝐹 ]⦅ _⊕_ ⦆ N
+(v ⦅ _⊕_ ⦆[ 𝐸 ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ 𝐸 ∘∘ 𝐹 ]
+([ 𝐸 ]⇑ g) ∘∘ 𝐹        =  [ 𝐸 ∘∘ 𝐹 ]⇑ g
+(`cast ±p [ 𝐸 ]) ∘∘ 𝐹     =  `cast ±p [ 𝐸 ∘∘ 𝐹 ]
+(″perform e∈E [ 𝐸 ] eq) ∘∘ 𝐹 = ″perform e∈E [ 𝐸 ∘∘ 𝐹 ] eq
+(′handle H [ 𝐸 ]) ∘∘ 𝐹  =  ′handle H [ 𝐸 ∘∘ 𝐹 ]
+```
+
+Composition and plugging
+```
+∘∘-lemma : ∀ {Γ A B C}
+  → (𝐸 : Frame Γ B C)
+  → (𝐹 : Frame Γ A B)
+  → (M : Γ ⊢ A)
+    -----------------------------
+  → 𝐸 ⟦ 𝐹 ⟦ M ⟧ ⟧ ≡ (𝐸 ∘∘ 𝐹) ⟦ M ⟧
+∘∘-lemma □ 𝐹 M                                         =  refl
+∘∘-lemma ([ 𝐸 ]· M₁) 𝐹 M       rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma (v ·[ 𝐸 ]) 𝐹 M        rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma ([ 𝐸 ]⦅ _⊕_ ⦆ N) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma (v ⦅ _⊕_ ⦆[ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma ([ 𝐸 ]⇑ g) 𝐹 M        rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma (`cast ±p [ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma (″perform e∈E [ 𝐸 ] eq) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma (′handle H [ 𝐸 ]) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+```
+
+```
+renᶠ : ∀ {Γ Δ P Q} → Γ →ᴿ Δ → Frame Γ P Q → Frame Δ P Q
+renᶠ ρ □ = □
+renᶠ ρ ([ 𝐸 ]· M) = [ renᶠ ρ 𝐸 ]· ren ρ M
+renᶠ ρ (v ·[ 𝐸 ]) = ren-val ρ v ·[ renᶠ ρ 𝐸 ]
+renᶠ ρ ([ 𝐸 ]⦅ f ⦆ M) = [ renᶠ ρ 𝐸 ]⦅ f ⦆ ren ρ M
+renᶠ ρ (v ⦅ f ⦆[ 𝐸 ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ 𝐸 ]
+renᶠ ρ ([ 𝐸 ]⇑ g) = [ renᶠ ρ 𝐸 ]⇑ g
+renᶠ ρ (`cast ±p [ 𝐸 ]) = `cast ±p [ renᶠ ρ 𝐸 ]
+renᶠ ρ (″perform e∈E [ 𝐸 ] eq) = ″perform e∈E [ renᶠ ρ 𝐸 ] eq
+renᶠ ρ (′handle H [ 𝐸 ]) = ′handle (renʰ ρ H) [ renᶠ ρ 𝐸 ]
+
+liftᶠ : ∀ {Γ P Q A} → Frame Γ P Q → Frame (Γ ▷ A) P Q
+liftᶠ = renᶠ S_
+
+liftʰ : ∀ {Γ P Q A} → Γ ⊢ P ➡ Q → Γ ▷ A ⊢ P ➡ Q
+liftʰ = renʰ S_
+```
+
 ```
 private
   variable
@@ -101,7 +236,7 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
 
   -- The substitution will put the value under different effects,
   -- the `value` function generalizes the effect of a value.
-  β : ∀ {N : Γ ⹁ A ⊢ ⟨ E ⟩ B} {W : Γ ⊢ ⟨ E ⟩ A}
+  β : ∀ {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {W : Γ ⊢ ⟨ E ⟩ A}
     → (w : Value W)
       --------------------
     → (ƛ N) · W ↦ N [ gvalue w ]
@@ -116,7 +251,7 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
       --------------
     → cast ±p V ↦ gvalue v
 
-  wrap : {N : Γ ⹁ A ⊢ P}
+  wrap : {N : Γ ▷ A ⊢ P}
       {∓s : A′ => A} {±t : P =>ᶜ P′} {±p : (⟨ E ⟩ (A ⇒ P)) =>ᶜ ⟨ E′ ⟩ (A′ ⇒ P′)}
     → splitᶜ ±p ≡ ∓s ⇒ ±t
       ----------------------------------------------------
@@ -483,7 +618,7 @@ data Static {Γ E} : (Γ ⊢ ⟨ E ⟩ A) → Set where
       ------------
     → Static (` x)
 
-  ƛ_ : ∀ {F} {N : Γ ⹁ A ⊢ ⟨ F ⟩ B}
+  ƛ_ : ∀ {F} {N : Γ ▷ A ⊢ ⟨ F ⟩ B}
     → Static N
       ------------
     → Static (ƛ N)
@@ -514,7 +649,7 @@ static {M = M} m  =  M
 
 ⌈_⌉ᴳ : Context → Context
 ⌈ ∅ ⌉ᴳ = ∅
-⌈ Γ ⹁ A ⌉ᴳ = ⌈ Γ ⌉ᴳ ⹁ ★
+⌈ Γ ▷ A ⌉ᴳ = ⌈ Γ ⌉ᴳ ▷ ★
 
 ⌈_⌉ˣ : ∀ {Γ A} → (Γ ∋ A) → (⌈ Γ ⌉ᴳ ∋ ★)
 ⌈ Z ⌉ˣ          = Z
