@@ -1,7 +1,6 @@
 # Operational Semantics
 
 ```
-{-# OPTIONS --show-implicit #-}
 module Progress where
 
 open import Utils
@@ -28,19 +27,19 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
   □ : Frame Γ C C
 
   [_]·_ : ∀ {E A B}
-    →  (𝐸 : Frame Γ C (⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)))
+    →  (ℰ : Frame Γ C (⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)))
     →  (M : Γ ⊢ ⟨ E ⟩ A)
        ---------------
     →  Frame Γ C (⟨ E ⟩ B)
 
   _·[_] : ∀ {E A B}{V : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)}
     →  (v : Value V)
-    →  (𝐸 : Frame Γ C (⟨ E ⟩ A))
+    →  (ℰ : Frame Γ C (⟨ E ⟩ A))
        ----------------
     →  Frame Γ C (⟨ E ⟩ B)
 
   [_]⦅_⦆_ : ∀ {E ι ι′ ι″}
-    →  (𝐸 : Frame Γ C (⟨ E ⟩ ($ ι)))
+    →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι)))
     →  (_⊕_ : rep ι → rep ι′ → rep ι″)
     →  (N : Γ ⊢ ⟨ E ⟩ ($ ι′))
        ------------------
@@ -49,19 +48,19 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
   _⦅_⦆[_] : ∀ {E ι ι′ ι″}{V : Γ ⊢ ⟨ E ⟩ $ ι}
     →  (v : Value V)
     →  (_⊕_ : rep ι → rep ι′ → rep ι″)
-    →  (𝐸 : Frame Γ C (⟨ E ⟩ ($ ι′)))
+    →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι′)))
        -------------------
     →  Frame Γ C (⟨ E ⟩ ($ ι″))
 
   [_]⇑_ : ∀ {E G}
-    →  (𝐸 : Frame Γ C (⟨ E ⟩ G))
+    →  (ℰ : Frame Γ C (⟨ E ⟩ G))
     →  (g : Ground G)
        --------------
     →  Frame Γ C (⟨ E ⟩ ★)
 
   `cast_[_] : ∀ {P Q}
     →  (±p : P =>ᶜ Q)
-    →  (𝐸 : Frame Γ C P)
+    →  (ℰ : Frame Γ C P)
        -------------
     →  Frame Γ C Q
 
@@ -78,67 +77,67 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
        -----------
     →  Frame Γ C Q
 
-pattern ′perform_[_] e 𝐸 = ″perform e [ 𝐸 ] refl
+pattern ′perform_[_] e ℰ = ″perform e [ ℰ ] refl
 ```
 
 The plug function inserts an expression into the hole of a frame.
 ```
 _⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
 □ ⟦ M ⟧                 =  M
-([ 𝐸 ]· M) ⟦ L ⟧        =  𝐸 ⟦ L ⟧ · M
-(v ·[ 𝐸 ]) ⟦ M ⟧        =  value v · 𝐸 ⟦ M ⟧
-([ 𝐸 ]⦅ _⊕_ ⦆ N) ⟦ M ⟧  =  𝐸 ⟦ M ⟧ ⦅ _⊕_ ⦆ N
-(v ⦅ _⊕_ ⦆[ 𝐸 ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ 𝐸 ⟦ N ⟧
-([ 𝐸 ]⇑ g) ⟦ M ⟧        =  𝐸 ⟦ M ⟧ ⇑ g
-(`cast ±p [ 𝐸 ]) ⟦ M ⟧  =  cast ±p (𝐸 ⟦ M ⟧)
-(″perform e∈E [ 𝐸 ] eq) ⟦ M ⟧ = perform- e∈E eq (𝐸 ⟦ M ⟧)
-(′handle H [ 𝐸 ]) ⟦ M ⟧ = handle H (𝐸 ⟦ M ⟧)
+([ ℰ ]· M) ⟦ L ⟧        =  ℰ ⟦ L ⟧ · M
+(v ·[ ℰ ]) ⟦ M ⟧        =  value v · ℰ ⟦ M ⟧
+([ ℰ ]⦅ _⊕_ ⦆ N) ⟦ M ⟧  =  ℰ ⟦ M ⟧ ⦅ _⊕_ ⦆ N
+(v ⦅ _⊕_ ⦆[ ℰ ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ ℰ ⟦ N ⟧
+([ ℰ ]⇑ g) ⟦ M ⟧        =  ℰ ⟦ M ⟧ ⇑ g
+(`cast ±p [ ℰ ]) ⟦ M ⟧  =  cast ±p (ℰ ⟦ M ⟧)
+(″perform e∈E [ ℰ ] eq) ⟦ M ⟧ = perform- e∈E eq (ℰ ⟦ M ⟧)
+(′handle H [ ℰ ]) ⟦ M ⟧ = handle H (ℰ ⟦ M ⟧)
 ```
 
 Composition of two frames
 ```
 _∘∘_ : ∀{Γ A B C} → Frame Γ B C → Frame Γ A B → Frame Γ A C
 □ ∘∘ 𝐹                 =  𝐹
-([ 𝐸 ]· M) ∘∘ 𝐹        =  [ 𝐸 ∘∘ 𝐹 ]· M
-(v ·[ 𝐸 ]) ∘∘ 𝐹        =  v ·[ 𝐸 ∘∘ 𝐹 ]
-([ 𝐸 ]⦅ _⊕_ ⦆ N) ∘∘ 𝐹  =  [ 𝐸 ∘∘ 𝐹 ]⦅ _⊕_ ⦆ N
-(v ⦅ _⊕_ ⦆[ 𝐸 ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ 𝐸 ∘∘ 𝐹 ]
-([ 𝐸 ]⇑ g) ∘∘ 𝐹        =  [ 𝐸 ∘∘ 𝐹 ]⇑ g
-(`cast ±p [ 𝐸 ]) ∘∘ 𝐹     =  `cast ±p [ 𝐸 ∘∘ 𝐹 ]
-(″perform e∈E [ 𝐸 ] eq) ∘∘ 𝐹 = ″perform e∈E [ 𝐸 ∘∘ 𝐹 ] eq
-(′handle H [ 𝐸 ]) ∘∘ 𝐹  =  ′handle H [ 𝐸 ∘∘ 𝐹 ]
+([ ℰ ]· M) ∘∘ 𝐹        =  [ ℰ ∘∘ 𝐹 ]· M
+(v ·[ ℰ ]) ∘∘ 𝐹        =  v ·[ ℰ ∘∘ 𝐹 ]
+([ ℰ ]⦅ _⊕_ ⦆ N) ∘∘ 𝐹  =  [ ℰ ∘∘ 𝐹 ]⦅ _⊕_ ⦆ N
+(v ⦅ _⊕_ ⦆[ ℰ ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ ℰ ∘∘ 𝐹 ]
+([ ℰ ]⇑ g) ∘∘ 𝐹        =  [ ℰ ∘∘ 𝐹 ]⇑ g
+(`cast ±p [ ℰ ]) ∘∘ 𝐹     =  `cast ±p [ ℰ ∘∘ 𝐹 ]
+(″perform e∈E [ ℰ ] eq) ∘∘ 𝐹 = ″perform e∈E [ ℰ ∘∘ 𝐹 ] eq
+(′handle H [ ℰ ]) ∘∘ 𝐹  =  ′handle H [ ℰ ∘∘ 𝐹 ]
 ```
 
 Composition and plugging
 ```
 ∘∘-lemma : ∀ {Γ A B C}
-  → (𝐸 : Frame Γ B C)
+  → (ℰ : Frame Γ B C)
   → (𝐹 : Frame Γ A B)
   → (M : Γ ⊢ A)
     -----------------------------
-  → 𝐸 ⟦ 𝐹 ⟦ M ⟧ ⟧ ≡ (𝐸 ∘∘ 𝐹) ⟦ M ⟧
+  → ℰ ⟦ 𝐹 ⟦ M ⟧ ⟧ ≡ (ℰ ∘∘ 𝐹) ⟦ M ⟧
 ∘∘-lemma □ 𝐹 M                                         =  refl
-∘∘-lemma ([ 𝐸 ]· M₁) 𝐹 M       rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma (v ·[ 𝐸 ]) 𝐹 M        rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma ([ 𝐸 ]⦅ _⊕_ ⦆ N) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma (v ⦅ _⊕_ ⦆[ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma ([ 𝐸 ]⇑ g) 𝐹 M        rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma (`cast ±p [ 𝐸 ]) 𝐹 M  rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma (″perform e∈E [ 𝐸 ] eq) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
-∘∘-lemma (′handle H [ 𝐸 ]) 𝐹 M rewrite ∘∘-lemma 𝐸 𝐹 M  =  refl
+∘∘-lemma ([ ℰ ]· M₁) 𝐹 M       rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (v ·[ ℰ ]) 𝐹 M        rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma ([ ℰ ]⦅ _⊕_ ⦆ N) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (v ⦅ _⊕_ ⦆[ ℰ ]) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma ([ ℰ ]⇑ g) 𝐹 M        rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (`cast ±p [ ℰ ]) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (″perform e∈E [ ℰ ] eq) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (′handle H [ ℰ ]) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ```
 
 ```
 renᶠ : ∀ {Γ Δ P Q} → Γ →ᴿ Δ → Frame Γ P Q → Frame Δ P Q
 renᶠ ρ □ = □
-renᶠ ρ ([ 𝐸 ]· M) = [ renᶠ ρ 𝐸 ]· ren ρ M
-renᶠ ρ (v ·[ 𝐸 ]) = ren-val ρ v ·[ renᶠ ρ 𝐸 ]
-renᶠ ρ ([ 𝐸 ]⦅ f ⦆ M) = [ renᶠ ρ 𝐸 ]⦅ f ⦆ ren ρ M
-renᶠ ρ (v ⦅ f ⦆[ 𝐸 ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ 𝐸 ]
-renᶠ ρ ([ 𝐸 ]⇑ g) = [ renᶠ ρ 𝐸 ]⇑ g
-renᶠ ρ (`cast ±p [ 𝐸 ]) = `cast ±p [ renᶠ ρ 𝐸 ]
-renᶠ ρ (″perform e∈E [ 𝐸 ] eq) = ″perform e∈E [ renᶠ ρ 𝐸 ] eq
-renᶠ ρ (′handle H [ 𝐸 ]) = ′handle (renʰ ρ H) [ renᶠ ρ 𝐸 ]
+renᶠ ρ ([ ℰ ]· M) = [ renᶠ ρ ℰ ]· ren ρ M
+renᶠ ρ (v ·[ ℰ ]) = ren-val ρ v ·[ renᶠ ρ ℰ ]
+renᶠ ρ ([ ℰ ]⦅ f ⦆ M) = [ renᶠ ρ ℰ ]⦅ f ⦆ ren ρ M
+renᶠ ρ (v ⦅ f ⦆[ ℰ ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ ℰ ]
+renᶠ ρ ([ ℰ ]⇑ g) = [ renᶠ ρ ℰ ]⇑ g
+renᶠ ρ (`cast ±p [ ℰ ]) = `cast ±p [ renᶠ ρ ℰ ]
+renᶠ ρ (″perform e∈E [ ℰ ] eq) = ″perform e∈E [ renᶠ ρ ℰ ] eq
+renᶠ ρ (′handle H [ ℰ ]) = ′handle (renʰ ρ H) [ renᶠ ρ ℰ ]
 
 liftᶠ : ∀ {Γ P Q A} → Frame Γ P Q → Frame (Γ ▷ A) P Q
 liftᶠ = renᶠ S_
@@ -204,36 +203,58 @@ private
 
 ## Reduction
 
+The effect row in the codomain of the cast. 
 ```
 cast-effect : {P Q : Typeᶜ} → P =>ᶜ Q → Effs
 cast-effect {Q = ⟨ E ⟩ B} _ = E
+```
 
+`handled e ℰ` means that the operation `e` is handled by the evaluation context `ℰ`:
+either `ℰ` contains a handler where `e` is one of its hooks, or `ℰ` contains a cast
+where `e` is not allowed by the codomain of the cast.
+```
 handled : ∀ e → Frame Γ P Q → Set
 handled e □ = ⊥
-handled {Q = ⟨ E ⟩ _} e (`cast ±p [ 𝐸 ]) = (¬ e ∈☆ cast-effect ±p) ⊎ handled e 𝐸
-handled e ([ 𝐸 ]· M) = handled e 𝐸
-handled e (M ·[ 𝐸 ]) = handled e 𝐸
-handled e ([ 𝐸 ]⦅ f ⦆ M) = handled e 𝐸
-handled e (M ⦅ f ⦆[ 𝐸 ]) = handled e 𝐸
-handled e ([ 𝐸 ]⇑ g) = handled e 𝐸
-handled e (″perform e′∈E [ 𝐸 ] eq) = handled e 𝐸
-handled e (′handle H [ 𝐸 ]) = e ∈ H .Hooks ⊎ handled e 𝐸
+handled e (′handle H [ ℰ ]) = e ∈ H .Hooks ⊎ handled e ℰ
+handled {Q = ⟨ E ⟩ _} e (`cast ±p [ ℰ ]) = (¬ e ∈☆ E) ⊎ handled e ℰ  -- ±p : P => ⟨ E ⟩ B
+handled e ([ ℰ ]· M) = handled e ℰ
+handled e (M ·[ ℰ ]) = handled e ℰ
+handled e ([ ℰ ]⦅ f ⦆ M) = handled e ℰ
+handled e (M ⦅ f ⦆[ ℰ ]) = handled e ℰ
+handled e ([ ℰ ]⇑ g) = handled e ℰ
+handled e (″perform e′∈E [ ℰ ] eq) = handled e ℰ
+```
 
-¬handled-cast : ∀ {e} {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)} (𝐸 : Frame Γ P (⟨ E ⟩ A))
+Note: for casts, this definition always checks whether `e` is in the codomain.
+
+An evaluation context `ℰ₀` containing only an upcast may never raise blame: no
+effects are handled by `ℰ₀`.
+
+```
+upcast-safety : ∀ {Γ P Q} (P≤Q : P ≤ᶜ Q) →
+  let  ℰ₀ : Frame Γ P Q
+       ℰ₀ = `cast (+ P≤Q) [ □ ] in
+  ∀ (e : 𝔼) → e ∈☆ Typeᶜ.effects P → ¬ handled e ℰ₀
+upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆ ☆
+upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
+```
+
+```
+¬handled-cast : ∀ {e} {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)} (ℰ : Frame Γ P (⟨ E ⟩ A))
   → e ∈☆ F
-  → ¬ handled e 𝐸
+  → ¬ handled e ℰ
     -------------------------
-  → ¬ handled e (`cast ±p [ 𝐸 ])
-¬handled-cast 𝐸 e∈F ¬e//𝐸 (inj₁ ¬e∈F) = ¬e∈F e∈F
-¬handled-cast 𝐸 e∈F ¬e//𝐸 (inj₂ e//𝐸) = ¬e//𝐸 e//𝐸
+  → ¬ handled e (`cast ±p [ ℰ ])
+¬handled-cast ℰ e∈F ¬e//ℰ (inj₁ ¬e∈F) = ¬e∈F e∈F
+¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
 
-¬handled-handle : ∀ {e} {H : Γ ⊢ P ➡ Q} (𝐸 : Frame Γ P′ P)
+¬handled-handle : ∀ {e} {H : Γ ⊢ P ➡ Q} (ℰ : Frame Γ P′ P)
   → ¬ e ∈ Hooks H
-  → ¬ handled e 𝐸
+  → ¬ handled e ℰ
     -----------------------------
-  → ¬ handled e (′handle H [ 𝐸 ])
-¬handled-handle 𝐸 ¬e∈H ¬e//𝐸 (inj₁ e∈H) = ¬e∈H e∈H
-¬handled-handle 𝐸 ¬e∈H ¬e//𝐸 (inj₂ e//𝐸) = ¬e//𝐸 e//𝐸
+  → ¬ handled e (′handle H [ ℰ ])
+¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₁ e∈H) = ¬e∈H e∈H
+¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
 
 ∈☆-++☆ʳ : ∀ {e Eh} → e ∈☆ E → e ∈☆ (Eh ++☆ E)
 ∈☆-++☆ʳ {Eh = Eh} (¡ e∈E) = ¡ (Any.++⁺ʳ Eh e∈E)
@@ -254,16 +275,16 @@ handled e (′handle H [ 𝐸 ]) = e ∈ H .Hooks ⊎ handled e 𝐸
 ¬¬-dec (yes p) _ = p
 ¬¬-dec (no ¬p) ¬¬p = ⊥-elim (¬¬p ¬p)
 
-¬handled-∈ : ∀ {e} (𝐸 : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B)) → ¬ handled e 𝐸 → e ∈☆ E → e ∈☆ F
+¬handled-∈ : ∀ {e} (ℰ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B)) → ¬ handled e ℰ → e ∈☆ E → e ∈☆ F
 ¬handled-∈ □ _ e∈E = e∈E
-¬handled-∈ ([ 𝐸 ]· M) ¬e//𝐸 = ¬handled-∈ 𝐸 ¬e//𝐸
-¬handled-∈ (v ·[ 𝐸 ]) ¬e//𝐸 = ¬handled-∈ 𝐸 ¬e//𝐸
-¬handled-∈ ([ 𝐸 ]⦅ _⊕_ ⦆ N) ¬e//𝐸 = ¬handled-∈ 𝐸 ¬e//𝐸
-¬handled-∈ (v ⦅ _⊕_ ⦆[ 𝐸 ]) ¬e//𝐸 = ¬handled-∈ 𝐸 ¬e//𝐸
-¬handled-∈ ([ 𝐸 ]⇑ g) ¬e//𝐸 = ¬handled-∈ 𝐸 ¬e//𝐸
-¬handled-∈ (`cast ±p [ 𝐸 ]) ¬e//𝐸 e∈E = ¬¬-dec (_ ∈☆? _) (¬e//𝐸 ∘ inj₁)
-¬handled-∈ (″perform e∈E [ 𝐸 ] x₁) ¬e//𝐸 = ¬handled-∈ 𝐸 ¬e//𝐸
-¬handled-∈ (′handle H [ 𝐸 ]) ¬e//𝐸 e∈E = ¬∈-handler H (¬handled-∈ 𝐸 (¬e//𝐸 ∘ inj₂) e∈E) (¬e//𝐸 ∘ inj₁)
+¬handled-∈ ([ ℰ ]· M) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
+¬handled-∈ (v ·[ ℰ ]) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
+¬handled-∈ ([ ℰ ]⦅ _⊕_ ⦆ N) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
+¬handled-∈ (v ⦅ _⊕_ ⦆[ ℰ ]) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
+¬handled-∈ ([ ℰ ]⇑ g) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
+¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e∈E = ¬¬-dec (_ ∈☆? _) (¬e//ℰ ∘ inj₁)
+¬handled-∈ (″perform e∈E [ ℰ ] x₁) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
+¬handled-∈ (′handle H [ ℰ ]) ¬e//ℰ e∈E = ¬∈-handler H (¬handled-∈ ℰ (¬e//ℰ ∘ inj₂) e∈E) (¬e//ℰ ∘ inj₁)
 ```
 
 ```
@@ -323,12 +344,12 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
       -----------------------------
     → cast (- ⟨ E′≤E ⟩ (p ⇑ h)) (V ⇑ g) ↦ blame
 
-  castᵉ-blame : ∀ {e} {e∈E′ : e ∈☆ E′} {𝐸 : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)} {V} {M}
+  castᵉ-blame : ∀ {e} {e∈E′ : e ∈☆ E′} {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)} {V} {M}
       {±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B}
     → ¬ e ∈☆ F
-    → ¬ handled e 𝐸
+    → ¬ handled e ℰ
     → Value V
-    → M ≡ 𝐸 ⟦ perform e∈E′ V ⟧
+    → M ≡ ℰ ⟦ perform e∈E′ V ⟧
       ---------------------------
     → cast ±p M ↦ blame
 
@@ -337,23 +358,23 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
       --------------
     → handle H V ↦ (H ._⊢_➡_.on-return [ gvalue v ])
 
-  handle-perform : ∀ {e} {e∈E : e ∈☆ E} {H : Γ ⊢ P ➡ Q} {V 𝐸 e∈Hooks}
+  handle-perform : ∀ {e} {e∈E : e ∈☆ E} {H : Γ ⊢ P ➡ Q} {V ℰ e∈Hooks}
     → (v : Value V)
-    → ¬ handled e 𝐸                 -- ensures H is the first matching handler
+    → ¬ handled e ℰ                 -- ensures H is the first matching handler
     → (e ∈? Hooks H) ≡ yes e∈Hooks  -- ensures this is the first matching clause within H
                                     -- TODO: a more declarative reformulation?
-    → handle H (𝐸 ⟦ perform e∈E V ⟧)
+    → handle H (ℰ ⟦ perform e∈E V ⟧)
       ↦ All.lookup (on-perform H) e∈Hooks
-          [ ƛ (handle (liftʰ (liftʰ H)) (liftᶠ (liftᶠ 𝐸) ⟦ ` Z ⟧)) ]
+          [ ƛ (handle (liftʰ (liftʰ H)) (liftᶠ (liftᶠ ℰ) ⟦ ` Z ⟧)) ]
           [ gvalue v ]
     -- TODO: explain the order of these substitutions and why the 2 lifts
 
 data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 
   ξξ : ∀ {Γ A B} {M N : Γ ⊢ A} {M′ N′ : Γ ⊢ B}
-    → ( 𝐸 : Frame Γ A B)
-    → M′ ≡ 𝐸 ⟦ M ⟧
-    → N′ ≡ 𝐸 ⟦ N ⟧
+    → ( ℰ : Frame Γ A B)
+    → M′ ≡ ℰ ⟦ M ⟧
+    → N′ ≡ ℰ ⟦ N ⟧
     → M ↦ N
       --------
     → M′ —→ N′
@@ -438,7 +459,7 @@ value-irreducible v V—→M = nope V—→M v
    nope (ξ □ (expand v g)) ()
    nope (ξ □ (collapse v g)) ()
    nope (ξ □ (collide v g h G≢H)) ()
-   nope (ξ □ (castᵉ-blame ¬∈ e//𝐸 v′ eq)) ()
+   nope (ξ □ (castᵉ-blame ¬∈ e//ℰ v′ eq)) ()
    nope (ξ ([ E ]⇑ g) V—→M) (v ⇑ g)  =  nope (ξ E V—→M) v
    nope (ξξ (″perform _ [ _ ] _) refl _ _) ()
 ```
@@ -467,7 +488,7 @@ blame-irreducible (ξ □ ())
 ```
 
 ```
-unframe-blame : ∀ {M} (𝐸 : Frame Γ P Q) → blame ≡ 𝐸 ⟦ M ⟧ → blame ≡ M
+unframe-blame : ∀ {M} (ℰ : Frame Γ P Q) → blame ≡ ℰ ⟦ M ⟧ → blame ≡ M
 unframe-blame □ blame≡ = blame≡
 ```
 
@@ -494,12 +515,12 @@ data Progress {P} : (∅ ⊢ P) → Set where
      ---------------------
    → Progress (E ⟦ blame ⟧)
 
-  performing : ∀ {e} {V} 𝐸
+  performing : ∀ {e} {V} ℰ
     → (e∈E : e ∈☆ E)
     → Value V
-    → ¬ handled e 𝐸
+    → ¬ handled e ℰ
       ------------------
-    → Progress (𝐸 ⟦ perform e∈E V ⟧)
+    → Progress (ℰ ⟦ perform e∈E V ⟧)
 
 progress± : ∀ {V : ∅ ⊢ P}
   → (v : Value V)
@@ -522,55 +543,55 @@ progress :
 
 progress (ƛ N)                           =  done (ƛ N)
 progress (L · M) with progress L
-... | blame 𝐸                            =  blame ([ 𝐸 ]· M)
-... | step (ξ 𝐸 L↦L′)                    =  step (ξ ([ 𝐸 ]· M) L↦L′)
-... | performing 𝐸 e∈E v ¬e//𝐸           =  performing ([ 𝐸 ]· M) e∈E v ¬e//𝐸
+... | blame ℰ                            =  blame ([ ℰ ]· M)
+... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]· M) L↦L′)
+... | performing ℰ e∈E v ¬e//ℰ           =  performing ([ ℰ ]· M) e∈E v ¬e//ℰ
 ... | done (ƛ N) with progress M
-...     | blame 𝐸                        =  blame ((ƛ N) ·[ 𝐸 ])
-...     | step (ξ 𝐸 M↦M′)                =  step (ξ ((ƛ N) ·[ 𝐸 ]) M↦M′)
-...     | performing 𝐸 e∈E v ¬e//𝐸       =  performing ((ƛ N) ·[ 𝐸 ]) e∈E v ¬e//𝐸
+...     | blame ℰ                        =  blame ((ƛ N) ·[ ℰ ])
+...     | step (ξ ℰ M↦M′)                =  step (ξ ((ƛ N) ·[ ℰ ]) M↦M′)
+...     | performing ℰ e∈E v ¬e//ℰ       =  performing ((ƛ N) ·[ ℰ ]) e∈E v ¬e//ℰ
 ...     | done w                         =  step (ξ □ (β w))
 progress ($ k)                           =  done ($ k)
 progress (L ⦅ _⊕_ ⦆ M) with progress L
-... | blame 𝐸                            =  blame ([ 𝐸 ]⦅ _⊕_ ⦆ M)
-... | step (ξ 𝐸 L↦L′)                    =  step (ξ ([ 𝐸 ]⦅ _⊕_ ⦆ M) L↦L′)
-... | performing 𝐸 e∈E v ¬e//𝐸           =  performing ([ 𝐸 ]⦅ _⊕_ ⦆ M) e∈E v ¬e//𝐸
+... | blame ℰ                            =  blame ([ ℰ ]⦅ _⊕_ ⦆ M)
+... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]⦅ _⊕_ ⦆ M) L↦L′)
+... | performing ℰ e∈E v ¬e//ℰ           =  performing ([ ℰ ]⦅ _⊕_ ⦆ M) e∈E v ¬e//ℰ
 ... | done ($ k) with progress M
-...     | blame 𝐸                        =  blame (($ k) ⦅ _⊕_ ⦆[ 𝐸 ])
-...     | step (ξ 𝐸 M↦M′)                =  step (ξ (($ k) ⦅ _⊕_ ⦆[ 𝐸 ]) M↦M′)
-...     | performing 𝐸 e∈E v ¬e//𝐸       =  performing (($ k) ⦅ _⊕_ ⦆[ 𝐸 ]) e∈E v ¬e//𝐸
+...     | blame ℰ                        =  blame (($ k) ⦅ _⊕_ ⦆[ ℰ ])
+...     | step (ξ ℰ M↦M′)                =  step (ξ (($ k) ⦅ _⊕_ ⦆[ ℰ ]) M↦M′)
+...     | performing ℰ e∈E v ¬e//ℰ       =  performing (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e∈E v ¬e//ℰ
 ...     | done ($ k′)                    =  step (ξ □ δ)
 progress (M ⇑ g) with progress M
-... | blame 𝐸                            =  blame ([ 𝐸 ]⇑ g)
-... | step (ξ 𝐸 M↦M′)                    =  step (ξ ([ 𝐸 ]⇑ g) M↦M′)
-... | performing 𝐸 e∈E v ¬e//𝐸            =  performing ([ 𝐸 ]⇑ g) e∈E v ¬e//𝐸
+... | blame ℰ                            =  blame ([ ℰ ]⇑ g)
+... | step (ξ ℰ M↦M′)                    =  step (ξ ([ ℰ ]⇑ g) M↦M′)
+... | performing ℰ e∈E v ¬e//ℰ            =  performing ([ ℰ ]⇑ g) e∈E v ¬e//ℰ
 ... | done v                             =  done (v ⇑ g)
 progress (cast ±p M) with progress M
-... | blame 𝐸           =  blame (`cast ±p [ 𝐸 ])
-... | step (ξ 𝐸 M↦M′)   =  step (ξ (`cast ±p [ 𝐸 ]) M↦M′)
+... | blame ℰ           =  blame (`cast ±p [ ℰ ])
+... | step (ξ ℰ M↦M′)   =  step (ξ (`cast ±p [ ℰ ]) M↦M′)
 progress (cast {Q = ⟨ F ⟩ _} ±p M)
-    | performing {e = e} 𝐸 e∈E v ¬e//𝐸
+    | performing {e = e} ℰ e∈E v ¬e//ℰ
         with e ∈☆? F
-...     | yes e∈F = performing (`cast ±p [ 𝐸 ]) e∈E v (¬handled-cast {±p = ±p} 𝐸 e∈F ¬e//𝐸)
-...     | no  ¬∈  = step (ξ □ (castᵉ-blame ¬∈ ¬e//𝐸 v refl))
+...     | yes e∈F = performing (`cast ±p [ ℰ ]) e∈E v (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
+...     | no  ¬∈  = step (ξ □ (castᵉ-blame ¬∈ ¬e//ℰ v refl))
 progress (cast ±p M) 
     | done v
         with progress± v ±p
 ...     | _ , V⟨±p⟩↦N                        = step (ξ □ V⟨±p⟩↦N)
 progress blame                           =  blame □
 progress (perform- e∈E eq M) with progress M
-... | blame 𝐸                            = blame (″perform e∈E [ 𝐸 ] eq)
-... | step (ξ 𝐸 M↦M′)                    = step (ξ (″perform e∈E [ 𝐸 ] eq) M↦M′)
-... | performing 𝐸 e′∈E′ v ¬e′//𝐸        = performing (″perform e∈E [ 𝐸 ] eq) e′∈E′ v ¬e′//𝐸
+... | blame ℰ                            = blame (″perform e∈E [ ℰ ] eq)
+... | step (ξ ℰ M↦M′)                    = step (ξ (″perform e∈E [ ℰ ] eq) M↦M′)
+... | performing ℰ e′∈E′ v ¬e′//ℰ        = performing (″perform e∈E [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
 ... | done v with eq
 ...   | refl = performing □ e∈E v (λ())
 progress (handle H M) with progress M
-... | blame 𝐸 = blame (′handle H [ 𝐸 ])
-... | step (ξ 𝐸 M↦M′) = step (ξ (′handle H [ 𝐸 ]) M↦M′)
+... | blame ℰ = blame (′handle H [ ℰ ])
+... | step (ξ ℰ M↦M′) = step (ξ (′handle H [ ℰ ]) M↦M′)
 ... | done v = step (ξ □ (handle-value v))
-... | performing {e = e} 𝐸 e∈E v ¬e//𝐸 with e ∈? Hooks H in eq
-...   | yes e∈H = step (ξ □ (handle-perform v ¬e//𝐸 eq))
-...   | no ¬e∈H = performing (′handle H [ 𝐸 ]) e∈E v (¬handled-handle {H = H} 𝐸 ¬e∈H ¬e//𝐸)
+... | performing {e = e} ℰ e∈E v ¬e//ℰ with e ∈? Hooks H in eq
+...   | yes e∈H = step (ξ □ (handle-perform v ¬e//ℰ eq))
+...   | no ¬e∈H = performing (′handle H [ ℰ ]) e∈E v (¬handled-handle {H = H} ℰ ¬e∈H ¬e//ℰ)
 ```
 
 
@@ -598,12 +619,12 @@ data Finished {P} : (∅ ⊢ P) → Set where
       ---------------------
     → Finished (E ⟦ blame ⟧)
 
-  performing : ∀ {e V 𝐸}
+  performing : ∀ {e V ℰ}
     → (e∈E : e ∈☆ E)
     → Value V
-    → (e//𝐸 : ¬ handled e 𝐸)
+    → (e//ℰ : ¬ handled e ℰ)
       ------------------------------
-    → Finished (𝐸 ⟦ perform e∈E V ⟧)
+    → Finished (ℰ ⟦ perform e∈E V ⟧)
 
   out-of-gas : {N : ∅ ⊢ P}
       ----------
@@ -633,7 +654,7 @@ eval (gas (suc m)) L
     with progress L
 ... | done v               =  steps (L ∎) (done v)
 ... | blame E              =  steps (L ∎) (blame E)
-... | performing 𝐸 e∈E v ¬e//𝐸 =  steps (L ∎) (performing e∈E v ¬e//𝐸)
+... | performing ℰ e∈E v ¬e//ℰ =  steps (L ∎) (performing e∈E v ¬e//ℰ)
 ... | step {L} {M} L—→M
     with eval (gas m) M
 ... | steps M—↠N fin       =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
@@ -709,7 +730,7 @@ static {M = M} m  =  M
 ⌈ M ⦅ _⊕_ ⦆ N ⌉  =  ⌈ M ⌉ ⦅ _⊕_ ⦆★ ⌈ N ⌉
 ```
 
-## Examples
+## Examples {#progress-examples}
 
 The following abbreviations cause Agda to produce more readable output
 when using `eval`.  In particular, the specialised `$ℕ★_`, `$𝔹★_`, and

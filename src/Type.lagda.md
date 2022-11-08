@@ -18,6 +18,7 @@ Base types are primitive data types such as numbers and booleans.
 data Base : Set where
   ′ℕ : Base
   ′𝔹 : Base
+  ′𝕌 : Base
 ```
 
 The `rep` function interprets base types into Agda types.
@@ -25,15 +26,21 @@ The `rep` function interprets base types into Agda types.
 rep : Base → Set
 rep ′ℕ  =  ℕ
 rep ′𝔹  =  𝔹
+rep ′𝕌  =  ⊤
 ```
 
 Decision procedure for equality of base types.
 ```
 _≡$?_ : (ι : Base) → (ι′ : Base) → Dec (ι ≡ ι′)
 ′ℕ  ≡$? ′ℕ  =  yes refl
-′ℕ  ≡$? ′𝔹  =  no (λ ())
-′𝔹  ≡$? ′ℕ  =  no (λ ())
+′ℕ  ≡$? ′𝔹  =  no λ()
+′ℕ  ≡$? ′𝕌  =  no λ()
+′𝔹  ≡$? ′ℕ  =  no λ()
 ′𝔹  ≡$? ′𝔹  =  yes refl
+′𝔹  ≡$? ′𝕌  =  no λ()
+′𝕌  ≡$? ′ℕ  =  no λ()
+′𝕌  ≡$? ′𝔹  =  no λ()
+′𝕌  ≡$? ′𝕌  =  yes refl
 ```
 
 ## Effects
@@ -139,8 +146,8 @@ Having defined types, we can assign signatures to effects, which are their
 input and output types, also called requests and responses.
 ```
 𝔼-sig : 𝔼 → Type × Type
-𝔼-sig "get" = ($ ′𝔹 , $ ′ℕ)
-𝔼-sig "put" = ($ ′ℕ , $ ′𝔹)
+𝔼-sig "get" = ($ ′𝕌 , $ ′ℕ)
+𝔼-sig "put" = ($ ′ℕ , $ ′𝕌)
 𝔼-sig _ = (★ , ★)
 
 request : 𝔼 → Type

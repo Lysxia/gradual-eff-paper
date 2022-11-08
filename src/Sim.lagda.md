@@ -118,15 +118,15 @@ sim (wrap≤ i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
 sim (≤wrap i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
-sim (cast≤ e M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//𝐸 v refl))
+sim (cast≤ e M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//ℰ v refl))
     =  _ , (_ ∎) , blame≤
-sim (perform≤perform M≤M′) (ξ (″perform _ [ 𝐸 ] _) M↦N)
-    with sim M≤M′ (ξ 𝐸 M↦N)
+sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     = perform- _ _ N′ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
 sim (perform≤perform M≤M′) (ξξ □ refl _ ())
-sim (handle≤handle H≤ M≤) (ξ (′handle _ [ 𝐸 ]) M↦N)
-    with sim M≤ (ξ 𝐸 M↦N)
+sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
+    with sim M≤ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     = handle _ N′ , ξ* (′handle _ [ □ ]) M′—↠N′ , handle≤handle H≤ N≤N′
 sim (handle≤handle H≤ V≤M′) (ξ □ (handle-value v))
@@ -134,12 +134,12 @@ sim (handle≤handle H≤ V≤M′) (ξ □ (handle-value v))
 ... | V′ , v′ , M′—↠V′ , V≤V′
     = _ , (ξ* (′handle _ [ □ ]) M′—↠V′ ++↠ unit (handle-value v′))
         , []≤[] (on-return H≤) (gvalue≤gvalue v v′ V≤V′)
-sim (handle≤handle H≤ M≤) (ξ □ (handle-perform {𝐸 = 𝐸} v ¬e//𝐸 eq))
-    with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸 | lookup-All₂′ (on-perform H≤) eq
-... | Mk v′ V≤V′ 𝐸≤ ¬e//𝐸′ M′—↠N′ | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
-    = _ , (ξ* (′handle _ [ □ ]) M′—↠N′ ++↠ unit (handle-perform v′ ¬e//𝐸′ eq′))
+sim (handle≤handle H≤ M≤) (ξ □ (handle-perform {ℰ = ℰ} v ¬e//ℰ eq))
+    with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ | lookup-All₂′ (on-perform H≤) eq
+... | Mk v′ V≤V′ ℰ≤ ¬e//ℰ′ M′—↠N′ | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
+    = _ , (ξ* (′handle _ [ □ ]) M′—↠N′ ++↠ unit (handle-perform v′ ¬e//ℰ′ eq′))
         , []≤[] ([]≤[] HM′≤ (ƛ≤ƛ (handle≤handle (lift≤ʰ (lift≤ʰ (subst (_ ⊢ _ ≤ _ ⦂ _ ➡_) (sym cod≡) H≤)))
-                                                (⟦⟧≤⟦⟧ (lift≤ᶠ (lift≤ᶠ 𝐸≤)) (`≤` (subst (λ A → _ ▷ A ⊢ _ ≤ˣ _ ⦂ _) (sym dom≡) Z≤Z))))))
+                                                (⟦⟧≤⟦⟧ (lift≤ᶠ (lift≤ᶠ ℰ≤)) (`≤` (subst (λ A → _ ▷ A ⊢ _ ≤ˣ _ ⦂ _) (sym dom≡) Z≤Z))))))
                 (gvalue≤gvalue v v′ V≤V′)
 ```
 

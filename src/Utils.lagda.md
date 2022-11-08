@@ -1,7 +1,7 @@
 ```
 module Utils where
 
-open import Function.Base using (_∘_; flip) public
+open import Function.Base using (_∘_; case_of_; flip) public
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹) public
 open import Data.Empty using (⊥; ⊥-elim) public
 open import Data.Unit.Base using (⊤; tt) public
