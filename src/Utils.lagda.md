@@ -1,7 +1,7 @@
 ```
 module Utils where
 
-open import Function.Base using (_∘_; case_of_; flip) public
+open import Function.Base using (_∘_; case_of_; flip; it) public
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹) public
 open import Data.Empty using (⊥; ⊥-elim) public
 open import Data.Unit.Base using (⊤; tt) public
@@ -23,7 +23,7 @@ import Data.Vec.Relation.Binary.Equality.DecPropositional as Vec
 open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax) public
 open import Data.String as String using (String) public
 open import Data.Sum using (_⊎_; inj₁; inj₂) public
-open import Relation.Nullary using (¬_; Dec; yes; no) public
+open import Relation.Nullary using (¬_; Dec; does; yes; no) public
 open import Relation.Nullary.Decidable using (_×-dec_) public
 open import Relation.Nullary.Decidable.Core using (map′)
 open import Relation.Binary using (REL; Rel; Decidable) public
