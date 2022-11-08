@@ -118,22 +118,8 @@ sim (wrap≤ i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
 sim (≤wrap i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
-    {-
-sim (≤⟨⟩ M≤M′) M—→N
-    with sim M≤M′ M—→N
-... |  N′ , M′—↠N′ , N≤N′
-    =  N′ cast⟨ _ ⟩ , ξ* (`cast _ [ □ ]) M′—↠N′ , ≤⟨⟩ N≤N′
-sim (⟨⟩≤ M≤M′) (ξ ([ 𝐸 ]cast⟨ _ ⟩) M↦N)
-    with sim M≤M′ (ξ 𝐸 M↦N)
-... |  N′ , M′—↠N′ , N≤N′
-    =  N′ , M′—↠N′ , ⟨⟩≤ N≤N′
-sim (⟨⟩≤ V≤M′) (ξ □ (castᵉ-value v))
-    with catchup v V≤M′
-... | V′ , v′ , M′—↠V′ , V≤V′
-    = V′ , M′—↠V′ , value≤ v v′ V≤V′
-sim (⟨⟩≤ M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//𝐸 v refl))
+sim (cast≤ e M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//𝐸 v refl))
     =  _ , (_ ∎) , blame≤
-    -}
 sim (perform≤perform M≤M′) (ξ (″perform _ [ 𝐸 ] _) M↦N)
     with sim M≤M′ (ξ 𝐸 M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
