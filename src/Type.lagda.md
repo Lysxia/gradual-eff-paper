@@ -50,47 +50,50 @@ a request with some arguments, expecting some result in response.
 
 We represent those names simply as strings.
 ```
-𝔼 : Set
-𝔼 = String
+Op : Set
+Op = String
 ```
 
-A type-and-effect system keeps track of the names that a computation may
-call. We represent such a set of names concretely as a list.
-In our gradual system, effects may also be checked dynamically,
-assigning them the dynamic effect `☆`.
+A type-and-effect system keeps track of the operations that a computation may
+perform. A \emph{gradual effect} `E : Effect` may be either static or dynamic.
+A static effect is a list of operations that a computation may perform.
+The dynamic effect `☆` allows a computation to perform any operations.
 
-\lyx{fix the naming. What to call `e : 𝔼` (names?), `es : List 𝔼`, and `E : Effs`?
-Also `Effs` is a terrible name.}
+\lyx{fix the naming. What to call `e : Op` (names?), `es : List Op`, and `E : Effect`?
+Also `Effect` is a terrible name.}
 ```
+StaticEffect : Set
+StaticEffect = List Op
+
 infix 7 ¡_
 
-data Effs : Set where
-  ¡_ : List 𝔼 → Effs
-  ☆ : Effs
+data Effect : Set where
+  ¡_ : StaticEffect → Effect
+  ☆ : Effect
 ```
 
-Pattern synonym for the empty effect (a computation which calls no names).
+Pattern synonym for the empty effect (a computation which calls no operations).
 ```
 pattern ε = ¡ []
 ```
 
-Consistent membership lifts the membership relation `_∈_` from lists (static
-effect rows) to gradual effect rows.
-The dynamic effect row statically accepts any effect `e` as a member.
+\emph{Consistent membership} lifts the membership relation `_∈_` from lists (static
+effects) to gradual effects.
+The dynamic effect statically accepts any effect `e` as a member.
 
 \lyx{Compare with~\cite{sekiyama2019gradual,schwerter2016gradual}}
 ```
 infix 4 _∈☆_
 
-data _∈☆_ (e : 𝔼) : Effs → Set where
+data _∈☆_ (e : Op) : Effect → Set where
   ¡_ : ∀ {E} → e ∈ E → e ∈☆ ¡ E
   ☆  : e ∈☆ ☆
 ```
 
-List concatenation `_++_` is similarly lifted to gradual effect rows:
+List concatenation `_++_` is similarly lifted to gradual effects:
 extending the dynamic effect yields back the dynamic effect.
 ```
-_++☆_ : List 𝔼 → Effs → Effs
+_++☆_ : List Op → Effect → Effect
 E ++☆ ☆ = ☆
 E ++☆ (¡ F) = ¡ (E ++ F)
 ```
@@ -129,8 +132,8 @@ data Type : Set where
   _⇒_ : (A : Type) → (P : Typeᶜ) → Type
 ```
 
-Computation types are pairs of an effect row and a value type,
-respectively describing the effects that a computation may perform,
+Computation types are pairs of an effect and a value type,
+respectively describing the operations that a computation may perform,
 and the values that it may return.
 
 ```
@@ -138,30 +141,30 @@ record Typeᶜ where
   inductive
   constructor ⟨_⟩_
   field
-    effects : Effs
+    effects : Effect
     returns : Type
 ```
 
 Having defined types, we can assign signatures to effects, which are their
 input and output types, also called requests and responses.
 ```
-𝔼-sig : 𝔼 → Type × Type
-𝔼-sig "get" = ($ ′𝕌 , $ ′ℕ)
-𝔼-sig "put" = ($ ′ℕ , $ ′𝕌)
-𝔼-sig _ = (★ , ★)
+Op-sig : Op → Type × Type
+Op-sig "get" = ($ ′𝕌 , $ ′ℕ)
+Op-sig "put" = ($ ′ℕ , $ ′𝕌)
+Op-sig _ = (★ , ★)
 
-request : 𝔼 → Type
-request e = proj₁ (𝔼-sig e)
+request : Op → Type
+request e = proj₁ (Op-sig e)
 
-response : 𝔼 → Type
-response e = proj₂ (𝔼-sig e)
+response : Op → Type
+response e = proj₂ (Op-sig e)
 ```
 
 Decision procedure for equality of types.
 ```
 infix 4 _≡ᵉ?_ _≡ᶜ?_ _≡?_
 
-_≡ᵉ?_ : Decidable {A = Effs} _≡_
+_≡ᵉ?_ : Decidable {A = Effect} _≡_
 ☆ ≡ᵉ? ☆ = yes refl
 ¡ E ≡ᵉ? ¡ F with E ≟ F
 ... | yes refl = yes refl
@@ -261,15 +264,15 @@ infixl 5 _⇑_
 Precision orders types by how much static information they
 tell us about their values.
 
-The dynamic effect row `☆` is less precise than any static effect row `¡ E`.
+The dynamic effect `☆` is less precise than any static effect `¡ E`.
 \lyx{If we really wanted to treat lists as set, this should also allow reordering.}
 ```
-data _≤ᵉ_ : (_ _ : Effs) → Set where
+data _≤ᵉ_ : (_ _ : Effect) → Set where
   id : ∀ {E} → E ≤ᵉ E
   ¡≤☆ : ∀ {E} → ¡ E ≤ᵉ ☆
 ```
 
-`☆` is the least precise element in `Effs`.
+`☆` is the least precise element in `Effect`.
 ```
 ≤☆ : ∀ {E} → E ≤ᵉ ☆
 ≤☆ {☆} = id
@@ -389,7 +392,7 @@ Lemma. `★` is least precise.
 ★≤ {A ⇒ B} ()
 ```
 
-Lemma. Every effect row is more precise than `☆`.
+Lemma. Every effect is more precise than `☆`.
 ```
 E≤☆ : ∀ {E} → E ≤ᵉ ☆
 E≤☆ {☆} = id

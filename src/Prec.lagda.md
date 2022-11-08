@@ -45,7 +45,7 @@ private variable
   Δ≤ : Δ ≤ᴳ Δ′
   P P′ Q Q′ : Typeᶜ
   A A′ B B′ C : Type
-  E E′ F F′ : Effs
+  E E′ F F′ : Effect
   P≤ : P ≤ᶜ P′
   Q≤ : Q ≤ᶜ Q′
   A≤ : A ≤ A′

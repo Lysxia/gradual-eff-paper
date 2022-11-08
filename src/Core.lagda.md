@@ -64,7 +64,7 @@ data ± {S : Set} (_<_ : S → S → Set) (A B : S) : Set where
       → ± _<_ A B
 ```
 
-The types of casts for value types, computation types, and effect types
+The types of casts for value types, computation types, and effects
 are the symmetric closures of their respective precision relations.
 
 ```
@@ -74,13 +74,14 @@ _=>_ = ± _≤_
 _=>ᶜ_ : Typeᶜ → Typeᶜ → Set
 _=>ᶜ_ = ± _≤ᶜ_
 
-_=>ᵉ_ : Effs → Effs → Set
+_=>ᵉ_ : Effect → Effect → Set
 _=>ᵉ_ = ± _≤ᵉ_
 ```
 
 ## Terms
 
 ```
+infix  5 ƛ_
 infix  4 _⊢_
 infix  4 _⊢_➡_
 infixl  6 _·_
@@ -97,9 +98,9 @@ record _⊢_➡_ (Γ : Context) (P Q : Typeᶜ) : Set
 
 The data type `Γ ⊢ P` represents a term of computation type `P` in context `Γ`.
 The first five typing rules are standard (variables, abstraction, application,
-constants, and primitive operators). Then three typing rules are dedicated to
-graduality (casts, boxes, and blame), and two to algebraic effects (operations
-and handlers).
+constants, and primitive operators). Then three typing rules extend the
+calculus with gradual typing (casts, boxes, and blame), and two more with
+algebraic effects (operations and handlers).
 
 ```
 data _⊢_ : Context → Typeᶜ → Set where
@@ -107,7 +108,7 @@ data _⊢_ : Context → Typeᶜ → Set where
 
 A variable is a de Bruijn index into the context.
 Variables are to be substituted with values (hence they have value types),
-so they perform no effects, and thus impose no constraint on the effect row `E`.
+so they perform no effects, and thus impose no constraint on the effect `E`.
 
 ```
   `_ : ∀ {Γ E A}
@@ -116,7 +117,7 @@ so they perform no effects, and thus impose no constraint on the effect row `E`.
     →  Γ ⊢ ⟨ E ⟩ A
 ```
 
-Abstractions are values, so they impose no constraint on the outer effect row `E`,
+Abstractions are values, so they impose no constraint on the outer effect `E`,
 while the body of the function is typed in another row `F`.
 
 ```
@@ -126,7 +127,7 @@ while the body of the function is typed in another row `F`.
     →  Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ F ⟩ B)
 ```
 
-Applications ensure that the effect row of the function matches the ambient one `E`.
+Applications ensure that the effect of the function matches the ambient one `E`.
 
 ```
   _·_ : ∀ {Γ E A B}
@@ -156,7 +157,7 @@ and operators (`_||_`, `_+_`).
 A cast between computation types `P` to `Q` checks
 during run time that the inner computation, of type `P`,
 behaves like a computation of type `Q`: the operations
-performed by the inner computation must belong to the effect row
+performed by the inner computation must belong to the effect
 of `Q`, and the resulting value is to be wrapped or unwrapped
 according to the return type of `Q`.
 
@@ -226,14 +227,14 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
 `All` is the type of list indexed by lists.
 
 ```
-On-Perform : Context → Typeᶜ → List 𝔼 → Set
+On-Perform : Context → Typeᶜ → List Op → Set
 On-Perform Γ Q Hooks = All (λ e → Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q) Hooks
 
 record _⊢_➡_ Γ P Q where
   inductive
   open Typeᶜ
   field
-    Hooks : List 𝔼
+    Hooks : List Op
     Hooks-handled : P .effects ≡ (Hooks ++☆ Q .effects)
     on-return : Γ ▷ P .returns ⊢ Q
     on-perform : On-Perform Γ Q Hooks

@@ -131,7 +131,7 @@ lift[] {Γ = Γ} V W = trans (sub∘ren σ∘ V) (subId σId V)
   where
   σ∘ : ∀ {A E} (x : Γ ∋ A) → σ₀ W {E} (S x) ≡ ` x
   σ∘ x = refl
-  σId : ∀ {A} {E : Effs} (x : Γ ∋ A) → _≡_ {A = _ ⊢ ⟨ _ ⟩ _} (`_ {E = E} x) (` x)  -- TODO what's going on with inference here
+  σId : ∀ {A} {E : Effect} (x : Γ ∋ A) → _≡_ {A = _ ⊢ ⟨ _ ⟩ _} (`_ {E = E} x) (` x)  -- TODO what's going on with inference here
   σId x = refl
 ```
 

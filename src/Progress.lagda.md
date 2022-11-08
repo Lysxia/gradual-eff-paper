@@ -197,7 +197,7 @@ private
   variable
     A A′ B G : Type
     P P′ Q Q′ : Typeᶜ
-    E E′ F : Effs
+    E E′ F : Effect
     Γ : Context
 ```
 
@@ -205,7 +205,7 @@ private
 
 The effect row in the codomain of the cast. 
 ```
-cast-effect : {P Q : Typeᶜ} → P =>ᶜ Q → Effs
+cast-effect : {P Q : Typeᶜ} → P =>ᶜ Q → Effect
 cast-effect {Q = ⟨ E ⟩ B} _ = E
 ```
 
@@ -234,7 +234,7 @@ effects are handled by `ℰ₀`.
 upcast-safety : ∀ {Γ P Q} (P≤Q : P ≤ᶜ Q) →
   let  ℰ₀ : Frame Γ P Q
        ℰ₀ = `cast (+ P≤Q) [ □ ] in
-  ∀ (e : 𝔼) → e ∈☆ Typeᶜ.effects P → ¬ handled e ℰ₀
+  ∀ (e : Op) → e ∈☆ Typeᶜ.effects P → ¬ handled e ℰ₀
 upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆ ☆
 upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
 ```
