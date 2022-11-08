@@ -118,9 +118,12 @@ commute≤ᵉ p q r  =  ⊤
 ```
 
 ```
+=>ᶜ-returns : ∀ {P Q} (±q : P =>ᶜ Q) → Typeᶜ.returns P => Typeᶜ.returns Q
+=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
+=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
+
 commute≤ᶜ : ∀ {P Q R} (±p : P =>ᶜ Q) (q : Q ≤ᶜ R) (r : P ≤ᶜ R) → Set
-commute≤ᶜ (+ p) q r  =  p ⨟ᶜ q ≡ r
-commute≤ᶜ (- p) q r  =  p ⨟ᶜ r ≡ q
+commute≤ᶜ ±p (⟨ _ ⟩ q) (⟨ _ ⟩ r) = commute≤ (=>ᶜ-returns ±p) q r
 
 ≤commuteᶜ : ∀ {A B C} (p : A ≤ᶜ B) (±q : B =>ᶜ C) (r : A ≤ᶜ C) → Set
 ≤commuteᶜ p (+ q) r  =  p ⨟ᶜ q ≡ r
@@ -130,6 +133,25 @@ commute≤ᶜ (- p) q r  =  p ⨟ᶜ r ≡ q
 ## Lemmas about commuting diagrams
 
 ```
+≤returns : ∀ {P Q R} {p : P ≤ᶜ Q} {±q : Q =>ᶜ R} {r : P ≤ᶜ R}
+  → ≤commuteᶜ p ±q r → ≤commute (_≤ᶜ_.returns p) (=>ᶜ-returns ±q) (_≤ᶜ_.returns r)
+≤returns {±q = + _} refl = refl
+≤returns {±q = - _} refl = refl
+
+pure≤ : ∀ {E A B R} {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ R} {r : ⟨ E ⟩ A ≤ᶜ R}
+  → commute≤ ±p (_≤ᶜ_.returns q) (_≤ᶜ_.returns r) → commute≤ᶜ (pure± ±p) q r
+pure≤ {±p = + _} refl = refl
+pure≤ {±p = - _} refl = refl
+
+unique-≤ᵉ : ∀ {E F} {E≤ E≤′ : E ≤ᵉ F} → E≤ ≡ E≤′
+unique-≤ᵉ {E≤ = id} {E≤′ = id} = refl
+unique-≤ᵉ {E≤ = ¡≤☆} {E≤′ = ¡≤☆} = refl
+
+≤pure : ∀ {E P B C} {p : P ≤ᶜ ⟨ E ⟩ B} {±q : B => C} {r : P ≤ᶜ ⟨ E ⟩ C}
+  → ≤commute (_≤ᶜ_.returns p) ±q (_≤ᶜ_.returns r) → ≤commuteᶜ p (pure± ±q) r
+≤pure {±q = + _} refl = cong₂ ⟨_⟩_ unique-≤ᵉ refl
+≤pure {±q = - _} refl = cong₂ ⟨_⟩_ unique-≤ᵉ refl
+
 drop⇑ : ∀ {A B G} {±p : A => B} {q : B ≤ G} {r : A ≤ G} {g : Ground G}
   → commute≤ ±p (q ⇑ g) (r ⇑ g)
     ---------------------------
@@ -146,14 +168,14 @@ ident≤ : ∀ {A B} {q r : A ≤ B}
 ident≤ {q = q} (+ id) refl refl rewrite left-id q = refl
 ident≤ {r = r} (- id) refl refl rewrite left-id r = refl
 
-≤ident : ∀ {A B} {p r : A ≤ B}
-  → (±q : B => B)
-  → split ±q ≡ id
-  → ≤commute p ±q r
+≤ident : ∀ {A B} {p r : A ≤ᶜ B}
+  → (±q : B =>ᶜ B)
+  → splitᶜ ±q ≡ id
+  → ≤commuteᶜ p ±q r
     -----
   → p ≡ r
-≤ident (+ id) refl refl = refl
-≤ident (- id) refl refl = refl
+≤ident (+ ⟨ id ⟩ id) refl refl = refl
+≤ident (- ⟨ id ⟩ id) refl refl = refl
 
 dom≤ :  ∀ {A A′ A″ P P′ P″}
     {±p : A ⇒ P => A′ ⇒ P′} {q : A′ ⇒ P′ ≤ A″ ⇒ P″} {r : A ⇒ P ≤ A″ ⇒ P″}
@@ -172,8 +194,8 @@ cod≤ :  ∀ {A A′ A″ P P′ P″}
   → commute≤ ±p q r
     ---------------------------
   → commute≤ᶜ ±t (cod q) (cod r)
-cod≤ {±p = + s ⇒ t} {q = q} refl refl = cod-⨟ (s ⇒ t) q
-cod≤ {±p = - s ⇒ t} {r = r} refl refl = cod-⨟ (s ⇒ t) r
+cod≤ {±p = + s ⇒ t} {q = q} refl refl = cong _≤ᶜ_.returns (cod-⨟ (s ⇒ t) q)
+cod≤ {±p = - s ⇒ t} {r = r} refl refl = cong _≤ᶜ_.returns (cod-⨟ (s ⇒ t) r)
 
 ≤dom :  ∀ {A A′ A″ B B′ B″}
     {p : A ⇒ B ≤ A′ ⇒ B′} {±q : A′ ⇒ B′ => A″ ⇒ B″} {r : A ⇒ B ≤ A″ ⇒ B″}
@@ -407,7 +429,7 @@ data _=>_∋_≤_ : ∀ {P P′ Q Q′} → P ≤ᶜ P′ → Q ≤ᶜ Q′ → 
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
     ------------------------------------
   → Γ≤ ⊢ cast (+ p) M ≤ᴹ cast (+ q) M′ ⦂ t
-+≤+ e M≤M′ = cast≤ e (≤cast refl M≤M′)
++≤+ e M≤M′ = cast≤ (cong _≤ᶜ_.returns e) (≤cast refl M≤M′)
 ```
 
 Here is the derivation:

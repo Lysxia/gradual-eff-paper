@@ -72,56 +72,58 @@ sim (≤⇑ g M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
     =  N′ ⇑ g , ξ* ([ □ ]⇑ g) M′—↠N′ , ≤⇑ g N≤N′
-sim (▷≤ e M≤M′) (ξ ([ E ]▷ ∓s) M↦N)
+sim (cast≤ e M≤M′) (ξ (`cast ∓s [ E ]) M↦N)
     with sim M≤M′ (ξ E M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
-    =  N′ , M′—↠N′ , ▷≤ e N≤N′
-sim (▷≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
+    =  N′ , M′—↠N′ , cast≤ e N≤N′
+sim (cast≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
+  = ? {-
     rewrite ident≤ ±p e′ e
-    =  _ , (_ ∎) , V≤M′
-sim (▷≤ {q = id} e V≤M′) (ξ □ (wrap e′))
+    =  _ , (_ ∎) , V≤M′ -}
+sim (cast≤ {q = ⟨ _ ⟩ id} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  V′ , M′—↠V′ , wrap≤ e′ e (value≤value (ƛ _) (ƛ _) ƛN≤ƛN′)
-sim (▷≤ {q = _ ⇒ _} e V≤M′) (ξ □ (wrap e′))
+    =  V′ , M′—↠V′ , wrap≤ e′ {! e !} (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+sim (cast≤ {q = ⟨ _ ⟩ _ ⇒ _} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  V′ , M′—↠V′ , wrap≤ e′ e (value≤value (ƛ _) (ƛ _) ƛN≤ƛN′)
-sim (▷≤ {q = q ⇑ ★⇒★} e V≤M′) (ξ □ (wrap e′))
+    =  V′ , M′—↠V′ , wrap≤ e′ {! e !} (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+sim (cast≤ {q = ⟨ _ ⟩ (q ⇑ ★⇒★)} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
-    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ e′ (drop⇑ e) (value≤value (ƛ _) (ƛ _) ƛN≤ƛN′))
-sim (▷≤ {M = V} {±p = + p ⇑ .g} {q = id} {r = r} refl V≤M′) (ξ □ (expand v g))
+    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ e′ {! drop⇑ e !} (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
+sim (cast≤ {M = V} {±p = + ⟨ _ ⟩ (p ⇑ .g)} {q = ⟨ _ ⟩ id} {r = r} refl V≤M′) (ξ □ (expand v g))
     with catchup v V≤M′
 ... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ≤⇑ _ V≤V′
-    =  V′ ⇑ g , M′—↠V′⇑ , ⇑≤⇑ g (▷≤ refl V≤V′)
-sim (▷≤ {M = V} {±p = + p ⇑ .g} {q = q ⇑ h} refl V≤M′) (ξ □ (expand v g))
+    =  V′ ⇑ g , M′—↠V′⇑ , ⇑≤⇑ g (cast≤ refl V≤V′)
+sim (cast≤ {M = V} {±p = + ⟨ _ ⟩ (p ⇑ .g)} {q = ⟨ _ ⟩ (q ⇑ h)} refl V≤M′) (ξ □ (expand v g))
     =  ⊥-elim (¬★≤G h q)
-sim (▷≤ {M = V ⇑ .g} {±p = - p ⇑ .g} {r = id} refl V⇑≤M′) (ξ □ (collapse v g))
+sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .g)} {r = ⟨ _ ⟩ id} refl V⇑≤M′) (ξ □ (collapse v g))
    with catchup (v ⇑ g) V⇑≤M′
 ... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ⇑≤⇑ .g V≤V′
-    =  V′ ⇑ g , M′—↠V′⇑ , ≤⇑ g (▷≤ refl V≤V′)
-sim (▷≤ {M = V ⇑ .g} {±p = - p ⇑ .h} {r = id} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
+    =  V′ ⇑ g , M′—↠V′⇑ , ≤⇑ g (cast≤ refl V≤V′)
+sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ id} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
     =  _ , (_ ∎) , blame≤
-sim (▷≤ {M = V ⇑ .g} {±p = - p ⇑ .g} {r = r ⇑ h} refl V⇑≤M′) (ξ □ (collapse v g))
+sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .g)} {r = ⟨ _ ⟩ (r ⇑ h)} refl V⇑≤M′) (ξ □ (collapse v g))
     =  ⊥-elim (¬★≤G h r)
-sim (▷≤ {M = V ⇑ .g} {±p = - p ⇑ .h} {r = r ⇑ h′} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
+sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ (r ⇑ h′)} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
     =  ⊥-elim (¬★≤G h′ r)
-sim (≤▷ {±q = ±q} e M≤M′) M—→N
+sim (≤cast {±q = ±q} e M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
-    =  N′ ▷ ±q , ξ* ([ □ ]▷ ±q) M′—↠N′ , ≤▷ e N≤N′
+    =  cast ±q N′ , ξ* (`cast ±q [ □ ]) M′—↠N′ , ≤cast e N≤N′
 sim blame≤ M—→N
     =  ⊥-elim (blame-irreducible M—→N)
 sim (wrap≤ i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
 sim (≤wrap i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
+    {-
 sim (≤⟨⟩ M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
-    =  N′ ▷⟨ _ ⟩ , ξ* ([ □ ]▷⟨ _ ⟩) M′—↠N′ , ≤⟨⟩ N≤N′
-sim (⟨⟩≤ M≤M′) (ξ ([ 𝐸 ]▷⟨ _ ⟩) M↦N)
+    =  N′ cast⟨ _ ⟩ , ξ* (`cast _ [ □ ]) M′—↠N′ , ≤⟨⟩ N≤N′
+sim (⟨⟩≤ M≤M′) (ξ ([ 𝐸 ]cast⟨ _ ⟩) M↦N)
     with sim M≤M′ (ξ 𝐸 M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     =  N′ , M′—↠N′ , ⟨⟩≤ N≤N′
@@ -131,6 +133,7 @@ sim (⟨⟩≤ V≤M′) (ξ □ (castᵉ-value v))
     = V′ , M′—↠V′ , value≤ v v′ V≤V′
 sim (⟨⟩≤ M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//𝐸 v refl))
     =  _ , (_ ∎) , blame≤
+    -}
 sim (perform≤perform M≤M′) (ξ (″perform _ [ 𝐸 ] _) M↦N)
     with sim M≤M′ (ξ 𝐸 M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
@@ -144,14 +147,14 @@ sim (handle≤handle H≤ V≤M′) (ξ □ (handle-value v))
     with catchup v V≤M′
 ... | V′ , v′ , M′—↠V′ , V≤V′
     = _ , (ξ* (′handle _ [ □ ]) M′—↠V′ ++↠ unit (handle-value v′))
-        , []≤[] (on-return H≤) (value≤value v v′ V≤V′)
+        , []≤[] (on-return H≤) (gvalue≤gvalue v v′ V≤V′)
 sim (handle≤handle H≤ M≤) (ξ □ (handle-perform {𝐸 = 𝐸} v ¬e//𝐸 eq))
     with catchup-⟦perform⟧≤ v 𝐸 M≤ ¬e//𝐸 | lookup-All₂′ (on-perform H≤) eq
 ... | Mk v′ V≤V′ 𝐸≤ ¬e//𝐸′ M′—↠N′ | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
     = _ , (ξ* (′handle _ [ □ ]) M′—↠N′ ++↠ unit (handle-perform v′ ¬e//𝐸′ eq′))
         , []≤[] ([]≤[] HM′≤ (ƛ≤ƛ (handle≤handle (lift≤ʰ (lift≤ʰ (subst (_ ⊢ _ ≤ _ ⦂ _ ➡_) (sym cod≡) H≤)))
                                                 (⟦⟧≤⟦⟧ (lift≤ᶠ (lift≤ᶠ 𝐸≤)) (`≤` (subst (λ A → _ ⹁ A ⊢ _ ≤ˣ _ ⦂ _) (sym dom≡) Z≤Z))))))
-                (value≤value v v′ V≤V′)
+                (gvalue≤gvalue v v′ V≤V′)
 ```
 
 ## Simulation extended to sequences
@@ -218,9 +221,11 @@ yields the reduction sequence `inc★2★—↠3★`, and similarly for
 ```
 _ : gg inc2≤inc★2★ inc2—↠3 ($ 3) ≡
       ($★ 3 , $ 3 ⇑ $ℕ , inc★2★—↠3★ , $≤$★ 3)
-_ = refl
+_ = {! refl !}
 
+{-
 _ : gg inc2≤inc★′2★ inc2—↠3 ($ 3) ≡
       ($★ 3 , $ 3 ⇑ $ℕ , inc★′2★—↠3★ , $≤$★ 3)
 _ = refl
+-}
 ```

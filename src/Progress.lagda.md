@@ -38,13 +38,13 @@ handled e ([ 𝐸 ]⇑ g) = handled e 𝐸
 handled e (″perform e′∈E [ 𝐸 ] eq) = handled e 𝐸
 handled e (′handle H [ 𝐸 ]) = e ∈ H .Hooks ⊎ handled e 𝐸
 
-¬handled-▷⟨⟩ : ∀ {e} {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)} (𝐸 : Frame Γ P (⟨ E ⟩ A))
+¬handled-cast : ∀ {e} {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)} (𝐸 : Frame Γ P (⟨ E ⟩ A))
   → e ∈☆ F
   → ¬ handled e 𝐸
     -------------------------
   → ¬ handled e (`cast ±p [ 𝐸 ])
-¬handled-▷⟨⟩ 𝐸 e∈F ¬e//𝐸 (inj₁ ¬e∈F) = ¬e∈F e∈F
-¬handled-▷⟨⟩ 𝐸 e∈F ¬e//𝐸 (inj₂ e//𝐸) = ¬e//𝐸 e//𝐸
+¬handled-cast 𝐸 e∈F ¬e//𝐸 (inj₁ ¬e∈F) = ¬e∈F e∈F
+¬handled-cast 𝐸 e∈F ¬e//𝐸 (inj₂ e//𝐸) = ¬e//𝐸 e//𝐸
 
 ¬handled-handle : ∀ {e} {H : Γ ⊢ P ➡ Q} (𝐸 : Frame Γ P′ P)
   → ¬ e ∈ Hooks H
@@ -370,7 +370,7 @@ progress (cast ±p M) with progress M
 progress (cast {Q = ⟨ F ⟩ _} ±p M)
     | performing {e = e} 𝐸 e∈E v ¬e//𝐸
         with e ∈☆? F
-...     | yes e∈F = performing (`cast ±p [ 𝐸 ]) e∈E v (¬handled-▷⟨⟩ {±p = ±p} 𝐸 e∈F ¬e//𝐸)
+...     | yes e∈F = performing (`cast ±p [ 𝐸 ]) e∈E v (¬handled-cast {±p = ±p} 𝐸 e∈F ¬e//𝐸)
 ...     | no  ¬∈  = step (ξ □ (castᵉ-blame ¬∈ ¬e//𝐸 v refl))
 progress (cast ±p M) 
     | done v
