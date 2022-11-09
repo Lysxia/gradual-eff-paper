@@ -1,5 +1,9 @@
 # Operational Semantics
 
+In this section, we define the operational semantics as a small-step
+reduction relation, we prove progress, and since the proof is constructive
+it doubles as an evaluation function which we can apply on examples.
+
 ```
 module Progress where
 
@@ -23,11 +27,28 @@ infix  6 _⦅_⦆[_]
 infix  7 _⟦_⟧
 ```
 
+Frames are ``terms with a hole''.
+Frames are also known as evaluation contexts, but the identifier `Context` is
+already taken in our development.
+They are used to define a congruence rule for reduction, \ie{} the contexts
+under which reduction may happen, as well as to represent continuations for
+effect handlers.
+
 ```
 data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
+```
 
+The base case is the empty frame.
+```
   □ : Frame Γ C C
+```
 
+There are two frame constructors for applications: one
+where the hole is on the left of the application `_·_`,
+and one where the hole is on the right.
+To make the semantics deterministic, we require that we can
+only focus on the right operand once the left one is a value.
+```
   [_]·_ : ∀ {E A B}
     →  (ℰ : Frame Γ C (⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)))
     →  (M : Γ ⊢ ⟨ E ⟩ A)
@@ -39,7 +60,10 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
     →  (ℰ : Frame Γ C (⟨ E ⟩ A))
        ----------------
     →  Frame Γ C (⟨ E ⟩ B)
+```
 
+Primitive operators follow the same logic as applications.
+```
   [_]⦅_⦆_ : ∀ {E ι ι′ ι″}
     →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι)))
     →  (_⊕_ : rep ι → rep ι′ → rep ι″)
@@ -53,7 +77,11 @@ data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
     →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι′)))
        -------------------
     →  Frame Γ C (⟨ E ⟩ ($ ι″))
+```
 
+The other constructors represent term constructors
+with only one immediate subterm.
+```
   [_]⇑_ : ∀ {E G}
     →  (ℰ : Frame Γ C (⟨ E ⟩ G))
     →  (g : Ground G)
@@ -129,6 +157,7 @@ Composition and plugging
 ∘∘-lemma (′handle H [ ℰ ]) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ```
 
+Renaming on frames.
 ```
 renᶠ : ∀ {Γ Δ P Q} → Γ →ᴿ Δ → Frame Γ P Q → Frame Δ P Q
 renᶠ ρ □ = □
@@ -148,53 +177,6 @@ liftʰ : ∀ {Γ P Q A} → Γ ⊢ P ➡ Q → Γ ▷ A ⊢ P ➡ Q
 liftʰ = renʰ S_
 ```
 
-Decomposing a cast
-```
-infix 6 _==>_
-
-data _==>_ : Type → Type → Set where
-
-  id : ∀ {A}
-      -------
-    → A ==> A
-
-  _⇒_ : ∀ {A A′ P P′}
-    → A′ => A
-    → P =>ᶜ P′
-      -----------------
-    → A ⇒ P ==> A′ ⇒ P′
-
-  other : ∀ {A B}
-      -------
-    → A ==> B
-
-split : ∀ {A B} → A => B → A ==> B
-split (+ id)     =  id
-split (- id)     =  id
-split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
-split (- s ⇒ t)  =  (+ s) ⇒ (- t)
-split (+ p ⇑ g)  =  other
-split (- p ⇑ g)  =  other
-```
-
-```
-=>ᶜ-effects : ∀ {P Q} (±q : P =>ᶜ Q) → Typeᶜ.effects P =>ᵉ Typeᶜ.effects Q
-=>ᶜ-effects (+ ⟨ p ⟩ _) = + p
-=>ᶜ-effects (- ⟨ p ⟩ _) = - p
-
-=>ᶜ-returns : ∀ {P Q} (±q : P =>ᶜ Q) → Typeᶜ.returns P => Typeᶜ.returns Q
-=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
-=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
-```
-
-```
-splitᶜ : ∀ {E F A B}
-  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
-     -----------------------
-  →  A ==> B
-splitᶜ = split ∘ =>ᶜ-returns
-```
-
 ```
 private
   variable
@@ -204,9 +186,7 @@ private
     Γ : Context
 ```
 
-## Reduction
-
-The effect row in the codomain of the cast. 
+The effect in the codomain of the cast. 
 ```
 cast-effect : {P Q : Typeᶜ} → P =>ᶜ Q → Effect
 cast-effect {Q = ⟨ E ⟩ B} _ = E
@@ -290,55 +270,153 @@ upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
 ¬handled-∈ (′handle H [ ℰ ]) ¬e//ℰ e∈E = ¬∈-handler H (¬handled-∈ ℰ (¬e//ℰ ∘ inj₂) e∈E) (¬e//ℰ ∘ inj₁)
 ```
 
-```
-infix 2 _↦_ _—→_
+## Decomposing a cast
 
+```
+infix 6 _==>_
+
+data _==>_ : Type → Type → Set where
+
+  id : ∀ {A}
+      -------
+    → A ==> A
+
+  _⇒_ : ∀ {A A′ P P′}
+    → A′ => A
+    → P =>ᶜ P′
+      -----------------
+    → A ⇒ P ==> A′ ⇒ P′
+
+  other : ∀ {A B}
+      -------
+    → A ==> B
+
+split : ∀ {A B} → A => B → A ==> B
+split (+ id)     =  id
+split (- id)     =  id
+split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
+split (- s ⇒ t)  =  (+ s) ⇒ (- t)
+split (+ p ⇑ g)  =  other
+split (- p ⇑ g)  =  other
+```
+
+```
+=>ᶜ-effects : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → E =>ᵉ F
+=>ᶜ-effects (+ ⟨ p ⟩ _) = + p
+=>ᶜ-effects (- ⟨ p ⟩ _) = - p
+
+=>ᶜ-returns : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → A => B
+=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
+=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
+```
+
+```
+splitᶜ : ∀ {E F A B}
+  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
+     -----------------------
+  →  A ==> B
+splitᶜ = split ∘ =>ᶜ-returns
+```
+
+```
 pure± : (A′ => A) → (⟨ E ⟩ A′) =>ᶜ (⟨ E ⟩ A)
 pure± (+ A≤) = + ⟨ id ⟩ A≤
 pure± (- A≤) = - ⟨ id ⟩ A≤
+```
+
+## Reduction
+
+```
+infix 2 _↦_ _—→_
 
 ƛ-wrap : ∀ (∓s : A′ => A) (±t : P =>ᶜ P′) 
   → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P)) → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A′ ⇒ P′))
 ƛ-wrap ∓s ±t M =
   ƛ cast ±t (lift M · (cast (pure± ∓s) (` Z)))
+```
 
-data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
+We first define a reduction relation `_↦_` on redexes,
+and then close it under congruence, as `_—↠_`.
 
-  -- The substitution will put the value under different effects,
-  -- the `value` function generalizes the effect of a value.
+```
+data _↦_ {Γ} : ∀ {P} → (_ _ : Γ ⊢ P) → Set where
+```
+
+Because there are effects in our type system,
+we must modify the β rule a bit from its standard
+formulation. In the application `(ƛ N) · W`, the value
+`W` is a term with some effect `E`, but when substituting
+`W` in `N`, the substituted variable may occur in contexts
+with different effects `E`, in which case `W` would be
+an ill-typed replacement. Hence we generalize `W` before applying a
+substitution.
+\lyx{This explanation should be moved either to the definition of `gvalue` or of substitution.}
+
+```
   β : ∀ {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {W : Γ ⊢ ⟨ E ⟩ A}
     → (w : Value W)
       --------------------
     → (ƛ N) · W ↦ N [ gvalue w ]
+```
 
+The `δ` rule reduces primitive operators applied to constants.
+```
   δ : ∀ {ι ι′ ι″} {_⊕_ : rep ι → rep ι′ → rep ι″} {k : rep ι} {k′ : rep ι′}
       --------------------------------------------
-    → _⦅_⦆_ {Γ = Γ} {E = E} ($ k) _⊕_ ($ k′) ↦ $ (k ⊕ k′)
+    → _⦅_⦆_ {E = E} ($ k) _⊕_ ($ k′) ↦ $ (k ⊕ k′)
+```
 
+The next six rules have to do with casts. The first five are based on standard
+cast calculus rules, describing how to cast values. The sixth is a rule related
+to casting effects.
+
+The `ident` rule removes identity casts, after the casted computation returned
+a value.
+```
   ident : ∀ {V : Γ ⊢ ⟨ E ⟩ A} {±p : (⟨ E ⟩ A) =>ᶜ ⟨ F ⟩ A}
     → splitᶜ ±p ≡ id
     → (v : Value V)
       --------------
     → cast ±p V ↦ gvalue v
+```
 
+The `wrap` rule reduces casts between function types.
+The cast `±p` is split into two casts, `∓s` between domains and `±t` codomains;
+the function being cast is wrapped using `ƛ-wrap`, composing it with those two casts.
+```
   wrap : {N : Γ ▷ A ⊢ P}
       {∓s : A′ => A} {±t : P =>ᶜ P′} {±p : (⟨ E ⟩ (A ⇒ P)) =>ᶜ ⟨ E′ ⟩ (A′ ⇒ P′)}
     → splitᶜ ±p ≡ ∓s ⇒ ±t
       ----------------------------------------------------
     → cast ±p (ƛ N) ↦ ƛ-wrap ∓s ±t (ƛ N)
+```
 
+The `expand` rule reduces an upcast to `★` to a box.
+\lyx{and does something more with `p`}
+```
   expand : ∀{V : Γ ⊢ ⟨ E ⟩ A} {p : A ≤ G} {E≤E′ : E ≤ᵉ E′}
     → Value V
     → (g : Ground G)
       -------------------------------
     → cast (+ ⟨ E≤E′ ⟩ (p ⇑ g)) V ↦ cast (+ ⟨ E≤E′ ⟩ p) V ⇑ g
+```
 
+The `collapse` rule reduces a downcast `(p ⇑ g)` from `★`, in which case
+the value under the cast must be a box `(V ⇑ g)`, by unwrapping
+the box, provided the tag `g` in the box and in the cast match.
+\lyx{and does something more with `p`}
+```
   collapse : ∀ {V : Γ ⊢ ⟨ E ⟩ G} {p : A ≤ G} {E′≤E : E′ ≤ᵉ E}
     → Value V
     → (g : Ground G)
       --------------------------------
     → cast (- ⟨ E′≤E ⟩ (p ⇑ g)) (V ⇑ g) ↦ cast (- ⟨ E′≤E ⟩ p) V
+```
 
+The `collide` rule reduces a downcast `(p ⇑ h)` applied to
+a box `(V ⇑ g)` when the tags `g` and `h` don't match.
+This raises `blame`.
+```
   collide  : ∀{G H} {V : Γ ⊢ ⟨ E ⟩ G} {p : A ≤ H} {E′≤E : E′ ≤ᵉ E}
     → Value V
     → (g : Ground G)
@@ -346,7 +424,14 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
     → G ≢ H
       -----------------------------
     → cast (- ⟨ E′≤E ⟩ (p ⇑ h)) (V ⇑ g) ↦ blame
+```
 
+Casts contain both a cast on values (whose behavior is defined by the previous five rules),
+and a cast on effects. The next rule describes how such a cast may fail: the computation
+under the cast performs an effect which:
+is not handled by any inner handler and is not a member of the target effect `F` of the cast.
+
+```
   castᵉ-blame : ∀ {e} {e∈E′ : e ∈☆ E′} {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)} {V} {M}
       {±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B}
     → ¬ e ∈☆ F
@@ -355,12 +440,36 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
     → M ≡ ℰ ⟦ perform e∈E′ V ⟧
       ---------------------------
     → cast ±p M ↦ blame
+```
 
+Note that there is no rule for "successful effect casts". When an effect passes successfully
+through a cast, it simply keeps being raised until a matching handler or cast is found.
+
+Handlers have two rules. When the handled computation returns a value, the
+return clause is invoked.
+```
   handle-value : ∀ {H : Γ ⊢ P ➡ Q} {V}
     → (v : Value V)
       --------------
-    → handle H V ↦ (H ._⊢_➡_.on-return [ gvalue v ])
+    → handle H V ↦ (on-return H [ gvalue v ])
+```
 
+When the handled computation performs an operation, the corresponding operation
+clause of the closest matching handler is invoked.
+This rule expressed in Agda looks rather complex.
+
+In the right-hand side of the reduction, `All.lookup` finds the corresponding
+clause, given a proof that the operation `e` is an element of the handler's
+`Hooks`. Two substitutions follow, because operation clauses extend the
+context with two variables, one for the operation's request payload, and
+one for the continuation. Since the continuation variable occurs at the end of
+the context, it must be substituted first.
+
+```text
+clause : Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q
+```
+
+```
   handle-perform : ∀ {e} {e∈E : e ∈☆ E} {H : Γ ⊢ P ➡ Q} {V ℰ e∈Hooks}
     → (v : Value V)
     → ¬ handled e ℰ                 -- ensures H is the first matching handler
@@ -370,8 +479,14 @@ data _↦_ {Γ} : (_ _ : Γ ⊢ P) → Set where
       ↦ All.lookup (on-perform H) e∈Hooks
           [ ƛ (handle (liftʰ (liftʰ H)) (liftᶠ (liftᶠ ℰ) ⟦ ` Z ⟧)) ]
           [ gvalue v ]
-    -- TODO: explain the order of these substitutions and why the 2 lifts
+    -- TODO: explain the order of these substitutions and why the 2 lifts.
+    -- TODO: we can avoid one lift by doing a simultaneous substitution, but there is still one left.
+```
 
+The top-level reduction relation `_—↠_` allows reduction to happen under any
+frame. Again, we use fording to keep the frame substitution function out of the
+type's indices.
+```
 data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 
   ξξ : ∀ {Γ A B} {M N : Γ ⊢ A} {M′ N′ : Γ ⊢ B}
