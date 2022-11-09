@@ -21,7 +21,9 @@ infix  6 _·[_]
 infix  6 [_]⦅_⦆_
 infix  6 _⦅_⦆[_]
 infix  7 _⟦_⟧
+```
 
+```
 data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
 
   □ : Frame Γ C C
