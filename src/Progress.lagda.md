@@ -90,7 +90,7 @@ _⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
 (v ⦅ _⊕_ ⦆[ ℰ ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ ℰ ⟦ N ⟧
 ([ ℰ ]⇑ g) ⟦ M ⟧        =  ℰ ⟦ M ⟧ ⇑ g
 (`cast ±p [ ℰ ]) ⟦ M ⟧  =  cast ±p (ℰ ⟦ M ⟧)
-(″perform e∈E [ ℰ ] eq) ⟦ M ⟧ = perform- e∈E eq (ℰ ⟦ M ⟧)
+(″perform e∈E [ ℰ ] eq) ⟦ M ⟧ = perform- e∈E (ℰ ⟦ M ⟧) eq
 (′handle H [ ℰ ]) ⟦ M ⟧ = handle H (ℰ ⟦ M ⟧)
 ```
 
@@ -176,12 +176,13 @@ split (- p ⇑ g)  =  other
 ```
 
 ```
-separate : ∀ {E F A B}
-  →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
-     -----------------------
-  →  E =>ᵉ F × A => B
-separate (+ ⟨ E≤F ⟩ A≤B)  =  (+ E≤F) , (+ A≤B)
-separate (- ⟨ F≤E ⟩ B≤A)  =  (- F≤E) , (- B≤A)
+=>ᶜ-effects : ∀ {P Q} (±q : P =>ᶜ Q) → Typeᶜ.effects P =>ᵉ Typeᶜ.effects Q
+=>ᶜ-effects (+ ⟨ p ⟩ _) = + p
+=>ᶜ-effects (- ⟨ p ⟩ _) = - p
+
+=>ᶜ-returns : ∀ {P Q} (±q : P =>ᶜ Q) → Typeᶜ.returns P => Typeᶜ.returns Q
+=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
+=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
 ```
 
 ```
@@ -189,7 +190,7 @@ splitᶜ : ∀ {E F A B}
   →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
      -----------------------
   →  A ==> B
-splitᶜ = split ∘ proj₂ ∘ separate
+splitᶜ = split ∘ =>ᶜ-returns
 ```
 
 ```
@@ -579,7 +580,7 @@ progress (cast ±p M)
         with progress± v ±p
 ...     | _ , V⟨±p⟩↦N                        = step (ξ □ V⟨±p⟩↦N)
 progress blame                           =  blame □
-progress (perform- e∈E eq M) with progress M
+progress (perform- e∈E M eq) with progress M
 ... | blame ℰ                            = blame (″perform e∈E [ ℰ ] eq)
 ... | step (ξ ℰ M↦M′)                    = step (ξ (″perform e∈E [ ℰ ] eq) M↦M′)
 ... | performing ℰ e′∈E′ v ¬e′//ℰ        = performing (″perform e∈E [ ℰ ] eq) e′∈E′ v ¬e′//ℰ

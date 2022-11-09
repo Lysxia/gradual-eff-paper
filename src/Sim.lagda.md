@@ -123,7 +123,7 @@ sim (cast≤ e M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//ℰ v refl))
 sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
     with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
-    = perform- _ _ N′ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
+    = perform- _ N′ _ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
 sim (perform≤perform M≤M′) (ξξ □ refl _ ())
 sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
     with sim M≤ (ξ ℰ M↦N)

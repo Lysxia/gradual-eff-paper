@@ -199,8 +199,8 @@ returning a response of type `response e`.
   -- Fording (response e ≡ A) helps pattern matching.
   perform- : ∀ {Γ E e A}
     → e ∈☆ E
-    → response e ≡ A
     → Γ ⊢ ⟨ E ⟩ request e
+    → response e ≡ A
       --------------------
     → Γ ⊢ ⟨ E ⟩ A
 ```
@@ -244,7 +244,7 @@ open _⊢_➡_ public
 
 A pattern synonym to hide the equality argument in `perform-`.
 ```
-pattern perform e∈E M = perform- e∈E refl M
+pattern perform e∈E M = perform- e∈E M refl
 ```
 
 ## Renaming maps, substitution maps, term maps
@@ -312,7 +312,7 @@ ren ρ (L ⦅ _⊕_ ⦆ M)        =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
 ren ρ (M ⇑ g)              =  (ren ρ M) ⇑ g
 ren ρ (cast ±p M)          =  cast ±p (ren ρ M)
 ren ρ blame                =  blame
-ren ρ (perform- e∈E eq M)  =  perform- e∈E eq (ren ρ M)
+ren ρ (perform- e∈E M eq)  =  perform- e∈E (ren ρ M) eq
 ren ρ (handle H M)         =  handle (renʰ ρ H) (ren ρ M)
 
 lift : ∀ {Γ : Context} {A : Type} → Γ →ᵀ (Γ ▷ A)
@@ -353,7 +353,7 @@ sub σ (L ⦅ _⊕_ ⦆ M)        =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
 sub σ (M ⇑ g)              =  (sub σ M) ⇑ g
 sub σ (cast ±p M)          =  cast ±p (sub σ M)
 sub σ blame                =  blame
-sub σ (perform- e∈E eq M)  =  perform- e∈E eq (sub σ M)
+sub σ (perform- e∈E M eq)  =  perform- e∈E (sub σ M) eq
 sub ρ (handle H M)         =  handle (subʰ ρ H) (sub ρ M)
 ```
 
@@ -411,7 +411,7 @@ ren∘ren ρ≡ (L ⦅ _⊕_ ⦆ M)        =  cong₂ _⦅ _⊕_ ⦆_ (ren∘ren
 ren∘ren ρ≡ (M ⇑ g)              =  cong (_⇑ g) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ (cast ±p M)          =  cong (cast ±p) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ blame                =  refl
-ren∘ren ρ≡ (perform- e∈E eq M)  =  cong (perform- e∈E eq) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ (perform- e∈E M eq)  =  cong (λ M → perform- e∈E M eq) (ren∘ren ρ≡ M)
 ren∘ren {ρ = ρ} {ρ′ = ρ′} ρ≡ (handle H M) = cong₂ handle (ren∘renʰ {ρ = ρ} {ρ′ = ρ′} ρ≡ H) (ren∘ren ρ≡ M)
 
 lift∘ren : ∀ {Γ Δ A B} (ρ : Γ →ᴿ Δ) (M : Γ ⊢ B)
@@ -460,7 +460,7 @@ sub∘ren σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (sub∘ren σ≡
 sub∘ren σ≡ (M ⇑ g)        =  cong (_⇑ g) (sub∘ren σ≡ M)
 sub∘ren σ≡ (cast ±p M)     =  cong (cast ±p) (sub∘ren σ≡ M)
 sub∘ren σ≡ blame          =  refl
-sub∘ren ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (sub∘ren ρ≡ M)
+sub∘ren ρ≡ (perform- e∈E M eq) = cong (λ M → perform- e∈E M eq) (sub∘ren ρ≡ M)
 sub∘ren {ρ = ρ} {σ′ = σ′} ρ≡ (handle H M)   = cong₂ handle (sub∘renʰ {ρ = ρ} {σ′ = σ′} ρ≡ H) (sub∘ren ρ≡ M)
 
 ren∘sub▷ : ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
@@ -506,7 +506,7 @@ ren∘sub σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (ren∘sub σ≡
 ren∘sub σ≡ (M ⇑ g)        =  cong (_⇑ g) (ren∘sub σ≡ M)
 ren∘sub σ≡ (cast ±p M)    =  cong (cast ±p) (ren∘sub σ≡ M)
 ren∘sub σ≡ blame          =  refl
-ren∘sub ρ≡ (perform- e∈E eq M) = cong (perform- e∈E eq) (ren∘sub ρ≡ M)
+ren∘sub ρ≡ (perform- e∈E M eq) = cong (λ M → perform- e∈E M eq) (ren∘sub ρ≡ M)
 ren∘sub ρ≡ (handle H M)   = cong₂ handle (ren∘subʰ ρ≡ H) (ren∘sub ρ≡ M)
 
 lift∘sub : ∀ {Γ Δ A B} (σ : Γ →ˢ Δ) (M : Γ ⊢ B)
@@ -572,8 +572,8 @@ renId ρId (L ⦅ _⊕_ ⦆ M) rewrite renId ρId L | renId ρId M   =  refl
 renId ρId (M ⇑ g) rewrite renId ρId M                       =  refl
 renId ρId (cast ±p M) rewrite renId ρId M                   =  refl
 renId ρId blame                                             =  refl
-renId ρId (perform- e∈E eq M) rewrite renId ρId M           =  refl
-renId ρId (handle H M) rewrite renIdʰ ρId H | renId ρId M   = refl
+renId ρId (perform- e∈E M eq) rewrite renId ρId M           =  refl
+renId ρId (handle H M) rewrite renIdʰ ρId H | renId ρId M   =  refl
 
 subId▷ : ∀ {Γ} {σ : Γ →ˢ Γ}
   → Idˢ {Γ} σ
@@ -612,8 +612,8 @@ subId σId (L ⦅ _⊕_ ⦆ M) rewrite subId σId L | subId σId M   =  refl
 subId σId (M ⇑ g) rewrite subId σId M                       =  refl
 subId σId (cast ±p M) rewrite subId σId M                   =  refl
 subId σId blame                                             =  refl
-subId σId (perform- e∈E eq M) rewrite subId σId M           =  refl
-subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   = refl
+subId σId (perform- e∈E M eq) rewrite subId σId M           =  refl
+subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   =  refl
 ```
 
 ## Values

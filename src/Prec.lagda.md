@@ -118,10 +118,6 @@ commute≤ᵉ p q r  =  ⊤
 ```
 
 ```
-=>ᶜ-returns : ∀ {P Q} (±q : P =>ᶜ Q) → Typeᶜ.returns P => Typeᶜ.returns Q
-=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
-=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
-
 commute≤ᶜ : ∀ {P Q R} (±p : P =>ᶜ Q) (q : Q ≤ᶜ R) (r : P ≤ᶜ R) → Set
 commute≤ᶜ ±p (⟨ _ ⟩ q) (⟨ _ ⟩ r) = commute≤ (=>ᶜ-returns ±p) q r
 
@@ -142,15 +138,21 @@ pure≤ : ∀ {E A B R} {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ R} {r : ⟨ E ⟩
   → commute≤ ±p (_≤ᶜ_.returns q) (_≤ᶜ_.returns r) → commute≤ᶜ (pure± ±p) q r
 pure≤ {±p = + _} refl = refl
 pure≤ {±p = - _} refl = refl
+```
 
+```
+{-
 unique-≤ᵉ : ∀ {E F} {E≤ E≤′ : E ≤ᵉ F} → E≤ ≡ E≤′
 unique-≤ᵉ {E≤ = id} {E≤′ = id} = refl
 unique-≤ᵉ {E≤ = ¡≤☆} {E≤′ = ¡≤☆} = refl
+-}
+```
 
-≤pure : ∀ {E P B C} {p : P ≤ᶜ ⟨ E ⟩ B} {±q : B => C} {r : P ≤ᶜ ⟨ E ⟩ C}
-  → ≤commute (_≤ᶜ_.returns p) ±q (_≤ᶜ_.returns r) → ≤commuteᶜ p (pure± ±q) r
-≤pure {±q = + _} refl = cong₂ ⟨_⟩_ unique-≤ᵉ refl
-≤pure {±q = - _} refl = cong₂ ⟨_⟩_ unique-≤ᵉ refl
+```
+≤pure : ∀ {E F A B C} {p : A ≤ B} {±q : B => C} {r : A ≤ C} {E≤F : E ≤ᵉ F}
+  → ≤commute p ±q r → ≤commuteᶜ (⟨ E≤F ⟩ p) (pure± ±q) (⟨ E≤F ⟩ r)
+≤pure {±q = + _} refl = cong₂ ⟨_⟩_ refl refl
+≤pure {±q = - _} refl = cong₂ ⟨_⟩_ refl refl
 
 drop⇑ : ∀ {A B G} {±p : A => B} {q : B ≤ G} {r : A ≤ G} {g : Ground G}
   → commute≤ ±p (q ⇑ g) (r ⇑ g)
@@ -168,14 +170,14 @@ ident≤ : ∀ {A B} {q r : A ≤ B}
 ident≤ {q = q} (+ id) refl refl rewrite left-id q = refl
 ident≤ {r = r} (- id) refl refl rewrite left-id r = refl
 
-≤ident : ∀ {A B} {p r : A ≤ᶜ B}
-  → (±q : B =>ᶜ B)
+≤ident : ∀ {E F G A B} {p r : A ≤ B} {E≤F : E ≤ᵉ F} {E≤G : E ≤ᵉ G}
+  → (±q : ⟨ F ⟩ B =>ᶜ ⟨ G ⟩ B)
   → splitᶜ ±q ≡ id
-  → ≤commuteᶜ p ±q r
+  → ≤commuteᶜ (⟨ E≤F ⟩ p) ±q (⟨ E≤G ⟩ r)
     -----
   → p ≡ r
-≤ident (+ ⟨ id ⟩ id) refl refl = refl
-≤ident (- ⟨ id ⟩ id) refl refl = refl
+≤ident (+ ⟨ _ ⟩ id) refl refl = refl
+≤ident (- ⟨ _ ⟩ id) refl refl = refl
 
 dom≤ :  ∀ {A A′ A″ P P′ P″}
     {±p : A ⇒ P => A′ ⇒ P′} {q : A′ ⇒ P′ ≤ A″ ⇒ P″} {r : A ⇒ P ≤ A″ ⇒ P″}
@@ -374,7 +376,7 @@ data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ
                       {E≤ : E ≤ᵉ E′} {M M′}
     → {eq : response e ≡ A}
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id
-    → Γ≤ ⊢ perform- e∈E eq M ≤ᴹ perform- e∈E′ eq M′ ⦂ ⟨ E≤ ⟩ id
+    → Γ≤ ⊢ perform- e∈E M eq ≤ᴹ perform- e∈E′ M′ eq ⦂ ⟨ E≤ ⟩ id
 
   handle≤handle : ∀ {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′ M M′}
     → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ➡ Q≤
@@ -526,7 +528,7 @@ reflᴹ (M ⇑ g)         =  ⇑≤⇑ g (reflᴹ M)
 reflᴹ (cast (+ p) M)  =  +≤+ (sym (left-idᶜ p)) (reflᴹ M)
 reflᴹ (cast (- p) M)  =  -≤- (left-idᶜ p) (reflᴹ M)
 reflᴹ blame           =  blame≤
-reflᴹ (perform- e∈E eq M) = perform≤perform (reflᴹ M)
+reflᴹ (perform- e∈E M eq) = perform≤perform (reflᴹ M)
 reflᴹ (handle H M) = handle≤handle (reflʰ H) (reflᴹ M)
 
 reflʰ H = record

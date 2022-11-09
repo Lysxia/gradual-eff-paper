@@ -1,7 +1,6 @@
 ## Proof of the Gradual Guarantee
 
 ```
-{-# OPTIONS --allow-unsolved-metas #-} -- TODO
 module SimAux where
 
 open import Utils
@@ -67,15 +66,13 @@ cast-lemma : ∀ {Γ Γ′ A B C} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ B} {r 
   → ≤commuteᶜ p ±q r
   → Γ≤ ⊢ V ≤ᴹ V′ ⦂ p
     -------------------------------------------------------
-  → ∃[ W ] (Value W × (cast ±q V′ —↠ W) × (Γ≤ ⊢ V ≤ᴹ W ⦂ r))
+  → ∃[ W ] Value W × (cast ±q V′ —↠ W) × (Γ≤ ⊢ V ≤ᴹ W ⦂ r)
 cast-lemma v v′ ±q e V≤V′ with splitᶜ ±q in e′
-cast-lemma v v′ ±q e V≤V′ | id = ? -- TODO
-{-
+cast-lemma {p = ⟨ _ ⟩ _}  v v′ ±q e V≤V′ | id
     rewrite ≤ident ±q e′ e
-    =  _ , v′ , unit (ident e′ v′) , V≤V′
--}
+    =  _ , gValue v′ , unit (ident e′ v′) , ≤gvalue v v′ V≤V′
 cast-lemma (ƛ _) (ƛ _) ±q e ƛN≤ƛN′ | ∓s ⇒ ±t
-    =  ƛ _ , ƛ _ , unit (wrap e′) , ≤wrap e′ {! e !} (generalize-ƛ≤ƛ ƛN≤ƛN′)
+    =  ƛ _ , ƛ _ , unit (wrap e′) , ≤wrap e′ (≤returns e) (generalize-ƛ≤ƛ ƛN≤ƛN′)
 cast-lemma v v′ (+ ⟨ E≤E′ ⟩ (q ⇑ g)) refl V≤V′ | other
     with cast-lemma v v′ (+ ⟨ E≤E′ ⟩ q) refl V≤V′
 ... |  W′ , w , V′+—↠W′ , V≤W′
@@ -173,10 +170,7 @@ simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ 
   where qq = (cod≤ e′ e)
 
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′
-  = ?
-{-
-    with cast-lemma w (gValue w′) (pure± ∓s) (≤pure {p = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} {r = ⟨ ? ⟩ _} (≤dom e′ e)) (≤gvalue w w′ W≤W′)
-      where F≤ = let ⟨ F≤ ⟩ _ = cod p in F≤
+    with cast-lemma w (gValue w′) (pure± ∓s) (≤pure {E≤F = _≤ᶜ_.effects (cod p)} (≤dom e′ e)) (≤gvalue w w′ W≤W′)
 ... |  W″ , w″ , W′-—↠W″ , W≤W″
     with simβ w w″ ƛN≤ƛN′ W≤W″
 ... |  M′ , [ƛN′]·W″—↠M′ , N[W]≤M′
@@ -191,8 +185,7 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
             cast ±t M′
           ∎) ,
        (≤cast (≤cod e′ e) N[W]≤M′)
--}
-```   
+```
 
 ```
 Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
@@ -228,12 +221,6 @@ catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = P≤} v ℰ (≤cast {±q = ±q
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
     = Mk v′ V≤V′ (≤cast comm ℰ≤ℰ′) (¬handled-cast {±p = ±q} ℰ′ (∈-≤ (_≤ᶜ_.effects P≤) (¬handled-∈ ℰ ¬e//ℰ e∈E)) ¬e//ℰ′) (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
-{-
-catchup-⟦perform⟧≤ {e∈E = e∈E} v ℰ (≤⟨⟩ {E≤ = E≤} {±p = ±p} M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (≤⟨⟩ ℰ≤ℰ′) (¬handled-cast⟨⟩ {±p = ±p} ℰ′ (∈-≤ E≤ (¬handled-∈ ℰ ¬e//ℰ e∈E)) ¬e//ℰ′) (ξ* ([ □ ]cast⟨ _ ⟩) M′—↠ℰV′)
--}
 catchup-⟦perform⟧≤ v ([ ℰ ]· M) (·≤· N≤ M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ N≤ ¬e//ℰ
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ N′—↠ℰV′
