@@ -7,6 +7,7 @@ open import Utils
 open import Type
 open import Core
 open import Progress
+open import Data.Bool using (_∨_)
 ```
 
 ## State
@@ -86,7 +87,7 @@ infixl 4 _|>_
 pattern _|>_ N M = M · N
 
 perform! : ∀ {Γ E} e → ⦃ e ∈☆ E ⦄ → Γ ⊢ ⟨ E ⟩ request e → Γ ⊢ ⟨ E ⟩ response e
-perform! e M = perform- {e = e} it refl M
+perform! e M = perform- {e = e} it M refl
 
 -- Given initial state x, this computes 2*(x+1).
 some-comp : ∀ {Γ E} → Γ ⊢ ⟨ ¡ ("get" ∷ "put" ∷ E) ⟩ $ℕ
@@ -110,4 +111,61 @@ eval-state-example : ∃[ M—↠N ]
      eval (gas 25) state-example
   ≡  steps {⟨ ¡ [] ⟩ $ℕ} M—↠N (done ($ 4))
 eval-state-example = _ , refl
+```
+
+## Nondeterminism
+
+Church encoding of booleans. I haven't implemented `if` for `′𝔹` yet.
+```
+-- 𝟚 = ★ ⇒ ⟨ ☆ ⟩ ★ ⇒ ⟨ ☆ ⟩ ⇒ ★
+
+tru fls : ∀ {Γ E} → Γ ⊢ ⟨ E ⟩ 𝟚
+tru = ƛ ƛ ` S Z
+fls = ƛ ƛ ` Z
+
+if : ∀ {Γ E A} → Γ ⊢ ⟨ E ⟩ 𝟚 → Γ ⊢ ⟨ E ⟩ A → Γ ⊢ ⟨ E ⟩ A → Γ ⊢ ⟨ E ⟩ A
+if b t f = (cast (- ⟨ id ⟩ ≤𝟚) b · (ƛ (lift t)) · (ƛ (lift f))) · $ tt
+  where ≤𝟚 = A≤★ ⇒ ⟨ ≤☆ ⟩ A≤★ ⇒ ⟨ ≤☆ ⟩ A≤★
+```
+
+Also from Handlers in Action.
+A drunk tosses a coin: they may flip head or tails, or they may drop the coin
+and it falls in the gutter.
+```
+drunkToss : ∅ ⊢ ⟨ ¡ ("choose" ∷ "fail" ∷ []) ⟩ $𝔹
+drunkToss =
+  perform! "choose" ($ tt) |> ƛ (
+  if (` Z)
+     ( perform! "choose" ($ tt) |> ƛ (
+       if (` Z) ($ true) ($ false))
+     )
+     ( perform! "fail" ($ tt) |> ƛ
+       ($ true) {- this should be unreachable but I don't have an empty type yet -}))
+```
+
+Handle a non-deterministic computation of type `𝔹`,
+returning `true` when at least one execution returns `true`.
+```
+nondet-handler : ∅ ⊢ ⟨ ¡ ("choose" ∷ "fail" ∷ []) ⟩ $𝔹 ➡ ⟨ ε ⟩ $𝔹
+nondet-handler = record
+  { Hooks = "choose" ∷ "fail" ∷ []
+  ; Hooks-handled = refl
+  ; on-return = ` Z
+  ; on-perform
+      = ((` Z · tru) ⦅ _∨_ ⦆ (` Z · fls))
+      ∷ $ false
+      ∷ [] }
+```
+
+```
+nondet-example : ∅ ⊢ ⟨ ε ⟩ $𝔹
+nondet-example = handle nondet-handler drunkToss
+```
+
+`nondet-example` reduces to the constant `$ true`.
+```
+eval-nondet-example : ∃[ M—↠N ]
+     eval (gas 200) nondet-example
+  ≡  steps M—↠N (done ($ true))
+eval-nondet-example = _ , refl
 ```

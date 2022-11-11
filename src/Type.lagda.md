@@ -145,13 +145,21 @@ record Typeᶜ where
     returns : Type
 ```
 
+(TODO) the base type ′𝔹 doesn't have eliminators ("if") yet. In the meantime here's Church encoded booleans
+```
+-- Church booleans
+pattern 𝟚 = ★ ⇒ ⟨ ☆ ⟩ ★ ⇒ ⟨ ☆ ⟩ ★
+```
+
 Having defined types, we can assign signatures to effects, which are their
 input and output types, also called requests and responses.
 ```
 Op-sig : Op → Type × Type
-Op-sig "get" = ($ ′𝕌 , $ ′ℕ)
-Op-sig "put" = ($ ′ℕ , $ ′𝕌)
-Op-sig _ = (★ , ★)
+Op-sig "get"     =  ($ ′𝕌 , $ ′ℕ)
+Op-sig "put"     =  ($ ′ℕ , $ ′𝕌)
+Op-sig "choose"  =  ($ ′𝕌 , 𝟚)     -- TODO: conditionals (eliminate bool)
+Op-sig "fail"    =  ($ ′𝕌 , $ ′𝕌)  -- TODO: empty type
+Op-sig _         =  (★ , ★)
 
 request : Op → Type
 request e = proj₁ (Op-sig e)
