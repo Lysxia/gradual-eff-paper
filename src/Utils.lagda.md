@@ -2,11 +2,12 @@
 module Utils where
 
 open import Function.Base using (_∘_; case_of_; flip; it) public
-open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹) public
+open import Data.Bool.Base using (true; false; _∨_) renaming (Bool to 𝔹) public
 open import Data.Empty using (⊥; ⊥-elim) public
 open import Data.Unit.Base using (⊤; tt) public
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Fin.Properties using (≡-isDecEquivalence)
+open import Data.Maybe.Base using (Maybe; just; nothing) public
 open import Data.Nat.Base using (ℕ; zero; suc; _+_) public
 import Data.Nat.Properties as Nat
 open import Data.List.Base as List using (List; []; _∷_; _++_) public

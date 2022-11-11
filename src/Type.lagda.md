@@ -116,17 +116,19 @@ infix 7 ⟨_⟩_
 ```
 
 We distinguish computations from the values they return, assigning them different notions
-of types: computation types `Typeᶜ` \lyx{or CType?} and value types `Type`.
-They are defined mutually recursively, so we declare the type of one before defining the other.
+of types. Computation types `Typeᶜ` \lyx{or CType?} are pairs of effects `Effect` and value types `Type`.
+Computation types and value types are defined mutually recursively, so we declare both of their
+type signatures before giving their definitions.
 ```
 record Typeᶜ : Set
+data Type : Set
 ```
 
 A value type can be the dynamic type `★` for values whose type will be known at run time.
 The base type `$_` is for primitives. And the function type has a domain which is a value type
 and a codomain which is a computation type: when a function is applied, it may perform effects.
 ```
-data Type : Set where
+data Type where
   ★ : Type
   $_ : (ι : Base) → Type
   _⇒_ : (A : Type) → (P : Typeᶜ) → Type
@@ -510,43 +512,6 @@ Lemma. If `p : ★ ≤ ★` then `p ≡ id`.
 ★≤★→≡id : ∀ (p : ★ ≤ ★) → p ≡ id
 ★≤★→≡id id       =  refl
 ★≤★→≡id (p ⇑ g)  =  ⊥-elim (¬★≤G g p)
-```
-
-Decision procedure for precision.
-```
-infix 4 _≤?_ _≤ᵉ?_ _≤ᶜ?_
-
-_≤ᵉ?_ : Decidable _≤ᵉ_
-_ ≤ᵉ? ☆ = yes E≤☆
-¡ E ≤ᵉ? ¡ F with E ≟ F
-... | yes refl = yes id
-... | no ¬≡ = no λ{ id → ¬≡ refl }
-☆ ≤ᵉ? ¡ _ = no λ()
-
-_≤ᶜ?_ : Decidable _≤ᶜ_
-
-_≤?_ : (A : Type) → (B : Type) → Dec (A ≤ B)
-★ ≤? ★                                           =  yes id
-★ ≤? ($ ι)                                       =  no (λ ())
-★ ≤? (A ⇒ B)                                     =  no (λ ())
-($ ι) ≤? ★                                       =  yes (id ⇑ $ ι)
-($ ι) ≤? ($ ι′)       with ι ≡$? ι′
-...                     | yes refl               =  yes id
-...                     | no  ι≢ι′               =  no  λ{id → ι≢ι′ refl}
-($ ι) ≤? (A ⇒ B)                                 =  no (λ ())
-(A ⇒ B) ≤? ★         with A ≤? ★ ×-dec B ≤ᶜ? (⟨ ☆ ⟩ ★)
-...                     | yes (A≤★ , B≤★) = yes ((A≤★ ⇒ B≤★) ⇑ ★⇒★)
-...                     | no  ¬≤          = no  λ{((A≤★ ⇒ B≤★) ⇑ ★⇒★) → ¬≤ (A≤★ , B≤★);
-                                                  (id ⇑ ★⇒★)          → ¬≤ (id , ⟨ id ⟩ id)}
-(A ⇒ B) ≤? ($ ι)                                 =  no  (λ ())
-(A ⇒ B) ≤? (A′ ⇒ B′) with A ≤? A′ ×-dec B ≤ᶜ? B′
-...                     | yes (A≤A′ , B≤B′) = yes (A≤A′ ⇒ B≤B′)
-...                     | no  ¬≤ =  no  λ{(A≤A′ ⇒ B≤B′) → ¬≤ (A≤A′ , B≤B′);
-                                          id            → ¬≤ (id , ⟨ id ⟩ id)}
-
-⟨ E ⟩ A ≤ᶜ? ⟨ F ⟩ B with E ≤ᵉ? F ×-dec A ≤? B
-... | yes (E≤ , A≤) = yes (⟨ E≤ ⟩ A≤)
-... | no ¬≤ = no λ{ (⟨ E≤ ⟩ A≤) → ¬≤ (E≤ , A≤) }
 ```
 
 Lemma. Consistent membership is preserved by decreases in precision.

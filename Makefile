@@ -10,6 +10,7 @@ FILTERS := pandoc-filters
 # filename of the final output file
 FILENAME := main
 
+AGDA:=agda-dev
 build_latex:=_build/latex
 src_lagda_tex:=$(build_latex)/src_lagda_tex
 src_tex:=$(build_latex)/src_tex
@@ -67,7 +68,7 @@ html/%.html : html/%.md
 html/%.md : markdown/%.lagda.md
 	@echo "Typechecking with Agda"
 	@mkdir -p '$(@D)'
-	agda --html-dir=html \
+	$(AGDA) --html-dir=html \
 	--include-path=markdown \
 	--html-highlight=code \
 	--html $<
@@ -97,7 +98,7 @@ AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex) 
 
 # run agda under same directory with lagda.tex	
 $(src_tex)/%.tex : $(src_lagda_tex)/%.lagda.tex 
-	agda $(AGDA_LATEX_OPTS) $<
+	$(AGDA) $(AGDA_LATEX_OPTS) $<
 
 clean:
 	$(RM) -rf _build main.pdf

@@ -161,14 +161,14 @@ drop⇑ : ∀ {A B G} {±p : A => B} {q : B ≤ G} {r : A ≤ G} {g : Ground G}
 drop⇑ {±p = + _} refl = refl
 drop⇑ {±p = - _} refl = refl
 
-ident≤ : ∀ {A B} {q r : A ≤ B}
-  → (±p : A => A)
-  → split ±p ≡ id
-  → commute≤ ±p q r
+ident≤ : ∀ {E F G A B} {q r : A ≤ B} {E≤G : E ≤ᵉ G} {F≤G : F ≤ᵉ G}
+  → (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ A)
+  → splitᶜ ±p ≡ id
+  → commute≤ᶜ ±p (⟨ F≤G ⟩ q) (⟨ E≤G ⟩ r)
     -----
   → q ≡ r
-ident≤ {q = q} (+ id) refl refl rewrite left-id q = refl
-ident≤ {r = r} (- id) refl refl rewrite left-id r = refl
+ident≤ {q = q} (+ ⟨ _ ⟩ id) refl refl rewrite left-id q = refl
+ident≤ {r = r} (- ⟨ _ ⟩ id) refl refl rewrite left-id r = refl
 
 ≤ident : ∀ {E F G A B} {p r : A ≤ B} {E≤F : E ≤ᵉ F} {E≤G : E ≤ᵉ G}
   → (±q : ⟨ F ⟩ B =>ᶜ ⟨ G ⟩ B)

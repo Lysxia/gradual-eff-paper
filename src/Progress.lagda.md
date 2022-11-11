@@ -27,7 +27,7 @@ infix  6 _⦅_⦆[_]
 infix  7 _⟦_⟧
 ```
 
-Frames are ``terms with a hole''.
+Frames are "terms with a hole".
 Frames are also known as evaluation contexts, but the identifier `Context` is
 already taken in our development.
 They are used to define a congruence rule for reduction, \ie{} the contexts

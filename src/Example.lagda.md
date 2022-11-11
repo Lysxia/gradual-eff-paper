@@ -7,7 +7,6 @@ open import Utils
 open import Type
 open import Core
 open import Progress
-open import Data.Bool using (_∨_)
 ```
 
 ## State
@@ -124,7 +123,7 @@ tru = ƛ ƛ ` S Z
 fls = ƛ ƛ ` Z
 
 if : ∀ {Γ E A} → Γ ⊢ ⟨ E ⟩ 𝟚 → Γ ⊢ ⟨ E ⟩ A → Γ ⊢ ⟨ E ⟩ A → Γ ⊢ ⟨ E ⟩ A
-if b t f = (cast (- ⟨ id ⟩ ≤𝟚) b · (ƛ (lift t)) · (ƛ (lift f))) · $ tt
+if b t f = (cast (- ⟨ id ⟩ ≤𝟚) b · (ƛ (lift {A = $ ′𝕌} t)) · (ƛ (lift {A = $ ′𝕌} f))) · $ tt
   where ≤𝟚 = A≤★ ⇒ ⟨ ≤☆ ⟩ A≤★ ⇒ ⟨ ≤☆ ⟩ A≤★
 ```
 
@@ -163,9 +162,14 @@ nondet-example = handle nondet-handler drunkToss
 ```
 
 `nondet-example` reduces to the constant `$ true`.
-```
+\lyx{This takes a VERY (>20min) long time to evaluate. So we hide it from Agda for now}
+```txt
+from-steps : ∀ {P} {M : ∅ ⊢ P} → Steps M → Maybe (∅ ⊢ P)
+from-steps (steps _ (done v)) = just (value v)
+from-steps _ = nothing
+
 eval-nondet-example : ∃[ M—↠N ]
-     eval (gas 200) nondet-example
-  ≡  steps M—↠N (done ($ true))
+     from-steps (eval (gas 1000) nondet-example)
+  ≡  just ($ true)
 eval-nondet-example = _ , refl
 ```
