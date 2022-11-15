@@ -37,47 +37,6 @@ data _∋_ : Context → Type → Set where
     → Γ ▷ B ∋ A
 ```
 
-## Casts
-
-```
-infix  6 _=>_ _=>ᶜ_ _=>ᵉ_
-infix  4 +_ -_
-```
-
-Casts are either upcasts (reducing precision, \eg{} casting from `$ ι`
-to `★`) or downcasts (increasing precision). We define notions of
-casts for the different precision relations `_≤_`, `_≤ᶜ_`, `_≤ᵉ_`
-uniformly as their symmetric closures.
-
-Given any relation `_<_`, the relation `± _<_` is its symmetric closure:
-the smallest symmetric relation containing `_<_`.
-
-```
-data ± {S : Set} (_<_ : S → S → Set) (A B : S) : Set where
-
-  +_  : A < B
-        ---------
-      → ± _<_ A B
-
-  -_  : B < A
-        ---------
-      → ± _<_ A B
-```
-
-The types of casts for value types, computation types, and effects
-are the symmetric closures of their respective precision relations.
-
-```
-_=>_ : Type → Type → Set
-_=>_ = ± _≤_
-
-_=>ᶜ_ : Typeᶜ → Typeᶜ → Set
-_=>ᶜ_ = ± _≤ᶜ_
-
-_=>ᵉ_ : Effect → Effect → Set
-_=>ᵉ_ = ± _≤ᵉ_
-```
-
 ## Terms
 
 \lyx{Explain interleaved mutual. Here? Earlier?}

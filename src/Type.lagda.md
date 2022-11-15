@@ -58,9 +58,6 @@ A type-and-effect system keeps track of the operations that a computation may
 perform. A \emph{gradual effect} `E : Effect` may be either static or dynamic.
 A static effect is a list of operations that a computation may perform.
 The dynamic effect `☆` allows a computation to perform any operations.
-
-\lyx{fix the naming. What to call `e : Op` (names?), `es : List Op`, and `E : Effect`?
-Also `Effect` is a terrible name.}
 ```
 StaticEffect : Set
 StaticEffect = List Op
@@ -251,17 +248,6 @@ Star is not ground
 ```
 G≢★ : ∀ {G} → (g : Ground G) → G ≢ ★
 G≢★ () refl
-```
-
-Decision procedure for whether a type is ground.
-```
-Ground? : ∀(A : Type) → Dec (Ground A)
-Ground? ★                                 =  no λ ()
-Ground? ($ ι)                             =  yes ($ ι)
-Ground? (A ⇒ B) with A ≡? ★   | B ≡ᶜ? ⟨ ☆ ⟩ ★
-...                | yes refl | yes refl  =  yes ★⇒★
-...                | no  A≢★  | _         =  no  λ{★⇒★ → A≢★ refl}
-...                | _        | no  B≢★   =  no  λ{★⇒★ → B≢★ refl}
 ```
 
 ## Precision
@@ -519,4 +505,82 @@ Lemma. Consistent membership is preserved by decreases in precision.
 ∈-≤ : ∀ {E F e} → E ≤ᵉ F → e ∈☆ E → e ∈☆ F
 ∈-≤ id e∈E = e∈E
 ∈-≤ ¡≤☆ _ = ☆
+```
+
+## Subtyping
+
+```
+infix 4 _⊑ᵉ_ _⊑ᶜ_ _⊑_
+```
+
+```
+data _⊑ᵉ_ : Effect → Effect → Set where
+  ☆ : ☆ ⊑ᵉ ☆
+  ¡_ : ∀ {E F} → E ⊆ F → ¡ E ⊑ᵉ ¡ F
+```
+
+```
+data _⊑_ : Type → Type → Set
+record _⊑ᶜ_ (P Q : Typeᶜ) : Set
+```
+
+```
+data _⊑_ where
+  id : ∀ {E} → E ⊑ E
+  _⇒_ : ∀ {A A′ P P′} → A′ ⊑ A → P ⊑ᶜ P′ → (A ⇒ P) ⊑ (A′ ⇒ P′)
+
+record _⊑ᶜ_ P Q where
+  inductive
+  constructor ⟨_⟩_
+  field
+    effects : Typeᶜ.effects P ⊑ᵉ Typeᶜ.effects Q
+    returns : Typeᶜ.returns P ⊑  Typeᶜ.returns Q
+```
+
+```
+⊑ᵉ-refl : ∀ {E} → E ⊑ᵉ E
+⊑ᵉ-refl {☆} = ☆
+⊑ᵉ-refl {¡ _} = ¡ ⊆-refl
+```
+
+## Casts
+
+```
+infix  6 _=>_ _=>ᶜ_ _=>ᵉ_
+infix  4 +_ -_ *_
+```
+
+Casts are either upcasts (reducing precision, \eg{} casting from `$ ι`
+to `★`); downcasts (increasing precision); or safe casts
+(upcasts along the subtyping relation).
+We define notions of casts for the different precision relations
+`_≤_`, `_≤ᶜ_`, `_≤ᵉ_` uniformly with the `Cast` combinator.
+
+```
+data Cast {S : Set} (_<_ _⊏_ : S → S → Set) (A B : S) : Set where
+
+  +_  : A < B
+        ---------
+      → Cast _<_ _⊏_ A B
+
+  -_  : B < A
+        ---------
+      → Cast _<_ _⊏_ A B
+
+  *_  : A ⊏ B
+      → Cast _<_ _⊏_ A B
+```
+
+The types of casts for value types, computation types, and effects
+are the symmetric closures of their respective precision relations.
+
+```
+_=>_ : Type → Type → Set
+_=>_ = Cast _≤_ _⊑_
+
+_=>ᶜ_ : Typeᶜ → Typeᶜ → Set
+_=>ᶜ_ = Cast _≤ᶜ_ _⊑ᶜ_
+
+_=>ᵉ_ : Effect → Effect → Set
+_=>ᵉ_ = Cast _≤ᵉ_ _⊑ᵉ_
 ```

@@ -250,6 +250,11 @@ catchup-⟦perform⟧≤ v (`cast ±p [ ℰ ]) (cast≤ comm M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
     = Mk v′ V≤V′ (cast≤ comm ℰ≤ℰ′) ¬e//ℰ′ M′—↠ℰV′
+catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = ⟨ F≤ ⟩ _} v (`cast ±p [ ℰ ]) (safe-cast≤cast {P′⊑Q′ = P′⊑Q′} M≤) ¬e//ℰ
+  with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
+... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ (safe-cast≤cast ℰ≤ℰ′) ¬e//cast[ℰ′] (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
+  where ¬e//cast[ℰ′] = ¬handled-cast {±p = * P′⊑Q′} ℰ′ (∈-≤ F≤ (¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e∈E)) ¬e//ℰ′
 catchup-⟦perform⟧≤ v (″perform e∈E [ ℰ ] eq) (perform≤perform M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′

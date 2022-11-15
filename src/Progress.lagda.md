@@ -298,16 +298,25 @@ split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
 split (- s ⇒ t)  =  (+ s) ⇒ (- t)
 split (+ p ⇑ g)  =  other
 split (- p ⇑ g)  =  other
+split (* id)      =  id
+split (* s ⇒ t)  =  (* s) ⇒ (* t)
+```
+
+```
+split-*≢other : ∀ {A B} (q : A ⊑ B) → split (* q) ≢ other
+split-*≢other id ()
 ```
 
 ```
 =>ᶜ-effects : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → E =>ᵉ F
 =>ᶜ-effects (+ ⟨ p ⟩ _) = + p
 =>ᶜ-effects (- ⟨ p ⟩ _) = - p
+=>ᶜ-effects (* ⟨ p ⟩ _) = * p
 
 =>ᶜ-returns : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → A => B
 =>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
 =>ᶜ-returns (- ⟨ _ ⟩ q) = - q
+=>ᶜ-returns (* ⟨ _ ⟩ q) = * q
 ```
 
 ```
@@ -322,6 +331,7 @@ splitᶜ = split ∘ =>ᶜ-returns
 pure± : (A′ => A) → (⟨ E ⟩ A′) =>ᶜ (⟨ E ⟩ A)
 pure± (+ A≤) = + ⟨ id ⟩ A≤
 pure± (- A≤) = - ⟨ id ⟩ A≤
+pure± (* A⊑) = * ⟨ ⊑ᵉ-refl ⟩ A⊑
 ```
 
 ## Reduction
@@ -653,6 +663,7 @@ progress± (v ⇑ g) (- ⟨ _ ⟩ (_ ⇑ h)) | other
     with ground g ≡? ground h
 ... | yes refl rewrite uniqueG g h           =  _ , collapse v h
 ... | no  G≢H                                =  _ , collide v g h G≢H
+progress± _ (* ⟨ _ ⟩ q) | other              =  ⊥-elim (split-*≢other q e)
 
 progress :
     (M : ∅ ⊢ P)
