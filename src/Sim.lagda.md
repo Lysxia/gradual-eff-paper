@@ -114,7 +114,7 @@ sim (≤cast {±q = ±q} e M≤M′) M—→N
 sim (safe-cast≤cast V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  _ , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit ?) , wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+    =  _ , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit ?) , ? -- wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 sim blame≤ M—→N
     =  ⊥-elim (blame-irreducible M—→N)
 sim (wrap≤ i e V≤V′) M—→N

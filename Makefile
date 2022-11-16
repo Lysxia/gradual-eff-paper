@@ -10,7 +10,7 @@ FILTERS := pandoc-filters
 # filename of the final output file
 FILENAME := main
 
-AGDA:=agda-dev
+AGDA:=agda
 build_latex:=_build/latex
 src_lagda_tex:=$(build_latex)/src_lagda_tex
 src_tex:=$(build_latex)/src_tex

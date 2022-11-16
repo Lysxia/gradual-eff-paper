@@ -513,34 +513,53 @@ Lemma. Consistent membership is preserved by decreases in precision.
 infix 4 _⊑ᵉ_ _⊑ᶜ_ _⊑_
 ```
 
+Static effects have a natural notion of subtyping:
+an effect `E` is a subeffect of `F` if `E` is a subset of `F`.
+We lift this notion to gradual effects by treating the dynamic
+effect `☆` as only a subeffect of itself.
+[TODO citations, New Perspective] We thus treat subtyping orthogonally to
+gradual typing.
+
 ```
 data _⊑ᵉ_ : Effect → Effect → Set where
   ☆ : ☆ ⊑ᵉ ☆
   ¡_ : ∀ {E F} → E ⊆ F → ¡ E ⊑ᵉ ¡ F
 ```
 
+Lemma. The subeffect relation is reflexive.
+```
+⊑ᵉ-refl : ∀ {E} → E ⊑ᵉ E
+⊑ᵉ-refl {☆} = ☆
+⊑ᵉ-refl {¡ _} = ¡ ⊆-refl
+```
+
+We obtain a subtyping relation between types, again as two mutually recursive
+relations between value types and computation types.
+
 ```
 data _⊑_ : Type → Type → Set
 record _⊑ᶜ_ (P Q : Typeᶜ) : Set
 ```
 
+Subtyping is contravariant in the domain of a function type,
+unlike precision.
+
 ```
 data _⊑_ where
   id : ∀ {E} → E ⊑ E
   _⇒_ : ∀ {A A′ P P′} → A′ ⊑ A → P ⊑ᶜ P′ → (A ⇒ P) ⊑ (A′ ⇒ P′)
+```
 
+We use the subeffect relation above to define subtyping
+between computation types.
+
+```
 record _⊑ᶜ_ P Q where
   inductive
   constructor ⟨_⟩_
   field
     effects : Typeᶜ.effects P ⊑ᵉ Typeᶜ.effects Q
     returns : Typeᶜ.returns P ⊑  Typeᶜ.returns Q
-```
-
-```
-⊑ᵉ-refl : ∀ {E} → E ⊑ᵉ E
-⊑ᵉ-refl {☆} = ☆
-⊑ᵉ-refl {¡ _} = ¡ ⊆-refl
 ```
 
 ## Casts
@@ -583,4 +602,17 @@ _=>ᶜ_ = Cast _≤ᶜ_ _⊑ᶜ_
 
 _=>ᵉ_ : Effect → Effect → Set
 _=>ᵉ_ = Cast _≤ᵉ_ _⊑ᵉ_
+```
+
+```
+[]⊆ : ∀ {A : Set} {xs : List A} → [] ⊆ xs
+[]⊆ ()
+
+ε=>ᵉ : ∀ {E} → ε =>ᵉ E
+ε=>ᵉ {☆} = + ¡≤☆
+ε=>ᵉ {¡ _} = * (¡ []⊆)
+
+ε=>ᶜ : ∀ {E A} → (⟨ ε ⟩ A) =>ᶜ (⟨ E ⟩ A)
+ε=>ᶜ {☆} = + ⟨ ¡≤☆ ⟩ id
+ε=>ᶜ {¡ _} = * ⟨ ¡ []⊆ ⟩ id
 ```
