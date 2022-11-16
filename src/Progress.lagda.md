@@ -1,7 +1,7 @@
 # Operational Semantics
 
 In this section, we define the operational semantics as a small-step
-reduction relation, we prove progress, and since the proof is constructive
+reduction relation. We prove progress, and since the proof is constructive,
 it doubles as an evaluation function which we can apply on examples.
 
 ```
@@ -222,6 +222,8 @@ upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆ ☆
 upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
 ```
 
+An operation `e` is not handled by a cast `±p` if `e` is not an element of the
+target effect of the cast.
 ```
 ¬handled-cast : ∀ {e} {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)} (ℰ : Frame Γ P (⟨ E ⟩ A))
   → e ∈☆ F
@@ -230,7 +232,10 @@ upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
   → ¬ handled e (`cast ±p [ ℰ ])
 ¬handled-cast ℰ e∈F ¬e//ℰ (inj₁ ¬e∈F) = ¬e∈F e∈F
 ¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
+```
 
+An operation `e` is not handled by a handler if `e` is not one of its hooks.
+```
 ¬handled-handle : ∀ {e} {H : Γ ⊢ P ➡ Q} (ℰ : Frame Γ P′ P)
   → ¬ e ∈ Hooks H
   → ¬ handled e ℰ
@@ -238,26 +243,42 @@ upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
   → ¬ handled e (′handle H [ ℰ ])
 ¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₁ e∈H) = ¬e∈H e∈H
 ¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
+```
 
+Consistent membership is preserved by concatenation.
+```
 ∈☆-++☆ʳ : ∀ {e Eh} → e ∈☆ E → e ∈☆ (Eh ++☆ E)
 ∈☆-++☆ʳ {Eh = Eh} (¡ e∈E) = ¡ (Any.++⁺ʳ Eh e∈E)
 ∈☆-++☆ʳ ☆ = ☆
+```
 
+Inversion lemma for consistent membership.
+```
 ∈☆-++☆⁻ : ∀ {e Eh} → e ∈☆ (Eh ++☆ E) → e ∈ Eh ⊎ e ∈☆ E
 ∈☆-++☆⁻ {E = ☆} _ = inj₂ ☆
 ∈☆-++☆⁻ {E = ¡ _} {Eh = Eh} (¡ e∈++) with Any.++⁻ Eh e∈++
 ... | inj₁ e∈Eh = inj₁ e∈Eh
 ... | inj₂ e∈E = inj₂ (¡ e∈E)
+```
 
+If a computation under a handler raises an effect `e` which is
+not a hook of the handler, then `e` must be in the resulting effect
+of the handler.
+```
 ¬∈-handler : ∀ {e} (H : Γ ⊢ ⟨ E ⟩ A ➡ ⟨ F ⟩ B) → e ∈☆ E → ¬ e ∈ H .Hooks → e ∈☆ F
 ¬∈-handler H e∈E ¬e∈H rewrite Hooks-handled H with ∈☆-++☆⁻ e∈E
 ... | inj₁ e∈H = ⊥-elim (¬e∈H e∈H)
 ... | inj₂ e∈F = e∈F
+```
 
+Double negation elimination for decidable predicates.
+```
 ¬¬-dec : ∀ {P : Set} → Dec P → ¬ ¬ P → P
 ¬¬-dec (yes p) _ = p
 ¬¬-dec (no ¬p) ¬¬p = ⊥-elim (¬¬p ¬p)
+```
 
+```
 ¬handled-∈ : ∀ {e} (ℰ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B)) → ¬ handled e ℰ → e ∈☆ E → e ∈☆ F
 ¬handled-∈ □ _ e∈E = e∈E
 ¬handled-∈ ([ ℰ ]· M) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
@@ -272,6 +293,7 @@ upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
 
 ## Decomposing a cast
 
+The following construction unifies the behaviors of some casts.
 ```
 infix 6 _==>_
 
@@ -298,25 +320,14 @@ split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
 split (- s ⇒ t)  =  (+ s) ⇒ (- t)
 split (+ p ⇑ g)  =  other
 split (- p ⇑ g)  =  other
-split (* id)      =  id
+split (* id)     =  id
 split (* s ⇒ t)  =  (* s) ⇒ (* t)
 ```
 
+Safe casts are only `id` or `_⇒_`.
 ```
 split-*≢other : ∀ {A B} (q : A ⊑ B) → split (* q) ≢ other
 split-*≢other id ()
-```
-
-```
-=>ᶜ-effects : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → E =>ᵉ F
-=>ᶜ-effects (+ ⟨ p ⟩ _) = + p
-=>ᶜ-effects (- ⟨ p ⟩ _) = - p
-=>ᶜ-effects (* ⟨ p ⟩ _) = * p
-
-=>ᶜ-returns : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → A => B
-=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
-=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
-=>ᶜ-returns (* ⟨ _ ⟩ q) = * q
 ```
 
 ```
@@ -327,14 +338,7 @@ splitᶜ : ∀ {E F A B}
 splitᶜ = split ∘ =>ᶜ-returns
 ```
 
-```
-pure± : (A′ => A) → (⟨ E ⟩ A′) =>ᶜ (⟨ E ⟩ A)
-pure± (+ A≤) = + ⟨ id ⟩ A≤
-pure± (- A≤) = - ⟨ id ⟩ A≤
-pure± (* A⊑) = * ⟨ ⊑ᵉ-refl ⟩ A⊑
-```
-
-## Reduction
+## Wrapping functions
 
 ```
 infix 2 _↦_ _—→_
@@ -344,6 +348,8 @@ infix 2 _↦_ _—→_
 ƛ-wrap ∓s ±t M =
   ƛ cast ±t (lift M · (cast (pure± ∓s) (` Z)))
 ```
+
+## Reduction
 
 We first define a reduction relation `_↦_` on redexes,
 and then close it under congruence, as `_—↠_`.
@@ -500,17 +506,23 @@ type's indices.
 data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 
   ξξ : ∀ {Γ A B} {M N : Γ ⊢ A} {M′ N′ : Γ ⊢ B}
-    → ( ℰ : Frame Γ A B)
-    → M′ ≡ ℰ ⟦ M ⟧
-    → N′ ≡ ℰ ⟦ N ⟧
-    → M ↦ N
-      --------
-    → M′ —→ N′
+    →  (ℰ : Frame Γ A B)
+    →  M′ ≡ ℰ ⟦ M ⟧
+    →  N′ ≡ ℰ ⟦ N ⟧
+    →  M ↦ N
+       --------
+    →  M′ —→ N′
 ```
 
-Notation
+Notation to hide the fording indices.
 ```
-pattern ξ E M—→N = ξξ E refl refl M—→N
+pattern ξ ℰ M—→N = ξξ ℰ refl refl M—→N
+{-
+  ξ  :  (ℰ : Frame Γ A B)
+     →  M ↦ N
+        --------
+     →  ℰ ⟦ M ⟧ —→ ℰ ⟦ N ⟧
+-}
 ```
 
 ## Reflexive and transitive closure of reduction
@@ -622,111 +634,210 @@ unframe-blame □ blame≡ = blame≡
 
 ## Progress
 
-Every term that is well typed and closed is either
-blame or a value or takes a reduction step.
-
+Every term that is well typed and closed either takes
+a reduction step or belongs to one of several well-defined
+classes of normal forms: `blame`, a value, or a `pending`
+operation in some context.
+The following data type lists those possible cases.
 ```
 data Progress {P} : (∅ ⊢ P) → Set where
 
   step : ∀ {M N : ∅ ⊢ P}
-    → M —→ N
-      ----------
-    → Progress M
+    →  M —→ N
+       ----------
+    →  Progress M
 
   done : ∀ {M : ∅ ⊢ P}
-    → Value M
-      ----------
-    → Progress M
+    →  Value M
+       ----------
+    →  Progress M
 
   blame : ∀ {Q}
-   → (E : Frame ∅ Q P)
-     ---------------------
-   → Progress (E ⟦ blame ⟧)
+    →  (E : Frame ∅ Q P)
+       ---------------------
+    →  Progress (E ⟦ blame ⟧)
 
-  performing : ∀ {e} {V} ℰ
-    → (e∈E : e ∈☆ E)
-    → Value V
-    → ¬ handled e ℰ
-      ------------------
-    → Progress (ℰ ⟦ perform e∈E V ⟧)
+  pending : ∀ {e} {V} ℰ
+    →  (e∈E : e ∈☆ E)
+    →  Value V
+    →  ¬ handled e ℰ
+       ------------------
+    →  Progress (ℰ ⟦ perform e∈E V ⟧)
+```
 
+As one subcase of the proof of progress, we prove that a `cast` applied to a
+value always takes a step.
+```
 progress± : ∀ {V : ∅ ⊢ P}
   → (v : Value V)
   → (±p : P =>ᶜ Q)
     --------------------
   → ∃[ M ](cast ±p V ↦ M)
+```
+
+Note that the effect component of the cast is ignored because the term under
+the cast is a value. Only the value cast matters.
+The reduction rule to be applied depends on the structure of the `cast`.
+We first try to `split` the cast.
+```
 progress± v ±p with splitᶜ ±p in e
+```
+
+If the cast is an identity cast, then the `ident` rule applies, removing the
+cast.
+```
 progress± v     _ | id                       =  _ , ident e v
+```
+
+If the cast is between functions, then the `wrap` rule applies,
+wrapping the input and output of the function in casts.
+```
 progress± (ƛ _) _ | _ ⇒ _                    =  _ , wrap e
+```
+
+Otherwise, we have a cast to or from the dynamic type `★`.
+If it is an upcast to `★`, the `expand` rule wraps the value in a box.
+```
 progress± v       (+ ⟨ _ ⟩ (_ ⇑ g)) | other  =  _ , expand v g
+```
+
+If it is a downcast from `★`, the cast value must be a box.
+A run-time tag comparison is performed. If the tags match, we unbox the box
+with `collapse`. If the tags don't match, we raise blame with `collide`.
+```
 progress± (v ⇑ g) (- ⟨ _ ⟩ (_ ⇑ h)) | other
     with ground g ≡? ground h
 ... | yes refl rewrite uniqueG g h           =  _ , collapse v h
 ... | no  G≢H                                =  _ , collide v g h G≢H
-progress± _ (* ⟨ _ ⟩ q) | other              =  ⊥-elim (split-*≢other q e)
+```
 
+Safe casts `* q` are either identity casts or function casts, so the `other` case is
+vacuous for those.
+```
+progress± _ (* ⟨ _ ⟩ q) | other              =  ⊥-elim (split-*≢other q e)
+```
+
+We finally reach the progress proof.
+```
 progress :
     (M : ∅ ⊢ P)
     -----------
   → Progress M
+```
 
+Abstractions and constants are values.
+```
 progress (ƛ N)                           =  done (ƛ N)
+progress ($ k)                           =  done ($ k)
+```
+
+Blame is in its own category in the progress theorem.
+```
+progress blame                           =  blame □
+```
+
+To reduce an application, we first try to reduce the function subterm.
+The `blame`, `step`, and `pending` cases are propagated accordingly (by congruence).
+If the function is already a value (`done (ƛ N)`), we try to reduce
+its argument. If both operands of the application are values (`done w`),
+we may take a `β` step.
+```
 progress (L · M) with progress L
 ... | blame ℰ                            =  blame ([ ℰ ]· M)
 ... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]· M) L↦L′)
-... | performing ℰ e∈E v ¬e//ℰ           =  performing ([ ℰ ]· M) e∈E v ¬e//ℰ
+... | pending ℰ e∈E v ¬e//ℰ              =  pending ([ ℰ ]· M) e∈E v ¬e//ℰ
 ... | done (ƛ N) with progress M
 ...     | blame ℰ                        =  blame ((ƛ N) ·[ ℰ ])
 ...     | step (ξ ℰ M↦M′)                =  step (ξ ((ƛ N) ·[ ℰ ]) M↦M′)
-...     | performing ℰ e∈E v ¬e//ℰ       =  performing ((ƛ N) ·[ ℰ ]) e∈E v ¬e//ℰ
+...     | pending ℰ e∈E v ¬e//ℰ          =  pending ((ƛ N) ·[ ℰ ]) e∈E v ¬e//ℰ
 ...     | done w                         =  step (ξ □ (β w))
-progress ($ k)                           =  done ($ k)
+```
+
+Primitive operators behave similarly. We try to reduce each operand,
+and if both are values, we may take a `δ` step.
+```
 progress (L ⦅ _⊕_ ⦆ M) with progress L
 ... | blame ℰ                            =  blame ([ ℰ ]⦅ _⊕_ ⦆ M)
 ... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]⦅ _⊕_ ⦆ M) L↦L′)
-... | performing ℰ e∈E v ¬e//ℰ           =  performing ([ ℰ ]⦅ _⊕_ ⦆ M) e∈E v ¬e//ℰ
+... | pending ℰ e∈E v ¬e//ℰ              =  pending ([ ℰ ]⦅ _⊕_ ⦆ M) e∈E v ¬e//ℰ
 ... | done ($ k) with progress M
 ...     | blame ℰ                        =  blame (($ k) ⦅ _⊕_ ⦆[ ℰ ])
 ...     | step (ξ ℰ M↦M′)                =  step (ξ (($ k) ⦅ _⊕_ ⦆[ ℰ ]) M↦M′)
-...     | performing ℰ e∈E v ¬e//ℰ       =  performing (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e∈E v ¬e//ℰ
+...     | pending ℰ e∈E v ¬e//ℰ          =  pending (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e∈E v ¬e//ℰ
 ...     | done ($ k′)                    =  step (ξ □ δ)
+```
+
+A box constructor reduces its argument, and a boxed value is a value.
+```
 progress (M ⇑ g) with progress M
 ... | blame ℰ                            =  blame ([ ℰ ]⇑ g)
 ... | step (ξ ℰ M↦M′)                    =  step (ξ ([ ℰ ]⇑ g) M↦M′)
-... | performing ℰ e∈E v ¬e//ℰ            =  performing ([ ℰ ]⇑ g) e∈E v ¬e//ℰ
+... | pending ℰ e∈E v ¬e//ℰ              =  pending ([ ℰ ]⇑ g) e∈E v ¬e//ℰ
 ... | done v                             =  done (v ⇑ g)
+```
+
+For casts, we also try to reduce the term under the cast.
+`blame` and `step` are wrapped by congruence.
+```
 progress (cast ±p M) with progress M
 ... | blame ℰ           =  blame (`cast ±p [ ℰ ])
 ... | step (ξ ℰ M↦M′)   =  step (ξ (`cast ±p [ ℰ ]) M↦M′)
+```
+
+When a computation under a cast performs an operation `e`,
+the effect cast validates that the operation is expected,
+\ie{} it checks whether `e` is a member of the effect `F`
+at that point. If it is (`yes`), then `e` remains unhandled.
+If `e` is not allowed (`no`), then blame is raised by `castᵉ-blame`.
+```
 progress (cast {Q = ⟨ F ⟩ _} ±p M)
-    | performing {e = e} ℰ e∈E v ¬e//ℰ
+    | pending {e = e} ℰ e∈E v ¬e//ℰ
         with e ∈☆? F
-...     | yes e∈F = performing (`cast ±p [ ℰ ]) e∈E v (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
+...     | yes e∈F = pending (`cast ±p [ ℰ ]) e∈E v (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
 ...     | no  ¬∈  = step (ξ □ (castᵉ-blame ¬∈ ¬e//ℰ v refl))
+```
+
+Finally, when a cast is applied to a value, we apply the lemma `progress±`
+that we proved earlier.
+```
 progress (cast ±p M) 
     | done v
         with progress± v ±p
 ...     | _ , V⟨±p⟩↦N                        = step (ξ □ V⟨±p⟩↦N)
-progress blame                           =  blame □
+```
+
+Before pending an operation, we reduce its argument.
+Once it is a value, the operation is `pending`.
+```
 progress (perform- e∈E M eq) with progress M
 ... | blame ℰ                            = blame (″perform e∈E [ ℰ ] eq)
 ... | step (ξ ℰ M↦M′)                    = step (ξ (″perform e∈E [ ℰ ] eq) M↦M′)
-... | performing ℰ e′∈E′ v ¬e′//ℰ        = performing (″perform e∈E [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
+... | pending ℰ e′∈E′ v ¬e′//ℰ           = pending (″perform e∈E [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
 ... | done v with eq
-...   | refl = performing □ e∈E v (λ())
+...   | refl = pending □ e∈E v (λ())
+```
+
+A handler extends `done` computations with its return clause and intercepts
+`pending` operations with the relevant operation clause, if any,
+and forwards unhandled operations to outer handlers.
+```
 progress (handle H M) with progress M
 ... | blame ℰ = blame (′handle H [ ℰ ])
 ... | step (ξ ℰ M↦M′) = step (ξ (′handle H [ ℰ ]) M↦M′)
 ... | done v = step (ξ □ (handle-value v))
-... | performing {e = e} ℰ e∈E v ¬e//ℰ with e ∈? Hooks H in eq
+... | pending {e = e} ℰ e∈E v ¬e//ℰ with e ∈? Hooks H in eq
 ...   | yes e∈H = step (ξ □ (handle-perform v ¬e//ℰ eq))
-...   | no ¬e∈H = performing (′handle H [ ℰ ]) e∈E v (¬handled-handle {H = H} ℰ ¬e∈H ¬e//ℰ)
+...   | no ¬e∈H = pending (′handle H [ ℰ ]) e∈E v (¬handled-handle {H = H} ℰ ¬e∈H ¬e//ℰ)
 ```
-
 
 ## Evaluation
 
-Gas is specified by a natural number:
+The `progress` function computes a single reduction step.
+It must be iterated to run a computation to its conclusion.
+
+Computations may run forever. We ensure that the evaluation process terminates
+by limiting it to a finite number of steps, so that it can be defined in Agda.
+*Gas* is this bound on the number of reduction steps.
 ```
 record Gas : Set where
   constructor gas
@@ -735,6 +846,7 @@ record Gas : Set where
 ```
 When our evaluator returns a term `N`, it will either give evidence that
 `N` is a value, or indicate that blame occurred or it ran out of gas.
+\lyx{TODO: what to do/say about `pending`}
 ```
 data Finished {P} : (∅ ⊢ P) → Set where
 
@@ -748,7 +860,7 @@ data Finished {P} : (∅ ⊢ P) → Set where
       ---------------------
     → Finished (E ⟦ blame ⟧)
 
-  performing : ∀ {e V ℰ}
+  pending : ∀ {e V ℰ}
     → (e∈E : e ∈☆ E)
     → Value V
     → (e//ℰ : ¬ handled e ℰ)
@@ -759,8 +871,8 @@ data Finished {P} : (∅ ⊢ P) → Set where
       ----------
     → Finished N
 ```
-Given a term `L` of type `A`, the ev aluator will, for some `N`, return
-a reduction sequence from `L` to `N`  and an indication of whether
+Given a term `L` of type `A`, the evaluator will, for some `N`, return
+a reduction sequence from `L` to `N` and an indication of whether
 reduction finished:
 ```
 data Steps {A} : ∅ ⊢ A → Set where
@@ -783,7 +895,7 @@ eval (gas (suc m)) L
     with progress L
 ... | done v               =  steps (L ∎) (done v)
 ... | blame E              =  steps (L ∎) (blame E)
-... | performing ℰ e∈E v ¬e//ℰ =  steps (L ∎) (performing e∈E v ¬e//ℰ)
+... | pending ℰ e∈E v ¬e//ℰ =  steps (L ∎) (pending e∈E v ¬e//ℰ)
 ... | step {L} {M} L—→M
     with eval (gas m) M
 ... | steps M—↠N fin       =  steps (L —→⟨ L—→M ⟩ M—↠N) fin

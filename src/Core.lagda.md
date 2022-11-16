@@ -67,7 +67,9 @@ constants, and primitive operators). Then three typing rules extend the
 calculus with gradual typing (casts, boxes, and blame), and two more with
 algebraic effects (operations and handlers).
 
-\lyx{Explain this syntax}
+Within an `interleaved mutual` block, constructors can be declared in an
+anonymous `data _ where` block, which is not associated to any one data type.
+The data type that a constructor belongs to is inferred from its result type.
 ```
   data _ where
 ```
@@ -77,17 +79,9 @@ so they perform no operations.
 
 There are several possible ways to formulate the typing rules for variables
 and values (abstractions, constants, and boxes).
-
-\begin{itemize}
- \item Variables and values have an unconstrained effect parameter `E`.
-  This is the way it currently works.
- \item Variables and/or values have the empty effect `ε`. This requires a notion
-  of effect subtyping in order to use variables and values in effectful contexts.
- \begin{itemize}
-  \item When variables have an empty effect, they will generally be wrapped in
-   a subtyping cast `ε ⊑ᵉ E`
- \end{itemize}
-\end{itemize}
+Here, we make them effect polymorphic, which leads to simpler operational semantics.
+An alternative is to give them only the empty effect `ε`. Values would then always be
+wrapped with the subsumption rule.
 
 ```
     `_ : ∀ {Γ E A}

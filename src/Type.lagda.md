@@ -212,8 +212,8 @@ run-time checks. We define precision in the rest of this section.
 ## Ground types
 
 One early dimension to consider in designing a gradual type system is whether
-types are compared *deeply* or *shallowly* at run time. Deep type comparisons
-are known to break the gradual guarantee, so we will go with shallow type
+to compare types at run time *deeply* or *shallowly*. Deep type comparisons
+are known to break the gradual guarantee~\citep{boyland2014problem}, so we will go with shallow type
 comparisons. *Ground types* are those that reflect exactly the information learned
 from such a shallow comparison. We only look at the first type constructor
 of a type, so the type is either a base type `$_` or a function type `_⇒_`,
@@ -615,4 +615,25 @@ _=>ᵉ_ = Cast _≤ᵉ_ _⊑ᵉ_
 ε=>ᶜ : ∀ {E A} → (⟨ ε ⟩ A) =>ᶜ (⟨ E ⟩ A)
 ε=>ᶜ {☆} = + ⟨ ¡≤☆ ⟩ id
 ε=>ᶜ {¡ _} = * ⟨ ¡ []⊆ ⟩ id
+```
+
+Projections of computation casts.
+```
+=>ᶜ-effects : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → E =>ᵉ F
+=>ᶜ-effects (+ ⟨ p ⟩ _) = + p
+=>ᶜ-effects (- ⟨ p ⟩ _) = - p
+=>ᶜ-effects (* ⟨ p ⟩ _) = * p
+
+=>ᶜ-returns : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → A => B
+=>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
+=>ᶜ-returns (- ⟨ _ ⟩ q) = - q
+=>ᶜ-returns (* ⟨ _ ⟩ q) = * q
+```
+
+Pure casts: the identity on effects.
+```
+pure± : ∀ {E A B} → (A => B) → (⟨ E ⟩ A) =>ᶜ (⟨ E ⟩ B)
+pure± (+ A≤) = + ⟨ id ⟩ A≤
+pure± (- A≤) = - ⟨ id ⟩ A≤
+pure± (* A⊑) = * ⟨ ⊑ᵉ-refl ⟩ A⊑
 ```
