@@ -90,10 +90,10 @@ and values (abstractions, constants, and boxes).
 \end{itemize}
 
 ```
-    `_ : ∀ {Γ A}
+    `_ : ∀ {Γ E A}
       →  Γ ∋ A
          -----------
-      →  Γ ⊢ ⟨ ε ⟩ A
+      →  Γ ⊢ ⟨ E ⟩ A
 ```
 
 The typing rule for abstractions extends the standard rule from
@@ -236,13 +236,6 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
   open _⊢_➡_ public
 ```
 
-A shorthand for variables in an effectful context:
-
-```
-var : ∀ {Γ E A} → Γ ∋ A → Γ ⊢ ⟨ E ⟩ A
-var x = cast ε=>ᶜ (` x)
-```
-
 ## Substitutions
 
 Substitutions in terms using de Bruijn indices are defined in two steps:
@@ -267,7 +260,7 @@ _→ᴿ_ : Context → Context → Set
 Substitution maps: maps from variables to terms in another context.
 ```
 _→ˢ_ : Context → Context → Set
-Γ →ˢ Δ = ∀ {A} → Γ ∋ A → Δ ⊢ ⟨ ε ⟩ A
+Γ →ˢ Δ = ∀ {E A} → Γ ∋ A → Δ ⊢ ⟨ E ⟩ A
 ```
 
 Term maps: maps from terms to terms, changing their context.
@@ -485,19 +478,19 @@ lift∘ren {Γ} ρ M  =  trans (ren∘ren ρ≡₁ M) (sym (ren∘ren ρ≡₂ M
   ρ≡₂ (S x) = refl
 
 sub∘ren▷ : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → σ′ (ρ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
     ----------------------------------------------------------
-  → (∀ {B A} (x : Γ ▷ B ∋ A) → sub▷ σ′ (ren▷ ρ x) ≡ sub▷ σ″ x)
+  → (∀ {E B A} (x : Γ ▷ B ∋ A) → sub▷ σ′ {E} (ren▷ ρ x) ≡ sub▷ σ″ x)
 sub∘ren▷ σ≡ Z      =  refl
 sub∘ren▷ σ≡ (S x)  =  cong (ren S_) (σ≡ x)
 
 sub∘ren : ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → σ′ (ρ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
     ----------------------------------------------------------
   → (∀ {A} (M : Γ ⊢ A) → sub σ′ (ren ρ M) ≡ sub σ″ M)
 
 sub∘ren-on-perform :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → σ′ (ρ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
     -------------------------------------------------
   → (∀ {Hooks Q} (H : On-Perform Γ Q Hooks)
      → sub-on-perform σ′ (ren-on-perform ρ H) ≡ sub-on-perform σ″ H)
@@ -506,7 +499,7 @@ sub∘ren-on-perform ρ≡ (M ∷ Ms)
   = cong₂ _∷_ (sub∘ren (sub∘ren▷ (sub∘ren▷ ρ≡)) M) (sub∘ren-on-perform ρ≡ Ms)
 
 sub∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → σ′ (ρ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
     -------------------------------------------------
   → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → subʰ σ′ (renʰ ρ H) ≡ subʰ σ″ H)
 sub∘renʰ ρ≡ H = cong₂
@@ -527,9 +520,9 @@ sub∘ren {ρ = ρ} {σ′ = σ′} ρ≡ (handle H M)
   = cong₂ handle (sub∘renʰ {ρ = ρ} {σ′ = σ′} ρ≡ H) (sub∘ren ρ≡ M)
 
 ren∘sub▷ : ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → ren ρ′ (σ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (σ {E} x) ≡ σ″ x)
     -------------------------------------------------------------------
-  → (∀ {B A} (x : Γ ▷ B ∋ A) → ren (ren▷ ρ′) (sub▷ σ x) ≡ sub▷ σ″ x)
+  → (∀ {E B A} (x : Γ ▷ B ∋ A) → ren (ren▷ ρ′) (sub▷ σ {E} x) ≡ sub▷ σ″ x)
 ren∘sub▷ σ≡ Z      =  refl
 ren∘sub▷ {Γ′ = Γ′} {σ = σ} {ρ′ = ρ′} σ≡ {B = B} (S x)  =
     trans (trans (ren∘ren ρ∘₁ (σ x))
@@ -543,12 +536,12 @@ ren∘sub▷ {Γ′ = Γ′} {σ = σ} {ρ′ = ρ′} σ≡ {B = B} (S x)  =
   ρ∘₂ x = refl
 
 ren∘sub : ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → ren ρ′ (σ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (σ {E} x) ≡ σ″ x)
     --------------------------------------------------------
   → (∀ {A} (M : Γ ⊢ A) → ren ρ′ (sub σ M) ≡ sub σ″ M)
 
 ren∘sub-on-perform :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {ρ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → ren ρ′ (ρ x) ≡ ρ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (ρ {E} x) ≡ ρ″ x)
     -------------------------------------------------
   → (∀ {Hooks Q} (H : On-Perform Γ Q Hooks)
      → ren-on-perform ρ′ (sub-on-perform ρ H) ≡ sub-on-perform ρ″ H)
@@ -557,7 +550,7 @@ ren∘sub-on-perform ρ≡ (M ∷ Ms)
   = cong₂ _∷_ (ren∘sub (ren∘sub▷ (ren∘sub▷ ρ≡)) M) (ren∘sub-on-perform ρ≡ Ms)
 
 ren∘subʰ :  ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
-  → (∀ {A} (x : Γ ∋ A) → ren ρ′ (σ x) ≡ σ″ x)
+  → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (σ {E} x) ≡ σ″ x)
     -------------------------------------------------
   → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → renʰ ρ′ (subʰ σ H) ≡ subʰ σ″ H)
 ren∘subʰ ρ≡ H = cong₂
@@ -580,9 +573,9 @@ lift∘sub : ∀ {Γ Δ A B} (σ : Γ →ˢ Δ) (M : Γ ⊢ B)
   → lift {A = A} (sub σ M) ≡ sub (sub▷ σ) (lift {A = A} M)
 lift∘sub {Γ} σ M  =  trans (ren∘sub σ≡₁ M) (sym (sub∘ren σ≡₂ M))
   where
-  σ≡₁ : ∀ {A} (x : Γ ∋ A) → lift (σ x) ≡ lift (σ x)
+  σ≡₁ : ∀ {A E} (x : Γ ∋ A) → lift (σ {E} x) ≡ lift (σ x)
   σ≡₁ x = refl
-  σ≡₂ : ∀ {A} (x : Γ ∋ A) → sub▷ σ (S x) ≡ lift (σ x)
+  σ≡₂ : ∀ {A E} (x : Γ ∋ A) → sub▷ σ {E} (S x) ≡ lift (σ x)
   σ≡₂ Z     = refl
   σ≡₂ (S x) = refl
 ```
@@ -594,7 +587,7 @@ Idᴿ : ∀ {Γ} → (ρ : Γ →ᴿ Γ) → Set
 Idᴿ {Γ} ρ  =  ∀ {A} (x : Γ ∋ A) → ρ x ≡ x
 
 Idˢ : ∀ {Γ} → (σ : Γ →ˢ Γ) → Set
-Idˢ {Γ} σ  =  ∀ {A} (x : Γ ∋ A) → σ x ≡ ` x
+Idˢ {Γ} σ  =  ∀ {E A} (x : Γ ∋ A) → σ {E} x ≡ ` x
 
 Idᵀ : ∀ {Γ} → (θ : Γ →ᵀ Γ) → Set
 Idᵀ {Γ} θ  =  ∀ {A} (M : Γ ⊢ A) → θ M ≡ M
@@ -651,7 +644,7 @@ subId▷ : ∀ {Γ} {σ : Γ →ˢ Γ}
     ----------------------------
   → ∀ {A} → Idˢ {Γ ▷ A} (sub▷ σ)
 subId▷ σId Z                    =  refl
-subId▷ σId {A} (S x) rewrite σId x  =  refl
+subId▷ σId {A} {E} (S x) rewrite σId {E} x  =  refl
 
 subId : ∀ {Γ} {σ : Γ →ˢ Γ}
   → Idˢ σ
@@ -676,7 +669,7 @@ subIdʰ ρId H = cong₂
   (subId-on-perform ρId (on-perform H))
   where open _⊢_➡_ H
 
-subId σId {⟨ E ⟩ _} (` x) rewrite σId x                     =  refl
+subId σId {⟨ E ⟩ _} (` x) rewrite σId {E} x                 =  refl
 subId σId (ƛ M) rewrite subId (subId▷ σId) M                =  refl
 subId σId (L · M) rewrite subId σId L | subId σId M         =  refl
 subId σId ($ k)                                             =  refl

@@ -342,7 +342,7 @@ infix 2 _↦_ _—→_
 ƛ-wrap : ∀ (∓s : A′ => A) (±t : P =>ᶜ P′) 
   → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P)) → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A′ ⇒ P′))
 ƛ-wrap ∓s ±t M =
-  ƛ cast ±t (lift M · (cast (pure± ∓s) (var Z)))
+  ƛ cast ±t (lift M · (cast (pure± ∓s) (` Z)))
 ```
 
 We first define a reduction relation `_↦_` on redexes,
@@ -487,7 +487,7 @@ clause : Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q
                                     -- TODO: a more declarative reformulation?
     → handle H (ℰ ⟦ perform e∈E V ⟧)
       ↦ All.lookup (on-perform H) e∈Hooks
-          [ ƛ (handle (liftʰ (liftʰ H)) (liftᶠ (liftᶠ ℰ) ⟦ var Z ⟧)) ]
+          [ ƛ (handle (liftʰ (liftʰ H)) (liftᶠ (liftᶠ ℰ) ⟦ ` Z ⟧)) ]
           [ gvalue v ]
     -- TODO: explain the order of these substitutions and why the 2 lifts.
     -- TODO: we can avoid one lift by doing a simultaneous substitution, but there is still one left.
@@ -594,7 +594,7 @@ value-irreducible v V—→M = nope V—→M v
 
 Variables are irreducible.
 ```
-variable-irreducible : ∀ {x : Γ ∋ A} {N : Γ ⊢ ⟨ ε ⟩ A}
+variable-irreducible : ∀ {x : Γ ∋ A} {N : Γ ⊢ ⟨ E ⟩ A}
     ------------
   → ¬ (` x —→ N)
 variable-irreducible (ξξ □ refl _ ())
@@ -807,23 +807,23 @@ pattern  $★_ {ι = ι} k  =  $ k ⇑ $ ι
 pattern  _⦅_⦆★_ {ι = ι} {ι′} {ι″} M _⊕_ N
   =  cast (+ ⟨ id ⟩ (ι″ ≤★)) (cast (- ⟨ id ⟩ (ι ≤★)) M ⦅ _⊕_ ⦆ cast (- ⟨ id ⟩ (ι′ ≤★)) N) 
 
-data Static {Γ} : ∀ {E} → (Γ ⊢ ⟨ E ⟩ A) → Set where
+data Static {Γ E} : (Γ ⊢ ⟨ E ⟩ A) → Set where
 
   `_ :
       (x : Γ ∋ A)
       ------------
     → Static (` x)
 
-  ƛ_ : ∀ {E F} {N : Γ ▷ A ⊢ ⟨ F ⟩ B}
+  ƛ_ : ∀ {F} {N : Γ ▷ A ⊢ ⟨ F ⟩ B}
     → Static N
       ------------
-    → Static {E = E} (ƛ N)
+    → Static (ƛ N)
 
-  _·_ : ∀ {E} {L : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)} {M : Γ ⊢ ⟨ E ⟩ A}
+  _·_ : ∀ {L : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)} {M : Γ ⊢ ⟨ E ⟩ A}
     → Static L
     → Static M
       --------------
-    → Static {E = E} (L · M)
+    → Static (L · M)
 
   $_ : ∀ {ι}
     → (k : rep ι)
@@ -852,7 +852,7 @@ static {M = M} m  =  M
 ⌈ S x ⌉ˣ        = S ⌈ x ⌉ˣ
 
 ⌈_⌉ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} → Static M → (⌈ Γ ⌉ᴳ ⊢ ⟨ ☆ ⟩ ★)
-⌈ ` x ⌉          =  var ⌈ x ⌉ˣ
+⌈ ` x ⌉          =  ` ⌈ x ⌉ˣ
 ⌈ ƛ N ⌉          =  ƛ★ ⌈ N ⌉
 ⌈ L · M ⌉        =  ⌈ L ⌉ ·★ ⌈ M ⌉
 ⌈ $ k ⌉          =  $★ k
@@ -909,7 +909,6 @@ inc2—↠3  =
   —→⟨ ξ □ δ ⟩ $ 3
   ∎
 
-{-
 inc★2★—↠3★  : inc★ ·★ ($★ 2) —↠ $★ 3
 inc★2★—↠3★  =
   begin
@@ -939,7 +938,6 @@ inc★2★—↠3★  =
   —→⟨ ξ ([ □ ]⇑ $ℕ) (ident refl ($ 3)) ⟩
     $ℕ★ 3
   ∎
--}
 
 {- TODO
 inc★′2★—↠3★  : inc★′ ·★ ($★ 2) —↠ $★ 3
