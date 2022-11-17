@@ -12,8 +12,8 @@
 
 		<!-- Theme used for syntax highlighted code -->
 		<link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css">
-		<link rel="stylesheet" href="style.css">
 		<link rel="stylesheet" href="Agda.css">
+		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
     <div hidden>
