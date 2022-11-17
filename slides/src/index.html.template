@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>reveal.js</title>
+
+		<link rel="stylesheet" href="reveal.js/dist/reset.css">
+		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
+		<link rel="stylesheet" href="reveal.js/dist/theme/serif.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css">
+		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="Agda.css">
+	</head>
+	<body>
+    <div hidden>
+      \(
+        \def\N{\mathbb{N}}
+        \def\B{\mathbb{B}}
+        \def\nat{\texttt{nat}}
+        \def\bool{\texttt{bool}}
+        \definecolor{deemph}{RGB}{75,75,75}
+        \def\colortype#1{{\color{Blue}#1}}
+        \def\colorterm#1{{\color{deemph}#1}}
+
+        \def\lam#1#2{\lambda#1. #2}
+        \def\app#1#2{#1\,#2}
+        \def\hastype#1#2#3{\colortype{#1} \vdash \colorterm{#2} : \colortype{#3}}
+      \)
+    </div>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+          <h2>Gradual algebraic effects</h2>
+          <h3>formalized in Agda</h3>
+          <div style="text-align:right;">
+            <div><b>Li-yao Xia</b></div>
+            <div>Philip Wadler</div>
+          </div>
+        </section>
+        <section>
+				  <section>Algebraic effects</section>
+        </section>
+        <section>
+				  <section>Gradual types</section>
+        </section>
+        <section>
+          \[\begin{prooftree}
+              \AxiomC{\(\hastype{\Gamma,x:A}{M}{B}\)}
+            \UnaryInfC{\(\hastype{\Gamma}{\lam{x}{M}}{A \to B}\)}
+          \end{prooftree}\]
+        </section>
+        <section>
+          \[\begin{prooftree}
+              \AxiomC{\(\hastype{\Gamma}{N}{A\to B}\)}
+              \AxiomC{\(\hastype{\Gamma}{M}{A}\)}
+            \BinaryInfC{\(\hastype{\Gamma}{\app{N}{M}}{B}\)}
+          \end{prooftree}\]
+        </section>
+        <section>
+          \[\begin{prooftree}
+                  \AxiomC{}
+                  \RightLabel{Tag \(\nat\)}
+                \UnaryInfC{\(\nat \le \star\)}
+                  \AxiomC{}
+                  \RightLabel{Tag \(\bool\)}
+                \UnaryInfC{\(\bool \le \star\)}
+              \BinaryInfC{\((\nat \to \bool) \le (\star \to \star)\)}
+              \RightLabel{Tag \((\star \to \star)\)}
+            \UnaryInfC{\((\nat \to \bool) \le \star\)}
+          \end{prooftree}\]
+        </section>
+        <section>
+          <p>Some code</p>
+          <code>
+            {% block test %}{% endblock %}
+          </code>
+        </section>
+			</div>
+		</div>
+
+		<script src="reveal.js/dist/reveal.js"></script>
+		<script src="reveal.js/plugin/notes/notes.js"></script>
+		<script src="reveal.js/plugin/markdown/markdown.js"></script>
+		<script src="reveal.js/plugin/highlight/highlight.js"></script>
+    <script src="reveal.js/plugin/math/math.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+        slideNumber: 'c',
+
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes, RevealMath.MathJax3 ]
+			});
+		</script>
+	</body>
+</html>
