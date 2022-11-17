@@ -18,7 +18,7 @@ static/Agda.css: html/Agda.css
 	cp $< $@
 
 html/$(MODULE).md html/Agda.css: src/$(MODULE).lagda.md
-	$(AGDA) -isrc --html --html-highlight=code $<
+	$(AGDA) --verbose=0 -i../src -isrc --html --html-highlight=code $<
 
 clean:
 	$(RM) -r html
