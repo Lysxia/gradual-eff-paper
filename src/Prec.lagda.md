@@ -354,7 +354,7 @@ data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ
       -------------------------
     → Γ≤ ⊢ M ≤ᴹ cast ±q M′ ⦂ r
 
-  safe-cast≤cast : ∀ {P Q P′ Q′} {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′}
+  *≤* : ∀ {P Q P′ Q′} {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′}
                    {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′}
                    {P⊑Q : P ⊑ᶜ Q} {P′⊑Q′ : P′ ⊑ᶜ Q′}
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
@@ -542,7 +542,7 @@ reflᴹ (M ⦅ _⊕_ ⦆ N)   =  ⦅⦆≤⦅⦆ _⊕_ (reflᴹ M) (reflᴹ N)
 reflᴹ (M ⇑ g)         =  ⇑≤⇑ g (reflᴹ M)
 reflᴹ (cast (+ p) M)  =  +≤+ (sym (left-idᶜ p)) (reflᴹ M)
 reflᴹ (cast (- p) M)  =  -≤- (left-idᶜ p) (reflᴹ M)
-reflᴹ (cast (* p) M)  =  safe-cast≤cast (reflᴹ M)
+reflᴹ (cast (* p) M)  =  *≤* (reflᴹ M)
 reflᴹ blame           =  blame≤
 reflᴹ (perform- e∈E M eq) = perform≤perform (reflᴹ M)
 reflᴹ (handle H M) = handle≤handle (reflʰ H) (reflᴹ M)
@@ -630,7 +630,7 @@ ren≤ ρ≤ (⇑≤⇑ g M≤)           =  ⇑≤⇑ g (ren≤ ρ≤ M≤)
 ren≤ ρ≤ (≤⇑ g M≤)            =  ≤⇑ g (ren≤ ρ≤ M≤)
 ren≤ ρ≤ (cast≤ e M≤)         =  cast≤ e (ren≤ ρ≤ M≤)
 ren≤ ρ≤ (≤cast e M≤)         =  ≤cast e (ren≤ ρ≤ M≤)
-ren≤ ρ≤ (safe-cast≤cast M≤)  =  safe-cast≤cast (ren≤ ρ≤ M≤)
+ren≤ ρ≤ (*≤* M≤)  =  *≤* (ren≤ ρ≤ M≤)
 ren≤ ρ≤ blame≤               =  blame≤
 ren≤ {ρ = ρ} ρ≤ {A≤ = A≤} {E = E}
   (wrap≤ {N = N} {∓s = ∓s} {±t} i e ƛN≤ƛN′)
@@ -700,7 +700,7 @@ sub≤ σ≤ (⇑≤⇑ g M≤)           =  ⇑≤⇑ g (sub≤ σ≤ M≤)
 sub≤ σ≤ (≤⇑ g M≤)            =  ≤⇑ g (sub≤ σ≤ M≤)
 sub≤ σ≤ (cast≤ e M≤)         =  cast≤ e (sub≤ σ≤ M≤)
 sub≤ σ≤ (≤cast e M≤)         =  ≤cast e (sub≤ σ≤ M≤)
-sub≤ σ≤ (safe-cast≤cast M≤)  =  safe-cast≤cast (sub≤ σ≤ M≤)
+sub≤ σ≤ (*≤* M≤)  =  *≤* (sub≤ σ≤ M≤)
 sub≤ σ≤ blame≤               =  blame≤
 sub≤ {σ = σ} σ≤ {E = E} (wrap≤ {N = N} {∓s = ∓s} {±t} i e ƛN≤ƛN′)
   rewrite sub∘ƛ-wrap {E = E} {∓s = ∓s} {±t} σ (ƛ N)
@@ -866,7 +866,7 @@ data _⊢_⇒ᶠ_∋_≤_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
       --------------------------------------------
     → Γ≤ ⊢ P≤ ⇒ᶠ A≤C ∋ ℰ ≤ `cast B=>C [ ℰ′ ]
 
-  safe-cast≤cast : ∀ {Q R Q′ R′}
+  *≤* : ∀ {Q R Q′ R′}
                    {Q≤ : Q ≤ᶜ Q′} {R≤ : R ≤ᶜ R′}
                    {Q⊑R : Q ⊑ᶜ R} {Q′⊑R′ : Q′ ⊑ᶜ R′} {ℰ ℰ′}
     → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
@@ -905,7 +905,7 @@ ren≤ᶠ ρ≤ ([ ℰ≤ ]⇑ g) = [ ren≤ᶠ ρ≤ ℰ≤ ]⇑ g
 ren≤ᶠ ρ≤ (≤⇑ ℰ≤) = ≤⇑ (ren≤ᶠ ρ≤ ℰ≤)
 ren≤ᶠ ρ≤ (cast≤ comm ℰ≤) = cast≤ comm (ren≤ᶠ ρ≤ ℰ≤)
 ren≤ᶠ ρ≤ (≤cast comm ℰ≤) = ≤cast comm (ren≤ᶠ ρ≤ ℰ≤)
-ren≤ᶠ ρ≤ (safe-cast≤cast ℰ≤) = safe-cast≤cast (ren≤ᶠ ρ≤ ℰ≤)
+ren≤ᶠ ρ≤ (*≤* ℰ≤) = *≤* (ren≤ᶠ ρ≤ ℰ≤)
 ren≤ᶠ ρ≤ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) = ″perform (e∈E , e∈E′) [ ren≤ᶠ ρ≤ ℰ≤ ] eq
 ren≤ᶠ ρ≤ (′handle H≤ [ ℰ≤ ]) = ′handle (ren≤ʰ ρ≤ H≤) [ ren≤ᶠ ρ≤ ℰ≤ ]
 
@@ -927,7 +927,7 @@ lift≤ᶠ = ren≤ᶠ S≤S
 ⟦⟧≤⟦⟧ (≤⇑ ℰ≤) M≤ = ≤⇑ _ (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ⟦⟧≤⟦⟧ (cast≤ comm ℰ≤) M≤ = cast≤ comm (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ⟦⟧≤⟦⟧ (≤cast comm ℰ≤) M≤ = ≤cast comm (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (safe-cast≤cast ℰ≤) M≤ = safe-cast≤cast (⟦⟧≤⟦⟧ ℰ≤ M≤)
+⟦⟧≤⟦⟧ (*≤* ℰ≤) M≤ = *≤* (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ⟦⟧≤⟦⟧ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) M≤ = perform≤perform (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ⟦⟧≤⟦⟧ (′handle H≤ [ ℰ≤ ]) M≤ = handle≤handle H≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ```
