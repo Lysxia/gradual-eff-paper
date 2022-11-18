@@ -562,6 +562,11 @@ record _⊑ᶜ_ P Q where
     returns : Typeᶜ.returns P ⊑  Typeᶜ.returns Q
 ```
 
+```
+⊑ᶜ-refl : ∀ {P} → P ⊑ᶜ P
+⊑ᶜ-refl = ⟨ ⊑ᵉ-refl ⟩ id
+```
+
 ## Casts
 
 ```

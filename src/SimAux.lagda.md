@@ -166,7 +166,7 @@ simβ w w′ (ƛ≤ƛ N≤N′) W≤W′
 
 simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ e ƛN≤ƛN′) W≤W′
     rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (gvalue w)
-    =  (ƛ N′) · W′ , (_ ∎) , cast≤ (cod≤ e′ e) (·≤· ƛN≤ƛN′ (cast≤ {r = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} (pure≤ {q = ⟨ id ⟩ _} {r = ⟨ id ⟩ _} (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
+    =  (ƛ N′) · W′ , (_ ∎) , cast≤ (cod≤ e′ e) (·≤· ƛN≤ƛN′ (cast≤ {r = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
   where qq = (cod≤ e′ e)
 
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′

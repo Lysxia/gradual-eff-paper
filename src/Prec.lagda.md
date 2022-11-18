@@ -121,7 +121,9 @@ commute≤ᵉ p q r  =  ⊤
 
 ```
 commute≤ᶜ : ∀ {P Q R} (±p : P =>ᶜ Q) (q : Q ≤ᶜ R) (r : P ≤ᶜ R) → Set
-commute≤ᶜ ±p (⟨ _ ⟩ q) (⟨ _ ⟩ r) = commute≤ (=>ᶜ-returns ±p) q r
+commute≤ᶜ (+ p) q r = p ⨟ᶜ q ≡ r
+commute≤ᶜ (- p) q r = p ⨟ᶜ r ≡ q
+commute≤ᶜ (* p) q r = ⊥
 
 ≤commuteᶜ : ∀ {A B C} (p : A ≤ᶜ B) (±q : B =>ᶜ C) (r : A ≤ᶜ C) → Set
 ≤commuteᶜ p (+ q) r  =  p ⨟ᶜ q ≡ r
@@ -132,23 +134,26 @@ commute≤ᶜ ±p (⟨ _ ⟩ q) (⟨ _ ⟩ r) = commute≤ (=>ᶜ-returns ±p) q
 ## Lemmas about commuting diagrams
 
 ```
+unique-≤ᵉ : ∀ {E F} {E≤ E≤′ : E ≤ᵉ F} → E≤ ≡ E≤′
+unique-≤ᵉ {E≤ = id} {E≤′ = id} = refl
+unique-≤ᵉ {E≤ = ¡≤☆} {E≤′ = ¡≤☆} = refl
+```
+
+```
 ≤returns : ∀ {P Q R} {p : P ≤ᶜ Q} {±q : Q =>ᶜ R} {r : P ≤ᶜ R}
   → ≤commuteᶜ p ±q r → ≤commute (_≤ᶜ_.returns p) (=>ᶜ-returns ±q) (_≤ᶜ_.returns r)
 ≤returns {±q = + _} refl = refl
 ≤returns {±q = - _} refl = refl
 
+returns≤ : ∀ {P Q R} {±p : P =>ᶜ Q} {q : Q ≤ᶜ R} {r : P ≤ᶜ R}
+  → commute≤ᶜ ±p q r → commute≤ (=>ᶜ-returns ±p) (_≤ᶜ_.returns q) (_≤ᶜ_.returns r)
+returns≤ {±p = + _} refl = refl
+returns≤ {±p = - _} refl = refl
+
 pure≤ : ∀ {E A B R} {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ R} {r : ⟨ E ⟩ A ≤ᶜ R}
   → commute≤ ±p (_≤ᶜ_.returns q) (_≤ᶜ_.returns r) → commute≤ᶜ (pure± ±p) q r
-pure≤ {±p = + _} refl = refl
-pure≤ {±p = - _} refl = refl
-```
-
-```
-{-
-unique-≤ᵉ : ∀ {E F} {E≤ E≤′ : E ≤ᵉ F} → E≤ ≡ E≤′
-unique-≤ᵉ {E≤ = id} {E≤′ = id} = refl
-unique-≤ᵉ {E≤ = ¡≤☆} {E≤′ = ¡≤☆} = refl
--}
+pure≤ {±p = + _} refl = cong (⟨_⟩ _) unique-≤ᵉ
+pure≤ {±p = - _} refl = cong (⟨_⟩ _) unique-≤ᵉ
 ```
 
 ```
@@ -199,8 +204,8 @@ cod≤ :  ∀ {A A′ A″ P P′ P″}
   → commute≤ ±p q r
     ---------------------------
   → commute≤ᶜ ±t (cod q) (cod r)
-cod≤ {±p = + s ⇒ t} {q = q} refl refl = cong _≤ᶜ_.returns (cod-⨟ (s ⇒ t) q)
-cod≤ {±p = - s ⇒ t} {r = r} refl refl = cong _≤ᶜ_.returns (cod-⨟ (s ⇒ t) r)
+cod≤ {±p = + s ⇒ t} {q = q} refl refl = cod-⨟ (s ⇒ t) q
+cod≤ {±p = - s ⇒ t} {r = r} refl refl = cod-⨟ (s ⇒ t) r
 
 ≤dom :  ∀ {A A′ A″ B B′ B″}
     {p : A ⇒ B ≤ A′ ⇒ B′} {±q : A′ ⇒ B′ => A″ ⇒ B″} {r : A ⇒ B ≤ A″ ⇒ B″}
@@ -441,7 +446,7 @@ data _=>_∋_≤_ : ∀ {P P′ Q Q′} → P ≤ᶜ P′ → Q ≤ᶜ Q′ → 
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
     ------------------------------------
   → Γ≤ ⊢ cast (+ p) M ≤ᴹ cast (+ q) M′ ⦂ t
-+≤+ e M≤M′ = cast≤ (cong _≤ᶜ_.returns e) (≤cast refl M≤M′)
++≤+ e M≤M′ = cast≤ e (≤cast refl M≤M′)
 ```
 
 Here is the derivation:

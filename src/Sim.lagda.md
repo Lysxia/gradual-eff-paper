@@ -82,11 +82,11 @@ sim (cast≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
 sim (cast≤ {q = ⟨ _ ⟩ id} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  V′ , M′—↠V′ , wrap≤ e′ e (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+    =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 sim (cast≤ {q = ⟨ _ ⟩ _ ⇒ _} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  V′ , M′—↠V′ , wrap≤ e′ e (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+    =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 sim (cast≤ {q = ⟨ _ ⟩ (q ⇑ ★⇒★)} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′

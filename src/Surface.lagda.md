@@ -102,13 +102,13 @@ open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; perform-
 ```
 
 ```
-infix 4 _≤ᶻ_ _≤ᵍ_ _∋_≤⦂_ _⊢_≤ᵈ_⦂_
+infix 4 _≤ᵘ_ _≤ᵍ_ _∋_≤⦂_ _⊢_≤ᵈ_⦂_
 
-data _≤ᶻ_ : Term → Term → Set where
-  `_ : ∀ {x} → ` x ≤ᶻ ` x
-  _·_ : ∀ {M M′ N N′} → N ≤ᶻ N′ → M ≤ᶻ M′ → N · M ≤ᶻ N′ · M′
-  fun : ∀ {x A A′ M M′} → A ≤ A′ → M ≤ᶻ M′ → fun x A M ≤ᶻ fun x A′ M′
-  perform : ∀ {e M M′} → M ≤ᶻ M′ → perform e M ≤ᶻ perform e M′
+data _≤ᵘ_ : Term → Term → Set where
+  `_ : ∀ {x} → ` x ≤ᵘ ` x
+  _·_ : ∀ {M M′ N N′} → N ≤ᵘ N′ → M ≤ᵘ M′ → N · M ≤ᵘ N′ · M′
+  fun : ∀ {x A A′ M M′} → A ≤ A′ → M ≤ᵘ M′ → fun x A M ≤ᵘ fun x A′ M′
+  perform : ∀ {e M M′} → M ≤ᵘ M′ → perform e M ≤ᵘ perform e M′
 ```
 
 ```
@@ -138,7 +138,7 @@ data _⊢_≤ᵈ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᵍ Γ′) : Term → Term → �
     →  Γ≤ ⊢ ` x ≤ᵈ ` x ⦂ ⟨ E≤ ⟩ A≤
 
   _·_ : ∀ {E E′ A A′ B B′ N N′ M M′}
-          {E≤ : E ≤ᵉ E′} {A⇒B≤ : (A ⇒ ⟨ E ⟩ B) ≤ (A′ ⇒ ⟨ E′ ⟩ B′)}
+          {A⇒B≤ : (A ⇒ ⟨ E ⟩ B) ≤ (A′ ⇒ ⟨ E′ ⟩ B′)}
           (let E≤ = _≤ᶜ_.effects (cod A⇒B≤))
     →  Γ≤ ⊢ N ≤ᵈ N′ ⦂ ⟨ E≤ ⟩ A⇒B≤
     →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ ⟨ E≤ ⟩ dom A⇒B≤
@@ -146,11 +146,11 @@ data _⊢_≤ᵈ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᵍ Γ′) : Term → Term → �
     →  Γ≤ ⊢ N · M ≤ᵈ N′ · M′ ⦂ cod A⇒B≤
 
 
-  fun : ∀ {E E′ F F′ A A′ B B′ x M M′}
-          {E≤ : E ≤ᵉ E′} {F≤ : F ≤ᵉ F′} {A≤ : A ≤ A′} {B≤ : B ≤ B′}
-    →  Γ≤ ▷ x ⦂ A≤ ⊢ M ≤ᵈ M′ ⦂ ⟨ E≤ ⟩ B≤
+  fun : ∀ {E E′ A A′ P P′ x M M′}
+          {E≤ : E ≤ᵉ E′} {A⇒P≤ : A ⇒ P ≤ A′ ⇒ P′}
+    →  Γ≤ ▷ x ⦂ dom A⇒P≤ ⊢ M ≤ᵈ M′ ⦂ cod A⇒P≤
        ------------------------
-    →  Γ≤ ⊢ fun x A M ≤ᵈ fun x A′ M′ ⦂ ⟨ F≤ ⟩ (A≤ ⇒ ⟨ E≤ ⟩ B≤)
+    →  Γ≤ ⊢ fun x A M ≤ᵈ fun x A′ M′ ⦂ ⟨ E≤ ⟩ A⇒P≤
 
   perform- : ∀ {e E E′ A M M′}
                {E≤ : E ≤ᵉ E′}
@@ -161,11 +161,18 @@ data _⊢_≤ᵈ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᵍ Γ′) : Term → Term → �
        -----------------------
     →  Γ≤ ⊢ perform e M ≤ᵈ perform e M′ ⦂ ⟨ E≤ ⟩ (id {A = A})
 
-  materialize : ∀ {P P′ Q Q′ M M′}
-                  {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′}
+  materialize≤ : ∀ {P P′ Q M M′}
+                  {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ P′}
     →  {Q≤P : Q ≤ᶜ P}
+    →  Q≤P ⨟ᶜ P≤ ≡ Q≤
+    →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ P≤
+       ------------
+    →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ Q≤
+
+  ≤materialize : ∀ {P P′ Q′ M M′}
+                  {P≤ : P ≤ᶜ P′} {Q≤ : P ≤ᶜ Q′}
     →  {Q′≤P′ : Q′ ≤ᶜ P′}
-    →  Q≤ ⨟ᶜ Q′≤P′ ≡ Q≤P ⨟ᶜ P≤
+    →  Q≤ ⨟ᶜ Q′≤P′ ≡ P≤
     →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ P≤
        ------------
     →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ Q≤
@@ -177,6 +184,24 @@ data _⊢_≤ᵈ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᵍ Γ′) : Term → Term → �
     → Γ≤ ⊢ M ≤ᵈ M′ ⦂ P≤
       -----------------
     → Γ≤ ⊢ M ≤ᵈ M′ ⦂ Q≤
+```
+
+```
+≤ᶜ-refl : ∀ {P} → P ≤ᶜ P
+≤ᶜ-refl = ⟨ id ⟩ id
+```
+
+```
+coarsen : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P}
+  → Γ ⊢ M ⦂ P
+  → M ≤ᵘ M′
+  → Γ≤ ⊢ M ≤ᵈ M′ ⦂ ⟨ id ⟩ id
+coarsen (` x) `_ = {! !}
+coarsen (N · M) (N≤ · M≤) = coarsen N N≤ · coarsen M M≤
+coarsen (fun M) (fun A≤ M≤) = ≤materialize (left-idᶜ (⟨ id ⟩ (A≤ ⇒ ⟨ id ⟩ id))) (fun (coarsen M M≤))
+coarsen (perform- x M x₁) (perform M≤) = {! !}
+coarsen (materialize P≤Q M) M≤ = ≤materialize (left-idᶜ P≤Q) (materialize≤ refl (coarsen M M≤))
+coarsen (subsumption Q⊑P M) M≤ = subsumption Q⊑P Q⊑P (coarsen M M≤)
 ```
 
 ```
@@ -198,8 +223,10 @@ half (fun M≤) with half M≤
 ... | M , M′ = fun M , fun M′
 half (perform- e∈E e∈E′ M≤ eq) with half M≤
 ... | M , M′ = perform- e∈E M eq , perform- e∈E′ M′ eq
-half (materialize {Q≤P = Q≤P} {Q′≤P′ = Q′≤P′} comm M≤) with half M≤
-... | M , M′ = materialize Q≤P M , materialize Q′≤P′ M′
+half (materialize≤ {Q≤P = Q≤P} comm M≤) with half M≤
+... | M , M′ = materialize Q≤P M , M′
+half (≤materialize {Q′≤P′ = Q′≤P′} comm M≤) with half M≤
+... | M , M′ = M , materialize Q′≤P′ M′
 half (subsumption P⊑Q P′⊑Q′ M≤) with half M≤
 ... | M , M′ = subsumption P⊑Q M , subsumption P′⊑Q′ M′
 ```
@@ -221,6 +248,7 @@ open import Prec
 ⌊ _·_ {A⇒B≤ = A⇒B≤} N≤ M≤ ⌋ᴹ = ·≤· {p = A⇒B≤} ? ?
 ⌊ fun M≤ ⌋ᴹ = ƛ≤ƛ ?
 ⌊ perform- x x₁ x₂ eq ⌋ᴹ = {! !}
-⌊ materialize comm M≤ ⌋ᴹ = ≤cast comm (cast≤ refl ⌊ M≤ ⌋ᴹ)
+⌊ materialize≤ comm M≤ ⌋ᴹ = cast≤ comm ⌊ M≤ ⌋ᴹ
+⌊ ≤materialize comm M≤ ⌋ᴹ = ≤cast comm ⌊ M≤ ⌋ᴹ
 ⌊ subsumption x x₁ x₂ ⌋ᴹ = {! !}
 ```
