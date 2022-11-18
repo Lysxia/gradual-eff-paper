@@ -14,8 +14,10 @@ Var = String
 
 data Term : Set where
   `_ : Var -> Term
-  _·_ : Term → Term → Term
   fun : Var → Type → Term → Term
+  _·_ : Term → Term → Term
+  $_ : ∀ {ι} → rep ι → Term
+  _⦅_⦆_ : ∀ {ι ι′ ι″} → Term → (rep ι → rep ι′ → rep ι″) → Term → Term
   perform : Op → Term → Term
 ```
 
@@ -44,16 +46,28 @@ data _⊢_⦂_ (Γ : Context) : Term → Typeᶜ → Set where
        -----------------
     →  Γ ⊢ ` x ⦂ ⟨ E ⟩ A
 
+  fun : ∀ {E F A B x M}
+    →  Γ ▷ x ⦂ A ⊢ M ⦂ ⟨ E ⟩ B
+       ------------------------
+    →  Γ ⊢ fun x A M ⦂ ⟨ F ⟩ (A ⇒ ⟨ E ⟩ B)
+
   _·_ : ∀ {E A B N M}
     →  Γ ⊢ N ⦂ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)
     →  Γ ⊢ M ⦂ ⟨ E ⟩ A
        ---------------------------
     →  Γ ⊢ N · M ⦂ ⟨ E ⟩ B
 
-  fun : ∀ {E F A B x M}
-    →  Γ ▷ x ⦂ A ⊢ M ⦂ ⟨ E ⟩ B
-       ------------------------
-    →  Γ ⊢ fun x A M ⦂ ⟨ F ⟩ (A ⇒ ⟨ E ⟩ B)
+  $_ : ∀ {E ι}
+    →  (κ : rep ι)
+       -------------
+    →  Γ ⊢ $ κ ⦂ ⟨ E ⟩ $ ι
+
+  _⦅_⦆_ : ∀ {E ι ι′ ι″ M N}
+    →  Γ ⊢ M ⦂ ⟨ E ⟩ $ ι
+    →  (f : rep ι → rep ι′ → rep ι″)
+    →  Γ ⊢ N ⦂ ⟨ E ⟩ $ ι′
+       ------------------
+    →  Γ ⊢ M ⦅ f ⦆ N ⦂ ⟨ E ⟩ $ ι″
 
   perform- : ∀ {e E A M}
     →  e ∈☆ E
@@ -76,7 +90,7 @@ data _⊢_⦂_ (Γ : Context) : Term → Typeᶜ → Set where
 ```
 
 ```
-open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; perform-; cast)
+open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; $_; _⦅_⦆_; perform-; cast)
 ```
 
 ```
@@ -94,8 +108,10 @@ open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; perform-
 ```
 ⌊_⌋ : ∀ {Γ M P} → Γ ⊢ M ⦂ P → ⌊ Γ ⌋ᵍ ⊢ P
 ⌊ ` x ⌋ = ` ⌊ x ⌋ˣ
-⌊ N · M ⌋ = ⌊ N ⌋ · ⌊ M ⌋
 ⌊ fun M ⌋ = ƛ ⌊ M ⌋
+⌊ N · M ⌋ = ⌊ N ⌋ · ⌊ M ⌋
+⌊ $ κ ⌋ = $ κ
+⌊ M ⦅ f ⦆ N ⌋ = ⌊ M ⌋ ⦅ f ⦆ ⌊ N ⌋
 ⌊ perform- e∈E M eq ⌋ = perform- e∈E ⌊ M ⌋ eq
 ⌊ materialize Q≤P M ⌋ = cast (- Q≤P) ⌊ M ⌋
 ⌊ subsumption P⊑Q M ⌋ = cast (* P⊑Q) ⌊ M ⌋
@@ -106,8 +122,10 @@ infix 4 _≤ᵘ_ _≤ᵍ_ _∋_≤⦂_ _⊢_≤ᵈ_⦂_
 
 data _≤ᵘ_ : Term → Term → Set where
   `_ : ∀ {x} → ` x ≤ᵘ ` x
-  _·_ : ∀ {M M′ N N′} → N ≤ᵘ N′ → M ≤ᵘ M′ → N · M ≤ᵘ N′ · M′
   fun : ∀ {x A A′ M M′} → A ≤ A′ → M ≤ᵘ M′ → fun x A M ≤ᵘ fun x A′ M′
+  _·_ : ∀ {M M′ N N′} → N ≤ᵘ N′ → M ≤ᵘ M′ → N · M ≤ᵘ N′ · M′
+  $_ : ∀ {ι} (κ : rep ι) → $ κ ≤ᵘ $ κ
+  _⦅_⦆_ : ∀ {ι ι′ ι″ M M′ N N′} → M ≤ᵘ M′ → (f : rep ι → rep ι′ → rep ι″) → N ≤ᵘ N′ → M ⦅ f ⦆ N ≤ᵘ M′ ⦅ f ⦆ N′
   perform : ∀ {e M M′} → M ≤ᵘ M′ → perform e M ≤ᵘ perform e M′
 ```
 
@@ -137,6 +155,12 @@ data _⊢_≤ᵈ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᵍ Γ′) : Term → Term → �
        ---------------------------
     →  Γ≤ ⊢ ` x ≤ᵈ ` x ⦂ ⟨ E≤ ⟩ A≤
 
+  fun : ∀ {E E′ A A′ P P′ x M M′}
+          {E≤ : E ≤ᵉ E′} {A⇒P≤ : A ⇒ P ≤ A′ ⇒ P′}
+    →  Γ≤ ▷ x ⦂ dom A⇒P≤ ⊢ M ≤ᵈ M′ ⦂ cod A⇒P≤
+       ------------------------
+    →  Γ≤ ⊢ fun x A M ≤ᵈ fun x A′ M′ ⦂ ⟨ E≤ ⟩ A⇒P≤
+
   _·_ : ∀ {E E′ A A′ B B′ N N′ M M′}
           {A⇒B≤ : (A ⇒ ⟨ E ⟩ B) ≤ (A′ ⇒ ⟨ E′ ⟩ B′)}
           (let E≤ = _≤ᶜ_.effects (cod A⇒B≤))
@@ -145,12 +169,17 @@ data _⊢_≤ᵈ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᵍ Γ′) : Term → Term → �
        -------------------------------------
     →  Γ≤ ⊢ N · M ≤ᵈ N′ · M′ ⦂ cod A⇒B≤
 
+  $_ : ∀ {E E′ ι} {E≤ : E ≤ᵉ E′}
+    →  (κ : rep ι)
+       ---------------------------
+    →  Γ≤ ⊢ $ κ ≤ᵈ $ κ ⦂ ⟨ E≤ ⟩ id {A = $ ι}
 
-  fun : ∀ {E E′ A A′ P P′ x M M′}
-          {E≤ : E ≤ᵉ E′} {A⇒P≤ : A ⇒ P ≤ A′ ⇒ P′}
-    →  Γ≤ ▷ x ⦂ dom A⇒P≤ ⊢ M ≤ᵈ M′ ⦂ cod A⇒P≤
-       ------------------------
-    →  Γ≤ ⊢ fun x A M ≤ᵈ fun x A′ M′ ⦂ ⟨ E≤ ⟩ A⇒P≤
+  _⦅_⦆_ : ∀ {E E′ ι ι′ ι″ M M′ N N′} {E≤ : E ≤ᵉ E′}
+    →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ ⟨ E≤ ⟩ id {A = $ ι}
+    →  (f : rep ι → rep ι′ → rep ι″)
+    →  Γ≤ ⊢ N ≤ᵈ N′ ⦂ ⟨ E≤ ⟩ id {A = $ ι′}
+       ---------------------------
+    →  Γ≤ ⊢ M ⦅ f ⦆ N ≤ᵈ M′ ⦅ f ⦆ N′ ⦂ ⟨ E≤ ⟩ id {A = $ ι″}
 
   perform- : ∀ {e E E′ A M M′}
                {E≤ : E ≤ᵉ E′}
@@ -197,38 +226,55 @@ coarsen : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P}
   → M ≤ᵘ M′
   → Γ≤ ⊢ M ≤ᵈ M′ ⦂ ⟨ id ⟩ id
 coarsen (` x) `_ = {! !}
-coarsen (N · M) (N≤ · M≤) = coarsen N N≤ · coarsen M M≤
 coarsen (fun M) (fun A≤ M≤) = ≤materialize (left-idᶜ (⟨ id ⟩ (A≤ ⇒ ⟨ id ⟩ id))) (fun (coarsen M M≤))
+coarsen (N · M) (N≤ · M≤) = coarsen N N≤ · coarsen M M≤
+coarsen ($ .κ) ($ κ) = $ κ
+coarsen (M ⦅ .f ⦆ N) (M≤ ⦅ f ⦆ N≤) = coarsen M M≤ ⦅ f ⦆ coarsen N N≤
 coarsen (perform- x M x₁) (perform M≤) = {! !}
 coarsen (materialize P≤Q M) M≤ = ≤materialize (left-idᶜ P≤Q) (materialize≤ refl (coarsen M M≤))
 coarsen (subsumption Q⊑P M) M≤ = subsumption Q⊑P Q⊑P (coarsen M M≤)
 ```
 
 ```
-halfˣ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {x} {A A′} {A≤ : A ≤ A′}
+leftˣ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {x} {A A′} {A≤ : A ≤ A′}
   →  Γ≤ ∋ x ≤⦂ A≤
-  →  Γ ∋ x ⦂ A × Γ′ ∋ x ⦂ A′
-halfˣ here = here , here
-halfˣ (there x≢y X≤) with halfˣ X≤
-... | X , X′ = there x≢y X , there x≢y X′
+  →  Γ ∋ x ⦂ A
+leftˣ here = here
+leftˣ (there x≢y X≤) = there x≢y (leftˣ X≤)
 
-half : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P P′} {P≤ : P ≤ᶜ P′}
+left : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P P′} {P≤ : P ≤ᶜ P′}
   →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ P≤
-  →  Γ ⊢ M ⦂ P × Γ′ ⊢ M′ ⦂ P′
-half (` x≤) with halfˣ x≤
-... | x , x′ = ` x , ` x′
-half (N≤ · M≤) with half N≤ | half M≤
-... | N , N′ | M , M′ = N · M , N′ · M′
-half (fun M≤) with half M≤
-... | M , M′ = fun M , fun M′
-half (perform- e∈E e∈E′ M≤ eq) with half M≤
-... | M , M′ = perform- e∈E M eq , perform- e∈E′ M′ eq
-half (materialize≤ {Q≤P = Q≤P} comm M≤) with half M≤
-... | M , M′ = materialize Q≤P M , M′
-half (≤materialize {Q′≤P′ = Q′≤P′} comm M≤) with half M≤
-... | M , M′ = M , materialize Q′≤P′ M′
-half (subsumption P⊑Q P′⊑Q′ M≤) with half M≤
-... | M , M′ = subsumption P⊑Q M , subsumption P′⊑Q′ M′
+  →  Γ ⊢ M ⦂ P
+left (` x≤) = ` leftˣ x≤
+left (N≤ · M≤) = left N≤ · left M≤
+left (fun M≤) = fun (left M≤)
+left ($ κ) = $ κ
+left (M≤ ⦅ f ⦆ N≤) = left M≤ ⦅ f ⦆ left N≤
+left (perform- e∈E e∈E′ M≤ eq) = perform- e∈E (left M≤) eq
+left (materialize≤ {Q≤P = Q≤P} comm M≤) = materialize Q≤P (left M≤)
+left (≤materialize {Q′≤P′ = Q′≤P′} comm M≤) = left M≤
+left (subsumption P⊑Q P′⊑Q′ M≤) = subsumption P⊑Q (left M≤)
+```
+
+```
+rightˣ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {x} {A A′} {A≤ : A ≤ A′}
+  →  Γ≤ ∋ x ≤⦂ A≤
+  →  Γ′ ∋ x ⦂ A′
+rightˣ here = here
+rightˣ (there x≢y X≤) = there x≢y (rightˣ X≤)
+
+right : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P P′} {P≤ : P ≤ᶜ P′}
+  →  Γ≤ ⊢ M ≤ᵈ M′ ⦂ P≤
+  →  Γ′ ⊢ M′ ⦂ P′
+right (` x≤) = ` rightˣ x≤
+right (N≤ · M≤) = right N≤ · right M≤
+right (fun M≤) = fun (right M≤)
+right ($ κ) = $ κ
+right (M≤ ⦅ f ⦆ N≤) = right M≤ ⦅ f ⦆ right N≤
+right (perform- e∈E e∈E′ M≤ eq) = perform- e∈E′ (right M≤) eq
+right (materialize≤ {Q≤P = Q≤P} comm M≤) = right M≤
+right (≤materialize {Q′≤P′ = Q′≤P′} comm M≤) = materialize Q′≤P′ (right M≤)
+right (subsumption P⊑Q P′⊑Q′ M≤) = subsumption P′⊑Q′ (right M≤)
 ```
 
 ```
@@ -240,15 +286,16 @@ open import Prec
 ⌊ ∅ ⌋≤ᵍ = ∅
 ⌊ Γ≤ ▷ x ⦂ A≤ ⌋≤ᵍ = ⌊ Γ≤ ⌋≤ᵍ ▷ A≤
 
-⌊_⌋ᴹ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P P′} {P≤ : P ≤ᶜ P′}
+⌊_⌋≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᵍ Γ′} {M M′} {P P′} {P≤ : P ≤ᶜ P′}
   → (M≤ : Γ≤ ⊢ M ≤ᵈ M′ ⦂ P≤)
-    (let M , M′ = half M≤)
-  → ⌊ Γ≤ ⌋≤ᵍ ⊢ ⌊ M ⌋ ≤ᴹ ⌊ M′ ⌋ ⦂ P≤
-⌊ ` x≤ ⌋ᴹ = `≤` ?
-⌊ _·_ {A⇒B≤ = A⇒B≤} N≤ M≤ ⌋ᴹ = ·≤· {p = A⇒B≤} ? ?
-⌊ fun M≤ ⌋ᴹ = ƛ≤ƛ ?
-⌊ perform- x x₁ x₂ eq ⌋ᴹ = {! !}
-⌊ materialize≤ comm M≤ ⌋ᴹ = cast≤ comm ⌊ M≤ ⌋ᴹ
-⌊ ≤materialize comm M≤ ⌋ᴹ = ≤cast comm ⌊ M≤ ⌋ᴹ
-⌊ subsumption x x₁ x₂ ⌋ᴹ = {! !}
+  → ⌊ Γ≤ ⌋≤ᵍ ⊢ ⌊ left M≤ ⌋ ≤ᴹ ⌊ right M≤ ⌋ ⦂ P≤
+⌊ ` x≤ ⌋≤ = `≤` ?
+⌊ fun M≤ ⌋≤ = ƛ≤ƛ ?
+⌊ _·_ {A⇒B≤ = A⇒B≤} N≤ M≤ ⌋≤ = ·≤· {p = A⇒B≤} ? ?
+⌊ $ κ ⌋≤ = $≤$ κ
+⌊ M ⦅ f ⦆ N ⌋≤ = ⦅⦆≤⦅⦆ f ⌊ M ⌋≤ ⌊ N ⌋≤
+⌊ perform- x x₁ x₂ eq ⌋≤ = {! !}
+⌊ materialize≤ comm M≤ ⌋≤ = cast≤ comm ⌊ M≤ ⌋≤
+⌊ ≤materialize comm M≤ ⌋≤ = ≤cast comm ⌊ M≤ ⌋≤
+⌊ subsumption x x₁ x₂ ⌋≤ = {! !}
 ```
