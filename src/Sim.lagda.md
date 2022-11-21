@@ -111,7 +111,7 @@ sim (≤cast {±q = ±q} e M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
     =  cast ±q N′ , ξ* (`cast ±q [ □ ]) M′—↠N′ , ≤cast e N≤N′
-sim (safe-cast≤cast V≤M′) (ξ □ (wrap e′))
+sim (*≤* V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  _ , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit ?) , ? -- wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
@@ -141,7 +141,7 @@ sim (handle≤handle H≤ M≤) (ξ □ (handle-perform {ℰ = ℰ} v ¬e//ℰ e
     with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ | lookup-All₂′ (on-perform H≤) eq
 ... | Mk v′ V≤V′ ℰ≤ ¬e//ℰ′ M′—↠N′ | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
     = _ , (ξ* (′handle _ [ □ ]) M′—↠N′ ++↠ unit (handle-perform v′ ¬e//ℰ′ eq′))
-        , []≤[] ([]≤[] HM′≤ (ƛ≤ƛ (handle≤handle (lift≤ʰ (lift≤ʰ (subst (_ ⊢ _ ≤ _ ⦂ _ ➡_) (sym cod≡) H≤)))
+        , []≤[] ([]≤[] HM′≤ (ƛ≤ƛ (handle≤handle (lift≤ʰ (lift≤ʰ (subst (_ ⊢ _ ≤ _ ⦂ _ ⇒ʰ_) (sym cod≡) H≤)))
                                                 (⟦⟧≤⟦⟧ (lift≤ᶠ (lift≤ᶠ ℰ≤)) (`≤` (subst (λ A → _ ▷ A ⊢ _ ≤ˣ _ ⦂ _) (sym dom≡) Z≤Z))))))
                 (gvalue≤gvalue v v′ V≤V′)
 ```

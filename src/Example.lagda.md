@@ -22,7 +22,7 @@ St = $ ′ℕ
 
 Definition of the state handler
 ```
-state-handler : ∀ {Γ E A} → Γ ⊢ ⟨ ¡ ("get" ∷ "put" ∷ E) ⟩ A ➡ ⟨ ¡ E ⟩ (St ⇒ ⟨ ¡ E ⟩ A)
+state-handler : ∀ {Γ E A} → Γ ⊢ ⟨ ¡ ("get" ∷ "put" ∷ E) ⟩ A ⇒ʰ ⟨ ¡ E ⟩ (St ⇒ ⟨ ¡ E ⟩ A)
 state-handler = record
   { Hooks = "get" ∷ "put" ∷ []
   ; Hooks-handled = refl
@@ -36,7 +36,7 @@ state-handler = record
 
 Same definition using human-readable syntax with named variables:
 ```txt
-state-handler : {get,put,E} A  ➡  {E} (St → {E} A)
+state-handler : {get,put,E} A  ⇒ʰ  {E} (St → {E} A)
 state-handler = handler
   | return x → λ _ → x
   | !get () k → λ s → k s s
@@ -145,7 +145,7 @@ drunkToss =
 Handle a non-deterministic computation of type `𝔹`,
 returning `true` when at least one execution returns `true`.
 ```
-nondet-handler : ∅ ⊢ ⟨ ¡ ("choose" ∷ "fail" ∷ []) ⟩ $𝔹 ➡ ⟨ ε ⟩ $𝔹
+nondet-handler : ∅ ⊢ ⟨ ¡ ("choose" ∷ "fail" ∷ []) ⟩ $𝔹 ⇒ʰ ⟨ ε ⟩ $𝔹
 nondet-handler = record
   { Hooks = "choose" ∷ "fail" ∷ []
   ; Hooks-handled = refl

@@ -123,7 +123,7 @@ data _⊢_⦂_⇒ʰ_ Γ where
 ```
 
 ```
-open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; $_; _⦅_⦆_; perform-; cast; handle; _⊢_➡_)
+open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; $_; _⦅_⦆_; perform-; cast; handle; _⊢_⇒ʰ_)
 ```
 
 ```
@@ -152,7 +152,7 @@ open import Core using (∅; _▷_; _∋_; Z; S_; _⊢_; `_; _·_; ƛ_; $_; _⦅
     ⌊ [] ⌋ᵒ = []
     ⌊ N ∷ Ns ⌋ᵒ = ⌊ N ⌋ ∷ ⌊ Ns ⌋ᵒ
 
-    ⌊_⌋ʰ : ∀ {Γ H P Q} → Γ ⊢ H ⦂ P ⇒ʰ Q → ⌊ Γ ⌋ᵍ ⊢ P ➡ Q
+    ⌊_⌋ʰ : ∀ {Γ H P Q} → Γ ⊢ H ⦂ P ⇒ʰ Q → ⌊ Γ ⌋ᵍ ⊢ P ⇒ʰ Q
     ⌊ handler eq M Ns ⌋ʰ = record
       { Hooks-handled = eq
       ; on-return = ⌊ M ⌋

@@ -40,7 +40,7 @@ data _∋_ : Context → Type → Set where
 ## Terms
 
 The type of terms `_⊢_` is defined recursively with the type of handlers
-`_⊢_➡_`. In order to streamline this presentation, we will interleave
+`_⊢_⇒ʰ_`. In order to streamline this presentation, we will interleave
 term constructor declarations with related definitions.
 This is allowed in an `interleaved mutual` block, which Agda desugars by
 deinterleaving them.
@@ -50,7 +50,7 @@ interleaved mutual
 
   infix  5 ƛ_
   infix  4 _⊢_
-  infix  4 _⊢_➡_
+  infix  4 _⊢_⇒ʰ_
   infixl  6 _·_
   infix  6 _⦅_⦆_
   infix  8 `_
@@ -58,7 +58,7 @@ interleaved mutual
 
 ```
   data _⊢_ : Context → Typeᶜ → Set
-  record _⊢_➡_ (Γ : Context) (P Q : Typeᶜ) : Set
+  record _⊢_⇒ʰ_ (Γ : Context) (P Q : Typeᶜ) : Set
 ```
 
 The data type `Γ ⊢ P` represents a term of computation type `P` in context `Γ`.
@@ -191,20 +191,20 @@ A pattern synonym to hide the equality argument in `perform-`.
 ```
 
 Whereas functions are essentially maps between value types,
-handlers are maps between computation types `P ➡ Q`,
+handlers are maps between computation types `P ⇒ʰ Q`,
 whose syntax is defined below.
 
 ```
   data _ where
 
     handle : ∀ {Γ P Q}
-      →  _⊢_➡_ Γ P Q
+      →  _⊢_⇒ʰ_ Γ P Q
       →  Γ ⊢ P
          -----------
       →  Γ ⊢ Q
 ```
 
-A handler `H : Γ ⊢ P ➡ Q` consists of: a list of operations it handles (`Hooks`),
+A handler `H : Γ ⊢ P ⇒ʰ Q` consists of: a list of operations it handles (`Hooks`),
 which will be subtracted from the effects of the inner computation
 (`Hooks-handled`); a \emph{return clause} (`on-return`), which is a continuation
 to be called when the inner computation returns a value; and
@@ -218,7 +218,7 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
   On-Perform : Context → Typeᶜ → List Op → Set
   On-Perform Γ Q Hooks = All (λ e → Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q) Hooks
 
-  record _⊢_➡_ Γ P Q where
+  record _⊢_⇒ʰ_ Γ P Q where
     inductive
     open Typeᶜ
     field
@@ -227,7 +227,7 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
       on-return : Γ ▷ P .returns ⊢ Q
       on-perform : On-Perform Γ Q Hooks
 
-  open _⊢_➡_ public
+  open _⊢_⇒ʰ_ public
 ```
 
 ## Substitutions
@@ -266,7 +266,7 @@ _→ᵀ_ : Context → Context → Set
 Handler maps: maps from handlers to handlers, changing their context.
 ```
 _→ʰ_ : Context → Context → Set
-Γ →ʰ Δ = ∀ {P Q} → Γ ⊢ P ➡ Q → Δ ⊢ P ➡ Q
+Γ →ʰ Δ = ∀ {P Q} → Γ ⊢ P ⇒ʰ Q → Δ ⊢ P ⇒ʰ Q
 ```
 
 ### Renaming
@@ -444,7 +444,7 @@ ren∘ren-on-perform ρ≡ (M ∷ Ms)
 ren∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {ρ″ : Γ →ᴿ Γ″}
   → (∀ {A} (x : Γ ∋ A) → ρ′ (ρ x) ≡ ρ″ x)
     -------------------------------------------------
-  → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → renʰ ρ′ (renʰ ρ H) ≡ renʰ ρ″ H)
+  → (∀ {P Q} (H : Γ ⊢ P ⇒ʰ Q) → renʰ ρ′ (renʰ ρ H) ≡ renʰ ρ″ H)
 ren∘renʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
   (ren∘ren (ren∘ren▷ ρ≡) (on-return H)) (ren∘ren-on-perform ρ≡ (on-perform H))
@@ -495,7 +495,7 @@ sub∘ren-on-perform ρ≡ (M ∷ Ms)
 sub∘renʰ :  ∀ {Γ Γ′ Γ″} {ρ : Γ →ᴿ Γ′} {σ′ : Γ′ →ˢ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → σ′ {E} (ρ x) ≡ σ″ x)
     -------------------------------------------------
-  → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → subʰ σ′ (renʰ ρ H) ≡ subʰ σ″ H)
+  → (∀ {P Q} (H : Γ ⊢ P ⇒ʰ Q) → subʰ σ′ (renʰ ρ H) ≡ subʰ σ″ H)
 sub∘renʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
   (sub∘ren (sub∘ren▷ ρ≡) (on-return H))
@@ -546,7 +546,7 @@ ren∘sub-on-perform ρ≡ (M ∷ Ms)
 ren∘subʰ :  ∀ {Γ Γ′ Γ″} {σ : Γ →ˢ Γ′} {ρ′ : Γ′ →ᴿ Γ″} {σ″ : Γ →ˢ Γ″}
   → (∀ {E A} (x : Γ ∋ A) → ren ρ′ (σ {E} x) ≡ σ″ x)
     -------------------------------------------------
-  → (∀ {P Q} (H : Γ ⊢ P ➡ Q) → renʰ ρ′ (subʰ σ H) ≡ subʰ σ″ H)
+  → (∀ {P Q} (H : Γ ⊢ P ⇒ʰ Q) → renʰ ρ′ (subʰ σ H) ≡ subʰ σ″ H)
 ren∘subʰ ρ≡ H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
   (ren∘sub (ren∘sub▷ ρ≡) (on-return H))
@@ -587,7 +587,7 @@ Idᵀ : ∀ {Γ} → (θ : Γ →ᵀ Γ) → Set
 Idᵀ {Γ} θ  =  ∀ {A} (M : Γ ⊢ A) → θ M ≡ M
 
 Idʰ : ∀ {Γ} → (θ : Γ →ʰ Γ) → Set
-Idʰ {Γ} θ  =  ∀ {P Q} (H : Γ ⊢ P ➡ Q) → θ H ≡ H
+Idʰ {Γ} θ  =  ∀ {P Q} (H : Γ ⊢ P ⇒ʰ Q) → θ H ≡ H
 
 Id-on-perform : ∀ {Γ}
   → (θ : ∀ {Hooks Q} → On-Perform Γ Q Hooks → On-Perform Γ Q Hooks) → Set
@@ -620,7 +620,7 @@ renIdʰ : ∀ {Γ} {ρ : Γ →ᴿ Γ}
 renIdʰ ρId H = cong₂ (λ M Ns → record { on-return = M ; on-perform = Ns })
                      (renId (renId▷ ρId) (on-return H))
                      (renId-on-perform ρId (on-perform H))
-  where open _⊢_➡_ H
+  where open _⊢_⇒ʰ_ H
 
 renId ρId (` x) rewrite ρId x                               =  refl
 renId ρId (ƛ M) rewrite renId (renId▷ ρId) M                =  refl
@@ -661,7 +661,7 @@ subIdʰ ρId H = cong₂
   (λ M Ns → record { on-return = M ; on-perform = Ns })
   (subId (subId▷ ρId) (on-return H))
   (subId-on-perform ρId (on-perform H))
-  where open _⊢_➡_ H
+  where open _⊢_⇒ʰ_ H
 
 subId σId {⟨ E ⟩ _} (` x) rewrite σId {E} x                 =  refl
 subId σId (ƛ M) rewrite subId (subId▷ σId) M                =  refl

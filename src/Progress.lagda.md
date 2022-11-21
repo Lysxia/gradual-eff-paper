@@ -102,7 +102,7 @@ with only one immediate subterm.
     →  Frame Γ C (⟨ E ⟩ A)
 
   ′handle_[_] : ∀ {P Q}
-    →  Γ ⊢ P ➡ Q
+    →  Γ ⊢ P ⇒ʰ Q
     →  Frame Γ C P
        -----------
     →  Frame Γ C Q
@@ -173,7 +173,7 @@ renᶠ ρ (′handle H [ ℰ ]) = ′handle (renʰ ρ H) [ renᶠ ρ ℰ ]
 liftᶠ : ∀ {Γ P Q A} → Frame Γ P Q → Frame (Γ ▷ A) P Q
 liftᶠ = renᶠ S_
 
-liftʰ : ∀ {Γ P Q A} → Γ ⊢ P ➡ Q → Γ ▷ A ⊢ P ➡ Q
+liftʰ : ∀ {Γ P Q A} → Γ ⊢ P ⇒ʰ Q → Γ ▷ A ⊢ P ⇒ʰ Q
 liftʰ = renʰ S_
 ```
 
@@ -236,7 +236,7 @@ target effect of the cast.
 
 An operation `e` is not handled by a handler if `e` is not one of its hooks.
 ```
-¬handled-handle : ∀ {e} {H : Γ ⊢ P ➡ Q} (ℰ : Frame Γ P′ P)
+¬handled-handle : ∀ {e} {H : Γ ⊢ P ⇒ʰ Q} (ℰ : Frame Γ P′ P)
   → ¬ e ∈ Hooks H
   → ¬ handled e ℰ
     -----------------------------
@@ -265,7 +265,7 @@ If a computation under a handler raises an effect `e` which is
 not a hook of the handler, then `e` must be in the resulting effect
 of the handler.
 ```
-¬∈-handler : ∀ {e} (H : Γ ⊢ ⟨ E ⟩ A ➡ ⟨ F ⟩ B) → e ∈☆ E → ¬ e ∈ H .Hooks → e ∈☆ F
+¬∈-handler : ∀ {e} (H : Γ ⊢ ⟨ E ⟩ A ⇒ʰ ⟨ F ⟩ B) → e ∈☆ E → ¬ e ∈ H .Hooks → e ∈☆ F
 ¬∈-handler H e∈E ¬e∈H rewrite Hooks-handled H with ∈☆-++☆⁻ e∈E
 ... | inj₁ e∈H = ⊥-elim (¬e∈H e∈H)
 ... | inj₂ e∈F = e∈F
@@ -464,7 +464,7 @@ through a cast, it simply keeps being raised until a matching handler or cast is
 Handlers have two rules. When the handled computation returns a value, the
 return clause is invoked.
 ```
-  handle-value : ∀ {H : Γ ⊢ P ➡ Q} {V}
+  handle-value : ∀ {H : Γ ⊢ P ⇒ʰ Q} {V}
     → (v : Value V)
       --------------
     → handle H V ↦ (on-return H [ gvalue v ])
@@ -486,7 +486,7 @@ clause : Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q
 ```
 
 ```
-  handle-perform : ∀ {e} {e∈E : e ∈☆ E} {H : Γ ⊢ P ➡ Q} {V ℰ e∈Hooks}
+  handle-perform : ∀ {e} {e∈E : e ∈☆ E} {H : Γ ⊢ P ⇒ʰ Q} {V ℰ e∈Hooks}
     → (v : Value V)
     → ¬ handled e ℰ                 -- ensures H is the first matching handler
     → (e ∈? Hooks H) ≡ yes e∈Hooks  -- ensures this is the first matching clause within H

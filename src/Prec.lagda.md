@@ -1,12 +1,11 @@
 # Gradual Guarantee
 
-## Precision on terms
+In this section, we formalize \lyx{half of} the gradual guarantee:
+if a well-typed term `M` steps to `N`, then a term `M′` which is less precise
+than `M` steps to a term `N′` which is less precise than `N′`.
 
-Simple Blame Calculus with proof relevant casts.
-Uses polarity to unify upcasts and downcasts.
-Uses nested evaluation contexts.
-
-Siek, Thiemann, and Wadler
+The first step is to define the precision relation on contexts, terms, and
+frames.
 
 ```
 module Prec where
@@ -20,9 +19,10 @@ import Data.List.Relation.Unary.All as All
 import Data.List.Relation.Unary.Any as Any
 ```
 
-
 ## Precision on contexts
 
+Viewing contexts as lists of types, context precision is the
+pointwise lifting of type precision.
 ```
 infix 4 _≤ᴳ_
 infixl 5 _▷_
@@ -38,7 +38,10 @@ data _≤ᴳ_ : Context → Context → Set where
     → A ≤ A′
       ------------------
     → Γ ▷ A ≤ᴳ Γ′ ▷ A′
+```
 
+TODO: decide whether to use `variable`
+```
 private variable
   Γ Γ′ Δ Δ′ : Context
   Γ≤ : Γ ≤ᴳ Γ′
@@ -54,17 +57,24 @@ private variable
   F≤ : F ≤ᵉ F′
 ```
 
-## Reflexivity and transitivity of context precision
-
+Context precision is reflexive.
 ```
 idᴳ : ∀ {Γ} → Γ ≤ᴳ Γ
 idᴳ {∅}      =  ∅
 idᴳ {Γ ▷ A}  =  idᴳ ▷ id
+```
 
+Context precision is transitive.
+```
 _⨟ᴳ_ : ∀ {Γ Γ′ Γ″} → Γ ≤ᴳ Γ′ → Γ′ ≤ᴳ Γ″ → Γ ≤ᴳ Γ″
 ∅ ⨟ᴳ ∅                    =  ∅
 (Γ≤ ▷ A≤) ⨟ᴳ (Γ′≤ ▷ A′≤)  =  (Γ≤ ⨟ᴳ Γ′≤) ▷ (A≤ ⨟ A′≤)
+```
 
+From a proof-relevant perspective, context precision defines a category,
+where `idᴳ` is the identity morphism, and `_⨟ᴳ_` is morphism composition.
+They satisfy the following laws: \lyx{TODO: associativity?}
+```
 left-idᴳ : ∀ {Γ Δ} → (Γ≤Δ : Γ ≤ᴳ Δ) → idᴳ ⨟ᴳ Γ≤Δ ≡ Γ≤Δ
 left-idᴳ ∅ = refl
 left-idᴳ (Γ≤Δ ▷ p) rewrite left-idᴳ Γ≤Δ | left-id p = refl
@@ -76,6 +86,14 @@ right-idᴳ (Γ≤Δ ▷ p) rewrite right-idᴳ Γ≤Δ | right-id p = refl
 
 ## Precision on variables
 
+Variable precision `Γ≤ ⊢ x ≤ˣ x′ ⦂ A≤` relates variables `x` and `x′` that
+structurally represent the same natural number, \ie{} the same index in
+contexts of the same length.
+
+Viewed in a proof-relevant manner, context precision is a type of heterogeneous
+lists of type precision proofs, and variable precision is the corresponding type
+of indices.
+\lyx{Notation proposal: use `A≤` instead of `p`, `q`, `r` for precision proofs `A ≤ A′`}
 ```
 infix 3 _⊢_≤ˣ_⦂_
 
@@ -89,11 +107,35 @@ data _⊢_≤ˣ_⦂_ : ∀ {Γ Γ′ A A′} → Γ ≤ᴳ Γ′ → Γ ∋ A �
     → Γ≤ ⊢ x ≤ˣ x′ ⦂ A≤ 
       ---------------------------
     → Γ≤ ▷ B≤ ⊢ S x ≤ˣ S x′ ⦂ A≤
-
 ```
 
 ## Commuting diagram
 
+When defining term precision, the key rules are those that relate casts.
+If (1) `M : Γ ⊢ P` is more precise than `M′ : Γ′ ⊢ P′`,
+(2) there is a cast `P =>ᶜ Q`, and (3) `Q` is more precise than `P′`,
+then `cast ±p M : ⊢ Γ ⊢ Q` is more precise than `M′ : Γ′ ⊢ P′`.
+(And similarly for a cast on the right.)
+
+In addition, the cast `P =>ᶜ Q` and the precision relations
+`P ≤ᶜ P′` and `Q ≤ᶜ Q′` should form a commutative triangle.
+\lyx{explain motivation}
+```
+commute≤ᶜ : ∀ {P Q R} (±p : P =>ᶜ Q) (q : Q ≤ᶜ R) (r : P ≤ᶜ R) → Set
+commute≤ᶜ (+ p) q r = p ⨟ᶜ q ≡ r
+commute≤ᶜ (- p) q r = p ⨟ᶜ r ≡ q
+commute≤ᶜ (* p) q r = ⊥
+```
+
+A similar commutative triangle arises for casts on the right of term precision.
+```
+≤commuteᶜ : ∀ {P Q R} (p : P ≤ᶜ Q) (±q : Q =>ᶜ R) (r : P ≤ᶜ R) → Set
+≤commuteᶜ p (+ q) r  =  p ⨟ᶜ q ≡ r
+≤commuteᶜ p (- q) r  =  r ⨟ᶜ q ≡ p
+≤commuteᶜ p (* q) r  =  ⊥
+```
+
+The same commutative triangles can be defined on value type precision.
 ```
 commute≤ : ∀ {A B C} (±p : A => B) (q : B ≤ C) (r : A ≤ C) → Set
 commute≤ (+ p) q r  =  p ⨟ q ≡ r
@@ -106,69 +148,66 @@ commute≤ (* _) _ _  =  ⊥
 ≤commute _ (* _) _  =  ⊥
 ```
 
+We could also define it on effect types, but instead we make it a trivial
+relation.
 ```
-commute≤ᵉ : ∀ {A B C} (±p : A =>ᵉ B) (q : B ≤ᵉ C) (r : A ≤ᵉ C) → Set
-{-
-commute≤ᵉ id q r  =  q ≡ r
-commute≤ᵉ +☆ q r  =  ⊤  -- TODO
-commute≤ᵉ -☆ q r  =  ⊤  -- TODO
--}
+commute≤ᵉ : ∀ {E F G} (±p : E =>ᵉ F) (q : F ≤ᵉ G) (r : E ≤ᵉ G) → Set
 commute≤ᵉ p q r  =  ⊤
 
-≤commuteᵉ : ∀ {A B C} (p : A ≤ᵉ B) (±q : B =>ᵉ C) (r : A ≤ᵉ C) → Set
-≤commuteᵉ p q r   =  ⊤  -- TODO
+≤commuteᵉ : ∀ {E Q G} (p : E ≤ᵉ Q) (±q : Q =>ᵉ G) (r : E ≤ᵉ G) → Set
+≤commuteᵉ p q r  =  ⊤
 ```
 
-```
-commute≤ᶜ : ∀ {P Q R} (±p : P =>ᶜ Q) (q : Q ≤ᶜ R) (r : P ≤ᶜ R) → Set
-commute≤ᶜ (+ p) q r = p ⨟ᶜ q ≡ r
-commute≤ᶜ (- p) q r = p ⨟ᶜ r ≡ q
-commute≤ᶜ (* p) q r = ⊥
-
-≤commuteᶜ : ∀ {A B C} (p : A ≤ᶜ B) (±q : B =>ᶜ C) (r : A ≤ᶜ C) → Set
-≤commuteᶜ p (+ q) r  =  p ⨟ᶜ q ≡ r
-≤commuteᶜ p (- q) r  =  r ⨟ᶜ q ≡ p
-≤commuteᶜ p (* q) r  =  ⊥
-```
-
-## Lemmas about commuting diagrams
-
+Indeed, the structure of effect precision is simpler than type precision, so it
+seems fair to consider them to be unique.\lyx{I'm not 100% certain of that}
 ```
 unique-≤ᵉ : ∀ {E F} {E≤ E≤′ : E ≤ᵉ F} → E≤ ≡ E≤′
 unique-≤ᵉ {E≤ = id} {E≤′ = id} = refl
 unique-≤ᵉ {E≤ = ¡≤☆} {E≤′ = ¡≤☆} = refl
 ```
 
-```
-≤returns : ∀ {P Q R} {p : P ≤ᶜ Q} {±q : Q =>ᶜ R} {r : P ≤ᶜ R}
-  → ≤commuteᶜ p ±q r → ≤commute (_≤ᶜ_.returns p) (=>ᶜ-returns ±q) (_≤ᶜ_.returns r)
-≤returns {±q = + _} refl = refl
-≤returns {±q = - _} refl = refl
+Thanks to that assumption on effect precision, there is an equivalence between
+the commutative triangles on value type precision and those on computation type
+precision, with `returns≤` and `≤returns` in one direction, and `pure≤` and
+`≤pure` in the other.
 
+```
 returns≤ : ∀ {P Q R} {±p : P =>ᶜ Q} {q : Q ≤ᶜ R} {r : P ≤ᶜ R}
   → commute≤ᶜ ±p q r → commute≤ (=>ᶜ-returns ±p) (_≤ᶜ_.returns q) (_≤ᶜ_.returns r)
 returns≤ {±p = + _} refl = refl
 returns≤ {±p = - _} refl = refl
 
+≤returns : ∀ {P Q R} {p : P ≤ᶜ Q} {±q : Q =>ᶜ R} {r : P ≤ᶜ R}
+  → ≤commuteᶜ p ±q r → ≤commute (_≤ᶜ_.returns p) (=>ᶜ-returns ±q) (_≤ᶜ_.returns r)
+≤returns {±q = + _} refl = refl
+≤returns {±q = - _} refl = refl
+
 pure≤ : ∀ {E A B R} {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ R} {r : ⟨ E ⟩ A ≤ᶜ R}
   → commute≤ ±p (_≤ᶜ_.returns q) (_≤ᶜ_.returns r) → commute≤ᶜ (pure± ±p) q r
 pure≤ {±p = + _} refl = cong (⟨_⟩ _) unique-≤ᵉ
 pure≤ {±p = - _} refl = cong (⟨_⟩ _) unique-≤ᵉ
-```
 
-```
 ≤pure : ∀ {E F A B C} {p : A ≤ B} {±q : B => C} {r : A ≤ C} {E≤F : E ≤ᵉ F}
   → ≤commute p ±q r → ≤commuteᶜ (⟨ E≤F ⟩ p) (pure± ±q) (⟨ E≤F ⟩ r)
 ≤pure {±q = + _} refl = cong₂ ⟨_⟩_ refl refl
 ≤pure {±q = - _} refl = cong₂ ⟨_⟩_ refl refl
+```
 
+An inversion lemma on commutative triangles where the two precision sides
+consist of a box rule `_ ⇑ g`.
+```
 drop⇑ : ∀ {A B G} {±p : A => B} {q : B ≤ G} {r : A ≤ G} {g : Ground G}
   → commute≤ ±p (q ⇑ g) (r ⇑ g)
     ---------------------------
   → commute≤ ±p q r
 drop⇑ {±p = + _} refl = refl
 drop⇑ {±p = - _} refl = refl
+```
 
+Inversion lemmas when the cast side of a commutative triangle is an identity:
+the commutative triangle contracts into an equation between the two remaining
+sides.
+```
 ident≤ : ∀ {E F G A B} {q r : A ≤ B} {E≤G : E ≤ᵉ G} {F≤G : F ≤ᵉ G}
   → (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ A)
   → splitᶜ ±p ≡ id
@@ -186,7 +225,12 @@ ident≤ {r = r} (- ⟨ _ ⟩ id) refl refl rewrite left-id r = refl
   → p ≡ r
 ≤ident (+ ⟨ _ ⟩ id) refl refl = refl
 ≤ident (- ⟨ _ ⟩ id) refl refl = refl
+```
 
+Inversion lemmas when the cast side of a commutative triangle is a function
+cast. It projects into commutative triangles relating respectively the domains
+and codomains of the function types.
+```
 dom≤ :  ∀ {A A′ A″ P P′ P″}
     {±p : A ⇒ P => A′ ⇒ P′} {q : A′ ⇒ P′ ≤ A″ ⇒ P″} {r : A ⇒ P ≤ A″ ⇒ P″}
     {∓s : A′ => A} {±t : P =>ᶜ P′}
@@ -228,8 +272,12 @@ cod≤ {±p = - s ⇒ t} {r = r} refl refl = cod-⨟ (s ⇒ t) r
 ≤cod {±q = - s ⇒ t} {r = r} refl refl = cod-⨟ r (s ⇒ t)
 ```
 
-## Precision on terms
+## Relating list-indexed lists
 
+This is used by handlers, which contain list-indexed lists.
+
+Pointwise lifting of relations between elements of two list-indexed lists `All F as` and `All G bs`.
+TODO: hide this?
 ```
 module _ {A B : Set} {F : A → Set} {G : B → Set} (R : ∀ {a b} → F a → G b → Set) where
 
@@ -292,79 +340,118 @@ module _ {A : Set} ⦃ DecEq-A : DecEq A ⦄ {F G : A → Set} {R : ∀ {a} → 
   ... | _ , a∈bs , refl , r | eq′ = a∈bs , eq′ , r
 ```
 
+## Precision on terms
+
+Term precision `_⊢_≤ᴹ_⦂_` and handler precision `_⊢_≤_⦂_⇒ʰ_` are defined mutually recursively.
 ```
-infix 3 _⊢_≤ᴹ_⦂_ _⊢_≤_⦂_➡_
+infix 3 _⊢_≤ᴹ_⦂_ _⊢_≤_⦂_⇒ʰ_
 
-record _⊢_≤_⦂_➡_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′ Q Q′} (H : Γ ⊢ P ➡ Q) (H′ : Γ′ ⊢ P′ ➡ Q′) (P≤ : P ≤ᶜ P′) (Q≤ : Q ≤ᶜ Q′) : Set
+data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ ⊢ A → Γ′ ⊢ A′ → A ≤ᶜ A′ → Set
+record _⊢_≤_⦂_⇒ʰ_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′ Q Q′} (H : Γ ⊢ P ⇒ʰ Q) (H′ : Γ′ ⊢ P′ ⇒ʰ Q′) (P≤ : P ≤ᶜ P′) (Q≤ : Q ≤ᶜ Q′) : Set
+```
 
-data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ ⊢ A → Γ′ ⊢ A′ → A ≤ᶜ A′ → Set where
+Start by defining term precision.
+```
+data _⊢_≤ᴹ_⦂_ {Γ Γ′} Γ≤ where
+```
 
+We defined variable precision `_⊢_≤ˣ_⦂_` previously.
+Note that the effects on both sides may be arbitrary effects `E` and `E′` satisfying `E ≤ᵉ E′`.
+```
   `≤` : ∀ {A A′ x x′ E E′} {pᵉ : E ≤ᵉ E′} {p : A ≤ A′}
     → Γ≤ ⊢ x ≤ˣ x′ ⦂ p
       --------------------
     → Γ≤ ⊢ ` x ≤ᴹ ` x′ ⦂ ⟨ pᵉ ⟩ p
+```
 
-  ƛ≤ƛ : ∀ {E E′ A A′ B B′ N N′} {pᵉ : E ≤ᵉ E′} {p : A ⇒ B ≤ A′ ⇒ B′}
+An abstraction `ƛ N` is more precise than another `ƛ N′` if
+its body `N` is more precise than `N′`.
+The rule is quantified over precision witnesses between the function types
+of the respective abstractions `p : A ⇒ P ≤ A′ ⇒ P′`,
+which can be projected to precision witnesses between their domains `dom p : A ≤ A′`
+and codomains `P ≤ᶜ P′`
+```
+  ƛ≤ƛ : ∀ {E E′ A A′ P P′ N N′} {pᵉ : E ≤ᵉ E′} {p : A ⇒ P ≤ A′ ⇒ P′}
     → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′ ⦂ cod p
       ----------------------------
     → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ pᵉ ⟩ p
+```
 
-  ·≤· : ∀ {A A′ E E′ B B′ L L′ M M′} {p : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′} 
+```
+  ·≤· : ∀ {A A′ E E′ P P′ L L′ M M′} {p : A ⇒ ⟨ E ⟩ P ≤ A′ ⇒ ⟨ E′ ⟩ P′}
       (let qᵉ = _≤ᶜ_.effects (cod p))
     → Γ≤ ⊢ L ≤ᴹ L′ ⦂ ⟨ qᵉ ⟩ p
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ qᵉ ⟩ dom p
       -----------------------------
     → Γ≤ ⊢ L · M ≤ᴹ L′ · M′ ⦂ cod p
+```
 
+```
   $≤$ : ∀ {ι E E′} {pᵉ : E ≤ᵉ E′}
     → (k : rep ι)
       ------------------------
     → Γ≤ ⊢ $ k ≤ᴹ $ k ⦂ ⟨ pᵉ ⟩ id
+```
 
+```
   ⦅⦆≤⦅⦆ : ∀ {ι ι′ ι″ E E′ M M′ N N′} {pᵉ : E ≤ᵉ E′}
     → (_⊕_ : rep ι → rep ι′ → rep ι″)
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ id
     → Γ≤ ⊢ N ≤ᴹ N′ ⦂ ⟨ pᵉ ⟩ id
       -------------------------------------
     → Γ≤ ⊢ M ⦅ _⊕_ ⦆ N ≤ᴹ M′ ⦅ _⊕_ ⦆ N′ ⦂ ⟨ pᵉ ⟩ id
+```
     
+```
   ⇑≤⇑ : ∀ {G E E′ M M′} {pᵉ : E ≤ᵉ E′}
     → (g : Ground G)
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ id
       -----------------------------
     → Γ≤ ⊢ (M ⇑ g) ≤ᴹ (M′ ⇑ g) ⦂ ⟨ pᵉ ⟩ id
+```
 
+```
   ≤⇑ : ∀ {A G E E′ M M′} {p : A ≤ G} {pᵉ : E ≤ᵉ E′}
     → (g : Ground G)
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ p
       --------------------------
     → Γ≤ ⊢ M ≤ᴹ (M′ ⇑ g) ⦂ ⟨ pᵉ ⟩ (p ⇑ g)
+```
 
+```
   cast≤ : ∀ {A B C} {M : Γ ⊢ A} {M′ : Γ′ ⊢ C}
           {±p : A =>ᶜ B} {q : B ≤ᶜ C} {r : A ≤ᶜ C}
     → commute≤ᶜ ±p q r
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ r
       -------------------------
     → Γ≤ ⊢ cast ±p M ≤ᴹ M′ ⦂ q
+```
 
+```
   ≤cast : ∀ {A B C} {M : Γ ⊢ A} {M′ : Γ′ ⊢ B}
           {p : A ≤ᶜ B} {±q : B =>ᶜ C} {r : A ≤ᶜ C}
     → ≤commuteᶜ p ±q r
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ p
       -------------------------
     → Γ≤ ⊢ M ≤ᴹ cast ±q M′ ⦂ r
+```
 
+```
   *≤* : ∀ {P Q P′ Q′} {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′}
                    {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′}
                    {P⊑Q : P ⊑ᶜ Q} {P′⊑Q′ : P′ ⊑ᶜ Q′}
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
       -------------------------
     → Γ≤ ⊢ cast (* P⊑Q) M ≤ᴹ cast (* P′⊑Q′) M′ ⦂ Q≤
+```
 
+```
   blame≤ : ∀ {A A′ M′} {p : A ≤ᶜ A′}
       ---------------------
     → Γ≤ ⊢ blame ≤ᴹ M′ ⦂ p
+```
 
+```
   wrap≤ : ∀ {A A′ A″ B B′ B″ E E′}
              {N : Γ ▷ A ⊢ B} {N′ : Γ′ ▷ A″ ⊢ B″}
              {E≤ : E ≤ᵉ E′}
@@ -375,7 +462,9 @@ data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ
     → (∀ {F F′} {F≤ : F ≤ᵉ F′} → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ F≤ ⟩ r)
       -----------------------------------------------------
     → Γ≤ ⊢ ƛ-wrap ∓s ±t (ƛ N) ≤ᴹ ƛ N′ ⦂ ⟨ E≤ ⟩ q
+```
 
+```
   ≤wrap : ∀ {A A′ A″ B B′ B″ E E′}
              {N : Γ ▷ A ⊢ B} {N′ : Γ′ ▷ A′ ⊢ B′}
              {E≤ : E ≤ᵉ E′}
@@ -386,30 +475,36 @@ data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) : ∀ {A A′} → Γ
     → (∀ {F F′} {F≤ : F ≤ᵉ F′} → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ F≤ ⟩ p)
       -----------------------------------------------------
     → Γ≤ ⊢ ƛ N ≤ᴹ ƛ-wrap ∓s ±t (ƛ N′) ⦂ ⟨ E≤ ⟩ r
+```
 
+```
   perform≤perform : ∀ {E E′ e} {e∈E : e ∈☆ E} {e∈E′ : e ∈☆ E′} {A}
                       {E≤ : E ≤ᵉ E′} {M M′}
     → {eq : response e ≡ A}
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id
     → Γ≤ ⊢ perform- e∈E M eq ≤ᴹ perform- e∈E′ M′ eq ⦂ ⟨ E≤ ⟩ id
+```
 
+```
   handle≤handle : ∀ {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′ M M′}
-    → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ➡ Q≤
+    → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
     → Γ≤ ⊢ handle H M ≤ᴹ handle H′ M′ ⦂ Q≤
+```
 
+```
 On-Perform : ∀ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {Q Q′} (Q≤ : Q ≤ᶜ Q′) → ∀ {Eh Eh′}
   → Core.On-Perform Γ Q Eh → Core.On-Perform Γ′ Q′ Eh′ → Set
 On-Perform Γ≤ Q≤ = All₂′ λ M M′ → ∃[ B⇒Q≤ ] dom B⇒Q≤ ≡ id × cod B⇒Q≤ ≡ Q≤ × (Γ≤ ▷ id ▷ (B⇒Q≤) ⊢ M ≤ᴹ M′ ⦂ Q≤)
 
-record _⊢_≤_⦂_➡_ Γ≤ {P P′ Q Q′} H H′ P≤ Q≤ where
+record _⊢_≤_⦂_⇒ʰ_ Γ≤ {P P′ Q Q′} H H′ P≤ Q≤ where
   inductive
   open _≤ᶜ_ using (returns)
   field
     on-return : Γ≤ ▷ returns P≤ ⊢ on-return H ≤ᴹ on-return H′ ⦂ Q≤
     on-perform : On-Perform Γ≤ Q≤ (on-perform H) (on-perform H′)
 
-open _⊢_≤_⦂_➡_ public
+open _⊢_≤_⦂_⇒ʰ_ public
 ```
 
 ```
@@ -527,8 +622,8 @@ reflˣ Z      =  Z≤Z
 reflˣ (S x)  =  S≤S (reflˣ x)
 
 reflʰ : ∀ {Γ P Q}
-  → (H : Γ ⊢ P ➡ Q)
-  → idᴳ ⊢ H ≤ H ⦂ ⟨ id ⟩ id ➡ ⟨ id ⟩ id
+  → (H : Γ ⊢ P ⇒ʰ Q)
+  → idᴳ ⊢ H ≤ H ⦂ ⟨ id ⟩ id ⇒ʰ ⟨ id ⟩ id
 
 reflᴹ : ∀ {Γ P}
     → (M : Γ ⊢ P)
@@ -612,8 +707,8 @@ ren≤ʰ : ∀ {Γ Γ′ Δ Δ′} {Γ≤ : Γ ≤ᴳ Γ′} {Δ≤ : Δ ≤ᴳ 
   → Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
     -------------------------------------------
   → (∀ {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′}
-      → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ➡ Q≤
-      → Δ≤ ⊢ renʰ ρ H ≤ renʰ ρ′ H′ ⦂ P≤ ➡ Q≤)
+      → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
+      → Δ≤ ⊢ renʰ ρ H ≤ renʰ ρ′ H′ ⦂ P≤ ⇒ʰ Q≤)
 
 ren≤ : ∀ {Γ Γ′ Δ Δ′} {Γ≤ : Γ ≤ᴳ Γ′} {Δ≤ : Δ ≤ᴳ Δ′} {ρ : Γ →ᴿ Δ} {ρ′ : Γ′ →ᴿ Δ′} 
   →  Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
@@ -647,7 +742,7 @@ ren≤ʰ ρ≤ H≤ = record
   { on-return = ren≤ (ren▷≤ ρ≤) (on-return H≤)
   ; on-perform = ren≤-on-perform (on-perform H≤) }
   where
-    open _⊢_≤_⦂_➡_
+    open _⊢_≤_⦂_⇒ʰ_
 
     ren≤-on-perform : ∀ {Eh Eh′ Ms Ms′}
       → On-Perform _ _ {Eh} {Eh′} Ms Ms′
@@ -667,9 +762,9 @@ lift≤ = ren≤ S≤S
 
 lift≤ʰ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′}
           {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′}
-  → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ➡ Q≤
+  → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
     --------------------------------------
-  → Γ≤ ▷ A≤ ⊢ liftʰ H ≤ liftʰ H′ ⦂ P≤ ➡ Q≤
+  → Γ≤ ▷ A≤ ⊢ liftʰ H ≤ liftʰ H′ ⦂ P≤ ⇒ʰ Q≤
 lift≤ʰ = ren≤ʰ S≤S 
 ```
 
@@ -711,7 +806,7 @@ sub≤ {σ′ = σ′} σ≤ {E′ = E′} (≤wrap {N′ = N′} {∓s = ∓s} 
 sub≤ σ≤ (perform≤perform M≤) = perform≤perform (sub≤ σ≤ M≤)
 sub≤ σ≤ (handle≤handle H≤ M≤) = handle≤handle sub≤ʰ (sub≤ σ≤ M≤)
   where
-    open _⊢_≤_⦂_➡_
+    open _⊢_≤_⦂_⇒ʰ_
 
     sub≤-on-perform : ∀ {Eh Eh′ Ms Ms′}
       → On-Perform _ _ {Eh} {Eh′} Ms Ms′
@@ -887,7 +982,7 @@ data _⊢_⇒ᶠ_∋_≤_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ (″perform e∈E [ ℰ ] eq) ≤ (″perform e∈E′ [ ℰ′ ] eq)
 
   ′handle_[_] : ∀ {Q₁ Q₁′ Q₂ Q₂′} {Q₁≤ : Q₁ ≤ᶜ Q₁′} {Q₂≤ : Q₂ ≤ᶜ Q₂′} {H H′} {ℰ ℰ′}
-    → Γ≤ ⊢ H ≤ H′ ⦂ Q₁≤ ➡ Q₂≤
+    → Γ≤ ⊢ H ≤ H′ ⦂ Q₁≤ ⇒ʰ Q₂≤
     → Γ≤ ⊢ P≤ ⇒ᶠ Q₁≤ ∋ ℰ ≤ ℰ′
       ----------------------------------------------------
     → Γ≤ ⊢ P≤ ⇒ᶠ Q₂≤ ∋ ′handle H [ ℰ ] ≤ ′handle H′ [ ℰ′ ]

@@ -189,7 +189,7 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
 
 ```
 Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
-  → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ➡ Q≤
+  → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
   → Hooks H ≡ Hooks H′
 Hooks-≤ H≤ = All₂′-≡ (on-perform H≤)
 
@@ -250,10 +250,10 @@ catchup-⟦perform⟧≤ v (`cast ±p [ ℰ ]) (cast≤ comm M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
     = Mk v′ V≤V′ (cast≤ comm ℰ≤ℰ′) ¬e//ℰ′ M′—↠ℰV′
-catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = ⟨ F≤ ⟩ _} v (`cast ±p [ ℰ ]) (safe-cast≤cast {P′⊑Q′ = P′⊑Q′} M≤) ¬e//ℰ
+catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = ⟨ F≤ ⟩ _} v (`cast ±p [ ℰ ]) (*≤* {P′⊑Q′ = P′⊑Q′} M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (safe-cast≤cast ℰ≤ℰ′) ¬e//cast[ℰ′] (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
+    = Mk v′ V≤V′ (*≤* ℰ≤ℰ′) ¬e//cast[ℰ′] (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
   where ¬e//cast[ℰ′] = ¬handled-cast {±p = * P′⊑Q′} ℰ′ (∈-≤ F≤ (¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e∈E)) ¬e//ℰ′
 catchup-⟦perform⟧≤ v (″perform e∈E [ ℰ ] eq) (perform≤perform M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
