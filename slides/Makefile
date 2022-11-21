@@ -1,4 +1,4 @@
-.PHONY: build serve clean
+.PHONY: build serve clean svg
 
 AGDA:=agda
 MODULE:=Code
@@ -6,7 +6,7 @@ TEMPLATE:=html/$(MODULE).md
 
 TEMPLATE_SCRIPT:=scripts/jinja.py
 
-build: static/index.html static/Agda.css
+build: static/index.html static/Agda.css svg
 
 serve:
 	sh ./scripts/serve.sh
@@ -20,5 +20,11 @@ static/Agda.css: html/Agda.css
 html/$(MODULE).md html/Agda.css: src/$(MODULE).lagda.md
 	$(AGDA) --verbose=0 -i../src -isrc --html --html-highlight=code $<
 
+svg: static/cast-left-plus-tex.svg static/cast-left-minus-tex.svg
+
+static/%-tex.svg: src/%.tex
+	latexmk -auxdir=build -outdir=build -shell-escape -pdf $<
+	pdf2svg build/$(*F).pdf $@
+
 clean:
-	$(RM) -r html
+	$(RM) -r html build

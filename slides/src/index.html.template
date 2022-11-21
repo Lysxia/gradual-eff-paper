@@ -79,6 +79,42 @@
             {% block test %}{% endblock %}
           </code>
         </section>
+        <section>
+          \[\begin{CD}
+           A @<<< C
+           @VVV   @.
+           B @.
+          \end{CD}
+          \]
+        </section>
+        <section>
+          <style>
+            .container { display: flex; align-items: center; }
+            .col-1 { flex: 2; } .col-2 { flex: 1; }
+          </style>
+          <div class="container">
+            <code class="col-1 tiny">{% block cast_left_plus %}{% endblock %}</code>
+            <img class="col-2" src="cast-left-plus-tex.svg" width="250" height="250"/>
+          </div>
+          <div class="container">
+            <code class="col-1 tiny">{% block cast_left_minus %}{% endblock %}</code>
+            <img class="col-2" src="cast-left-minus-tex.svg" width="250" height="250"/>
+          </div>
+        </section>
+        <section>
+          <style>
+            .container { display: flex; align-items: center; }
+            .col-1 { flex: 2; } .col-2 { flex: 1; }
+          </style>
+          <div class="container">
+            <code class="col-1 tiny">{% block cast_left_plus_2 %}{% endblock %}</code>
+            <img class="col-2" src="cast-left-plus-tex.svg" width="250" height="250"/>
+          </div>
+          <div class="container">
+            <code class="col-1 tiny">{% block cast_left_minus_2 %}{% endblock %}</code>
+            <img class="col-2" src="cast-left-minus-tex.svg" width="250" height="250"/>
+          </div>
+        </section>
 			</div>
 		</div>
 
