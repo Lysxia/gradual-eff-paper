@@ -10,53 +10,13 @@ open import Progress
 open import Prec
 ```
 
-```
-gvalue≤gvalue : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {V : Γ ⊢ ⟨ E ⟩ A} {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-  → (v  : Value V)
-  → (v′ : Value V′)
-  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
-  → ∀ {F F′} {F≤ : F ≤ᵉ F′}
-  → Γ≤ ⊢ gvalue v ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
-gvalue≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
-gvalue≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤gvalue v v′ V≤)
-gvalue≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤gvalue v v′ V≤)
-gvalue≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-gvalue≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
-gvalue≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
-
-gValue : ∀ {Γ E A} {V : Γ ⊢ ⟨ E ⟩ A} → (v : Value V) → ∀ {F} → Value (gvalue v {F = F})
-gValue (ƛ N) = ƛ N
-gValue ($ κ) = $ κ
-gValue (v ⇑ g) = gValue v ⇑ g
-
-≤gvalue : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {V : Γ ⊢ ⟨ E ⟩ A} {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-  → (v  : Value V)
-  → (v′ : Value V′)
-  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
-  → ∀ {F′} {F≤ : E ≤ᵉ F′}
-  → Γ≤ ⊢ V ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
-≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
-≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (≤gvalue v v′ V≤)
-≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (≤gvalue v v′ V≤)
-≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
-≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
-
-gvalue≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {V : Γ ⊢ ⟨ E ⟩ A} {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-  → (v : Value V)
-  → (v′ : Value V′)
-  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
-  → ∀ {F} {F≤ : F ≤ᵉ E′}
-  → Γ≤ ⊢ gvalue v ≤ᴹ V′ ⦂ ⟨ F≤ ⟩ A≤
-gvalue≤ ($ _) ($ _) ($≤$ κ) = $≤$ κ
-gvalue≤ (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤ v v′ V≤)
-gvalue≤ v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤ v v′ V≤)
-gvalue≤ (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-gvalue≤ (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
-gvalue≤ (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
-```
+We now prove the gradual guarantee:
+if `M ≤ᴹ M′` and `M —→ N`, then `M′ —→ N′`
+and `N ≤ᴹ N′`.
 
 ## Cast lemma
+
+If `V ≤ᴹ V′`, then `cast ±q V′ —↠ W` and `V ≤ᴹ W`.
 ```
 cast-lemma : ∀ {Γ Γ′ A B C} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ B} {r : A ≤ᶜ C}
            {V : Γ ⊢ A} {V′ : Γ′ ⊢ B}
@@ -67,16 +27,38 @@ cast-lemma : ∀ {Γ Γ′ A B C} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ B} {r 
   → Γ≤ ⊢ V ≤ᴹ V′ ⦂ p
     -------------------------------------------------------
   → ∃[ W ] Value W × (cast ±q V′ —↠ W) × (Γ≤ ⊢ V ≤ᴹ W ⦂ r)
+```
+
+Mirroring `progress±`, this proof proceeds by case analysis on the shape of the
+cast.
+```
 cast-lemma v v′ ±q e V≤V′ with splitᶜ ±q in e′
+```
+
+If `±q` is the identity cast, then the cast is removed.
+```
 cast-lemma {p = ⟨ _ ⟩ _}  v v′ ±q e V≤V′ | id
     rewrite ≤ident ±q e′ e
     =  _ , gValue v′ , unit (ident e′ v′) , ≤gvalue v v′ V≤V′
+```
+
+If `±q` is a function cast, the value is wrapped.
+```
 cast-lemma (ƛ _) (ƛ _) ±q e ƛN≤ƛN′ | ∓s ⇒ ±t
-    =  ƛ _ , ƛ _ , unit (wrap e′) , ≤wrap e′ (≤returns e) (generalize-ƛ≤ƛ ƛN≤ƛN′)
+    =  ƛ _ , ƛ _ , unit (wrap e′) , ≤wrap e′ (≤returns e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+```
+
+If `±q` is a box upcast `q ⇑ g`, the value is boxed,
+and that box is related to the left-hand side using `≤⇑`.
+```
 cast-lemma v v′ (+ ⟨ E≤E′ ⟩ (q ⇑ g)) refl V≤V′ | other
     with cast-lemma v v′ (+ ⟨ E≤E′ ⟩ q) refl V≤V′
 ... |  W′ , w , V′+—↠W′ , V≤W′
     =  (W′ ⇑ g) , (w ⇑ g) , (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′+—↠W′) , ≤⇑ g V≤W′
+```
+
+Box downcast TODO
+```
 cast-lemma v (v′ ⇑ g) (- ⟨ E′≤E ⟩ (q ⇑ .g)) refl (≤⇑ .g  V≤V′) | other
     with cast-lemma v v′ (- ⟨ E′≤E ⟩ q) refl V≤V′
 ... |  W′ , w′ , V′-—↠W′ , V≤W′

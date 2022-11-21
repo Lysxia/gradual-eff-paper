@@ -120,6 +120,8 @@ then `cast ±p M : ⊢ Γ ⊢ Q` is more precise than `M′ : Γ′ ⊢ P′`.
 In addition, the cast `P =>ᶜ Q` and the precision relations
 `P ≤ᶜ P′` and `Q ≤ᶜ Q′` should form a commutative triangle.
 \lyx{explain motivation}
+
+Subtyping (`*_`) TODO
 ```
 commute≤ᶜ : ∀ {P Q R} (±p : P =>ᶜ Q) (q : Q ≤ᶜ R) (r : P ≤ᶜ R) → Set
 commute≤ᶜ (+ p) q r = p ⨟ᶜ q ≡ r
@@ -351,6 +353,8 @@ record _⊢_≤_⦂_⇒ʰ_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′ Q Q′} 
 ```
 
 Start by defining term precision.
+For constructs other than casts, the general rule is "a term `M` is more precise than `M′` if
+the subterms of `M` are more precise than the subterms of of `M′`".
 ```
 data _⊢_≤ᴹ_⦂_ {Γ Γ′} Γ≤ where
 ```
@@ -364,20 +368,17 @@ Note that the effects on both sides may be arbitrary effects `E` and `E′` sati
     → Γ≤ ⊢ ` x ≤ᴹ ` x′ ⦂ ⟨ pᵉ ⟩ p
 ```
 
-An abstraction `ƛ N` is more precise than another `ƛ N′` if
-its body `N` is more precise than `N′`.
-The rule is quantified over precision witnesses between the function types
-of the respective abstractions `p : A ⇒ P ≤ A′ ⇒ P′`,
+The rules for abstraction and application are quantified over precision
+witnesses between function types `p : A ⇒ P ≤ A′ ⇒ P′`,
 which can be projected to precision witnesses between their domains `dom p : A ≤ A′`
-and codomains `P ≤ᶜ P′`
+and codomains `P ≤ᶜ P′`. This allows `p` to be either `_⇒_` or `id`.
+This lets us use `id` uniformly in the proof of reflexivity for term precision.
 ```
   ƛ≤ƛ : ∀ {E E′ A A′ P P′ N N′} {pᵉ : E ≤ᵉ E′} {p : A ⇒ P ≤ A′ ⇒ P′}
     → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′ ⦂ cod p
       ----------------------------
     → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ pᵉ ⟩ p
-```
 
-```
   ·≤· : ∀ {A A′ E E′ P P′ L L′ M M′} {p : A ⇒ ⟨ E ⟩ P ≤ A′ ⇒ ⟨ E′ ⟩ P′}
       (let qᵉ = _≤ᶜ_.effects (cod p))
     → Γ≤ ⊢ L ≤ᴹ L′ ⦂ ⟨ qᵉ ⟩ p
@@ -386,14 +387,14 @@ and codomains `P ≤ᶜ P′`
     → Γ≤ ⊢ L · M ≤ᴹ L′ · M′ ⦂ cod p
 ```
 
+Base types are only related by `id`, which
+thus serves as the index for constants and primitive operators.
 ```
   $≤$ : ∀ {ι E E′} {pᵉ : E ≤ᵉ E′}
     → (k : rep ι)
       ------------------------
     → Γ≤ ⊢ $ k ≤ᴹ $ k ⦂ ⟨ pᵉ ⟩ id
-```
 
-```
   ⦅⦆≤⦅⦆ : ∀ {ι ι′ ι″ E E′ M M′ N N′} {pᵉ : E ≤ᵉ E′}
     → (_⊕_ : rep ι → rep ι′ → rep ι″)
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ id
@@ -401,7 +402,26 @@ and codomains `P ≤ᶜ P′`
       -------------------------------------
     → Γ≤ ⊢ M ⦅ _⊕_ ⦆ N ≤ᴹ M′ ⦅ _⊕_ ⦆ N′ ⦂ ⟨ pᵉ ⟩ id
 ```
-    
+
+Handlers and effects also follow the same pattern of relating subterms.
+Precision between `handle` terms uses handler precision `_⊢_≤_⦂_⇒ʰ_` which
+will be defined below.
+```
+  perform≤perform : ∀ {E E′ e} {e∈E : e ∈☆ E} {e∈E′ : e ∈☆ E′} {A}
+                      {E≤ : E ≤ᵉ E′} {M M′}
+    → {eq : response e ≡ A}
+    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id
+    → Γ≤ ⊢ perform- e∈E M eq ≤ᴹ perform- e∈E′ M′ eq ⦂ ⟨ E≤ ⟩ id
+
+  handle≤handle : ∀ {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′ M M′}
+    → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
+    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
+    → Γ≤ ⊢ handle H M ≤ᴹ handle H′ M′ ⦂ Q≤
+```
+
+Boxes have type `★`, and their contents have ground types, which
+can only be related by precision if they are equal. So the relation
+should be witnessed by `id`.
 ```
   ⇑≤⇑ : ∀ {G E E′ M M′} {pᵉ : E ≤ᵉ E′}
     → (g : Ground G)
@@ -410,6 +430,9 @@ and codomains `P ≤ᶜ P′`
     → Γ≤ ⊢ (M ⇑ g) ≤ᴹ (M′ ⇑ g) ⦂ ⟨ pᵉ ⟩ id
 ```
 
+`M` is more precise than a box `M′ ⇑ g` if `M` is more precise than the underlying term `M′`.
+Note the absence of a symmetric rule where the box is on the left.
+Intuitively, a more precisely typed term uses fewer dynamic boxes.
 ```
   ≤⇑ : ∀ {A G E E′ M M′} {p : A ≤ G} {pᵉ : E ≤ᵉ E′}
     → (g : Ground G)
@@ -418,24 +441,50 @@ and codomains `P ≤ᶜ P′`
     → Γ≤ ⊢ M ≤ᴹ (M′ ⇑ g) ⦂ ⟨ pᵉ ⟩ (p ⇑ g)
 ```
 
+Term precision does not imply that the more precise side has fewer casts.
+Indeed, increasing the precision of a term may introduce more run-time checks.
+
+For instance, consider the identity ``ID = ƛ (` Z) : ∅ ⊢ ★ ⇒ ⟨ ☆ ⟩ ★``,
+and the term obtained from casting a monomorphic identity `ID′ = cast (+ p) ID-ℕ`,
+where ``ID-ℕ = λ (` Z) : ∅ ⊢ ℕ ⇒ ⟨ ε ⟩ ℕ``. `ID-ℕ` is more precise than `ID`,
+and `ID-ℕ` contains a cast while `ID` does not.
+
+Unlike the preceding rules, we will have separate
+rules for inserting casts on either side.
+When we insert a cast on the left with `cast≤`,
+the right-hand side is less precise than the term
+on the left-hand side before and after the cast.
+This results in a triangle, with vertices `P`, `Q`, `R`, where one side
+consists of the cast `P =>ᶜ Q`, and the other two sides are the inequalities
+`P ≤ᶜ R` and `Q ≤ᶜ R`. We require that triangle to commute, using the predicate
+`commute≤ᶜ`.
 ```
-  cast≤ : ∀ {A B C} {M : Γ ⊢ A} {M′ : Γ′ ⊢ C}
-          {±p : A =>ᶜ B} {q : B ≤ᶜ C} {r : A ≤ᶜ C}
+  cast≤ : ∀ {P Q R} {M : Γ ⊢ P} {M′ : Γ′ ⊢ R}
+          {±p : P =>ᶜ Q} {q : Q ≤ᶜ R} {r : P ≤ᶜ R}
     → commute≤ᶜ ±p q r
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ r
       -------------------------
     → Γ≤ ⊢ cast ±p M ≤ᴹ M′ ⦂ q
 ```
 
+The `≤cast` rule is symmetrical to `cast≤`.
 ```
-  ≤cast : ∀ {A B C} {M : Γ ⊢ A} {M′ : Γ′ ⊢ B}
-          {p : A ≤ᶜ B} {±q : B =>ᶜ C} {r : A ≤ᶜ C}
+  ≤cast : ∀ {P Q R} {M : Γ ⊢ P} {M′ : Γ′ ⊢ Q}
+          {p : P ≤ᶜ Q} {±q : Q =>ᶜ R} {r : P ≤ᶜ R}
     → ≤commuteᶜ p ±q r
     → Γ≤ ⊢ M ≤ᴹ M′ ⦂ p
       -------------------------
     → Γ≤ ⊢ M ≤ᴹ cast ±q M′ ⦂ r
 ```
 
+
+```
+  blame≤ : ∀ {A A′ M′} {p : A ≤ᶜ A′}
+      ---------------------
+    → Γ≤ ⊢ blame ≤ᴹ M′ ⦂ p
+```
+
+Subtyping TODO.
 ```
   *≤* : ∀ {P Q P′ Q′} {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′}
                    {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′}
@@ -445,12 +494,10 @@ and codomains `P ≤ᶜ P′`
     → Γ≤ ⊢ cast (* P⊑Q) M ≤ᴹ cast (* P′⊑Q′) M′ ⦂ Q≤
 ```
 
-```
-  blame≤ : ∀ {A A′ M′} {p : A ≤ᶜ A′}
-      ---------------------
-    → Γ≤ ⊢ blame ≤ᴹ M′ ⦂ p
-```
-
+A cast between function types eventually steps to a `ƛ-wrap`, so
+we add an ad-hoc rule for that construct. After a further `β` step,
+the resulting terms will related using `cast≤` for `wrap≤`,
+and `≤cast` for `≤wrap`.
 ```
   wrap≤ : ∀ {A A′ A″ B B′ B″ E E′}
              {N : Γ ▷ A ⊢ B} {N′ : Γ′ ▷ A″ ⊢ B″}
@@ -463,6 +510,22 @@ and codomains `P ≤ᶜ P′`
       -----------------------------------------------------
     → Γ≤ ⊢ ƛ-wrap ∓s ±t (ƛ N) ≤ᴹ ƛ N′ ⦂ ⟨ E≤ ⟩ q
 ```
+
+Here is an example reduction sequence (with some oversimplifications for conciseness)
+of an abstraction `ƛ N` under a cast applied to an argument `M`.
+Every term in this sequence is more precise than `(ƛ N′) · M′`
+given `ƛ N ≤ᴹ ƛ N′` and `M ≤ᴹ M′`. This is witnessed by `cast≤` for the first
+term, `wrap≤` for the second term, and a combination of `cast≤` and `·≤·` for
+the last term.
+
+    cast ±p (ƛ N) · M
+    —→
+    ƛ-wrap ∓s ±t (ƛ N) · M
+    =
+    (ƛ (cast ±t (lift (ƛ N) · cast ∓s (` Z)))) · M
+    —→
+    cast ±t ((ƛ N) · cast ∓s M)
+
 
 ```
   ≤wrap : ∀ {A A′ A″ B B′ B″ E E′}
@@ -477,26 +540,15 @@ and codomains `P ≤ᶜ P′`
     → Γ≤ ⊢ ƛ N ≤ᴹ ƛ-wrap ∓s ±t (ƛ N′) ⦂ ⟨ E≤ ⟩ r
 ```
 
-```
-  perform≤perform : ∀ {E E′ e} {e∈E : e ∈☆ E} {e∈E′ : e ∈☆ E′} {A}
-                      {E≤ : E ≤ᵉ E′} {M M′}
-    → {eq : response e ≡ A}
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id
-    → Γ≤ ⊢ perform- e∈E M eq ≤ᴹ perform- e∈E′ M′ eq ⦂ ⟨ E≤ ⟩ id
-```
-
-```
-  handle≤handle : ∀ {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′ M M′}
-    → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
-    → Γ≤ ⊢ handle H M ≤ᴹ handle H′ M′ ⦂ Q≤
-```
-
+Precision between the operation clauses of handlers.
 ```
 On-Perform : ∀ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {Q Q′} (Q≤ : Q ≤ᶜ Q′) → ∀ {Eh Eh′}
   → Core.On-Perform Γ Q Eh → Core.On-Perform Γ′ Q′ Eh′ → Set
 On-Perform Γ≤ Q≤ = All₂′ λ M M′ → ∃[ B⇒Q≤ ] dom B⇒Q≤ ≡ id × cod B⇒Q≤ ≡ Q≤ × (Γ≤ ▷ id ▷ (B⇒Q≤) ⊢ M ≤ᴹ M′ ⦂ Q≤)
+```
 
+Precision between handlers.
+```
 record _⊢_≤_⦂_⇒ʰ_ Γ≤ {P P′ Q Q′} H H′ P≤ Q≤ where
   inductive
   open _≤ᶜ_ using (returns)
@@ -507,18 +559,10 @@ record _⊢_≤_⦂_⇒ʰ_ Γ≤ {P P′ Q Q′} H H′ P≤ Q≤ where
 open _⊢_≤_⦂_⇒ʰ_ public
 ```
 
-```
-generalize-ƛ≤ƛ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {P P′} {p : A ⇒ P ≤ A′ ⇒ P′} {N : Γ ▷ A ⊢ P} {N′}
-  → ∀ {E E′ F F′} {E≤ : E ≤ᵉ E′} {F≤ : F ≤ᵉ F′}
-  → Γ≤ ⊢ (ƛ N) ≤ᴹ (ƛ N′) ⦂ ⟨ E≤ ⟩ p
-  → Γ≤ ⊢ (ƛ N) ≤ᴹ (ƛ N′) ⦂ ⟨ F≤ ⟩ p
-generalize-ƛ≤ƛ (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-generalize-ƛ≤ƛ (wrap≤ i e N≤N′) = wrap≤ i e N≤N′
-generalize-ƛ≤ƛ (≤wrap i e N≤N′) = ≤wrap i e N≤N′
-```
+Term precision is reflexive. Because term precision is indexed by context precision and type precision,
+its reflexivity proof will be indexed by their respective reflexivity proofs.
 
-## Upcast congruence
-
+TODO: unify `+≤+`, `-≤-`, `*≤*` here.
 ```
 {-
 data _=>_∋_≤_ : ∀ {P P′ Q Q′} → P ≤ᶜ P′ → Q ≤ᶜ Q′ → P =>ᵉᵛ Q → P′ =>ᵉᵛ Q′ → Set where
@@ -534,17 +578,24 @@ data _=>_∋_≤_ : ∀ {P P′ Q Q′} → P ≤ᶜ P′ → Q ≤ᶜ Q′ → 
 -}
 ```
 
+## Cast congruence
+
+Term precision does not contain a rule to insert a cast on
+both sides of an inequation at once.
+The following lemmas derive such rules when both sides are casts with the same polarity.
+
+Upcast congruence:
 ```
-+≤+ : ∀ {Γ Γ′ A B A′ B′} {M : Γ ⊢ A} {M′ : Γ′ ⊢ A′} {Γ≤ : Γ ≤ᴳ Γ′}
-    {p : A ≤ᶜ B} {q : A′ ≤ᶜ B′} {s : A ≤ᶜ A′} {t : B ≤ᶜ B′}
-  → p ⨟ᶜ t ≡ s ⨟ᶜ q
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
-    ------------------------------------
-  → Γ≤ ⊢ cast (+ p) M ≤ᴹ cast (+ q) M′ ⦂ t
++≤+  : ∀ {Γ Γ′ A B A′ B′} {M : Γ ⊢ A} {M′ : Γ′ ⊢ A′} {Γ≤ : Γ ≤ᴳ Γ′}
+     {p : A ≤ᶜ B} {q : A′ ≤ᶜ B′} {s : A ≤ᶜ A′} {t : B ≤ᶜ B′}
+  →  p ⨟ᶜ t ≡ s ⨟ᶜ q
+  →  Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
+     ------------------------------------
+  →  Γ≤ ⊢ cast (+ p) M ≤ᴹ cast (+ q) M′ ⦂ t
 +≤+ e M≤M′ = cast≤ e (≤cast refl M≤M′)
 ```
 
-Here is the derivation:
+Here is the derivation of upcast congruence:
 
     Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
     s ⨟ q ≡ r
@@ -564,9 +615,7 @@ Here it is illustrated:
       (M + p) : B ---→ (M′ + q) : B′
                    t
 
-
-## Downcast congruence
-
+Downcast congruence:
 ```
 -≤- : ∀ {Γ Γ′ A B A′ B′} {M : Γ ⊢ B} {M′ : Γ′ ⊢ B′} {Γ≤ : Γ ≤ᴳ Γ′}
     {p : A ≤ᶜ B} {q : A′ ≤ᶜ B′} {s : A ≤ᶜ A′} {t : B ≤ᶜ B′}
@@ -577,7 +626,7 @@ Here it is illustrated:
 -≤- e M≤M′ = ≤cast e (cast≤ refl M≤M′)
 ```
 
-Here is the derivation:
+Here is the derivation of downcast congruence:
 
     Γ≤ ⊢ M ≤ᴹ M′ ⦂ t
     p ⨟ t ≡ r
@@ -597,21 +646,16 @@ Here it is illustrated:
       (M + p) : B ---→ (M′ + q) : B′
                    t
 
-## Effect cast congruence
-
-```
-{-
-=>-≤ : ∀ {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′} {P=>Q P′=>Q′}
-  → P≤ => Q≤ ∋ P=>Q ≤ P′=>Q′
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
-    ------------------------------------
-  → Γ≤ ⊢ (M cast⟨⟩ P=>Q) ≤ᴹ (M′ cast⟨⟩ P′=>Q′) ⦂ Q≤
-=>-≤ (+ᵉ {F≤ = F≤} E≤F E′≤F′) M≤M′ = ⟨⟩≤ {F≤ = E≤F ⨟ᵉ F≤} (≤⟨⟩ M≤M′)
-=>-≤ (-ᵉ {E≤ = E≤} F≤E F′≤E′) M≤M′ = ≤⟨⟩ {F≤ = F≤E ⨟ᵉ E≤} (⟨⟩≤ M≤M′)
--}
-```
-
 ## Reflexivity of term precision
+
+Every term is at least as precise as itself.
+Term precision is indexed by a type precision proof,
+and to relate a term with itself, a natural choice is to
+index it by the reflexivity proof `id` (or `⟨ id ⟩ id` which is the reflexivity
+proof for computation type precision). Reflexivity depends crucially on the
+fact that the rules for abstraction `ƛ≤ƛ`, application `·≤·`, and handlers
+`handle≤handle` are parameterized by proofs for type precision on functions,
+instead of constructing them using `_⇒_` which is distinct from `id`.
 
 ```
 reflˣ : ∀ {Γ A}
@@ -620,7 +664,9 @@ reflˣ : ∀ {Γ A}
     → idᴳ ⊢ x ≤ˣ x ⦂ id
 reflˣ Z      =  Z≤Z
 reflˣ (S x)  =  S≤S (reflˣ x)
+```
 
+```
 reflʰ : ∀ {Γ P Q}
   → (H : Γ ⊢ P ⇒ʰ Q)
   → idᴳ ⊢ H ≤ H ⦂ ⟨ id ⟩ id ⇒ʰ ⟨ id ⟩ id
@@ -629,18 +675,18 @@ reflᴹ : ∀ {Γ P}
     → (M : Γ ⊢ P)
       -------------------
     → idᴳ ⊢ M ≤ᴹ M ⦂ ⟨ id ⟩ id
-reflᴹ (` x)           =  `≤` (reflˣ x)
-reflᴹ (ƛ M)           =  ƛ≤ƛ (reflᴹ M)
-reflᴹ (L · M)         =  ·≤· (reflᴹ L) (reflᴹ M)
-reflᴹ ($ k)           =  $≤$ k
-reflᴹ (M ⦅ _⊕_ ⦆ N)   =  ⦅⦆≤⦅⦆ _⊕_ (reflᴹ M) (reflᴹ N)
-reflᴹ (M ⇑ g)         =  ⇑≤⇑ g (reflᴹ M)
-reflᴹ (cast (+ p) M)  =  +≤+ (sym (left-idᶜ p)) (reflᴹ M)
-reflᴹ (cast (- p) M)  =  -≤- (left-idᶜ p) (reflᴹ M)
-reflᴹ (cast (* p) M)  =  *≤* (reflᴹ M)
-reflᴹ blame           =  blame≤
-reflᴹ (perform- e∈E M eq) = perform≤perform (reflᴹ M)
-reflᴹ (handle H M) = handle≤handle (reflʰ H) (reflᴹ M)
+reflᴹ (` x)                 =  `≤` (reflˣ x)
+reflᴹ (ƛ M)                 =  ƛ≤ƛ (reflᴹ M)
+reflᴹ (L · M)               =  ·≤· (reflᴹ L) (reflᴹ M)
+reflᴹ ($ k)                 =  $≤$ k
+reflᴹ (M ⦅ _⊕_ ⦆ N)         =  ⦅⦆≤⦅⦆ _⊕_ (reflᴹ M) (reflᴹ N)
+reflᴹ (M ⇑ g)               =  ⇑≤⇑ g (reflᴹ M)
+reflᴹ (cast (+ p) M)        =  +≤+ (sym (left-idᶜ p)) (reflᴹ M)
+reflᴹ (cast (- p) M)        =  -≤- (left-idᶜ p) (reflᴹ M)
+reflᴹ (cast (* p) M)        =  *≤* (reflᴹ M)
+reflᴹ blame                 =  blame≤
+reflᴹ (perform- e∈E M eq)   =  perform≤perform (reflᴹ M)
+reflᴹ (handle H M)          =  handle≤handle (reflʰ H) (reflᴹ M)
 
 reflʰ H = record
   { on-return = reflᴹ (H .on-return)
@@ -651,7 +697,9 @@ reflʰ H = record
     refl-on-perform (M ∷ Ms) = (refl , id , refl , refl , reflᴹ M) ∷ refl-on-perform Ms
 ```
 
-## Renaming {#renaming-prec}
+## Precision is preserved by renaming and substitution
+
+### Renaming {#renaming-prec}
 
 Precision on renamings
 
@@ -768,7 +816,7 @@ lift≤ʰ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′
 lift≤ʰ = ren≤ʰ S≤S 
 ```
 
-## Substitution {#substitution-prec}
+### Substitution {#substitution-prec}
 
 Extension
 ```
@@ -899,6 +947,7 @@ inc2≤inc★′2★ = ·≤·★ inc≤inc★′ ($≤$★ 2)
 
 ## Precision on frames
 
+This is necessary for handlers.
 ```
 infix 3 _⊢_⇒ᶠ_∋_≤_
 
@@ -1025,4 +1074,55 @@ lift≤ᶠ = ren≤ᶠ S≤S
 ⟦⟧≤⟦⟧ (*≤* ℰ≤) M≤ = *≤* (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ⟦⟧≤⟦⟧ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) M≤ = perform≤perform (⟦⟧≤⟦⟧ ℰ≤ M≤)
 ⟦⟧≤⟦⟧ (′handle H≤ [ ℰ≤ ]) M≤ = handle≤handle H≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
+```
+
+## Precision on values
+
+Values are a subset of terms, so we don't need to define a separate relation for them.
+The following lemmas state that value precision is preserved by generalization (`gvalue`).
+```
+gvalue≤gvalue : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {V : Γ ⊢ ⟨ E ⟩ A} {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+  → (v  : Value V)
+  → (v′ : Value V′)
+  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
+  → ∀ {F F′} {F≤ : F ≤ᵉ F′}
+    --------------------------------------
+  → Γ≤ ⊢ gvalue v ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
+gvalue≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
+gvalue≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤gvalue v v′ V≤)
+gvalue≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤gvalue v v′ V≤)
+gvalue≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
+gvalue≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
+gvalue≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
+
+gValue : ∀ {Γ E A} {V : Γ ⊢ ⟨ E ⟩ A} → (v : Value V) → ∀ {F} → Value (gvalue v {F = F})
+gValue (ƛ N) = ƛ N
+gValue ($ κ) = $ κ
+gValue (v ⇑ g) = gValue v ⇑ g
+
+≤gvalue : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {V : Γ ⊢ ⟨ E ⟩ A} {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+  → (v  : Value V)
+  → (v′ : Value V′)
+  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
+  → ∀ {F′} {F≤ : E ≤ᵉ F′}
+  → Γ≤ ⊢ V ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
+≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
+≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (≤gvalue v v′ V≤)
+≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (≤gvalue v v′ V≤)
+≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
+≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
+≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
+
+gvalue≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {V : Γ ⊢ ⟨ E ⟩ A} {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+  → (v : Value V)
+  → (v′ : Value V′)
+  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
+  → ∀ {F} {F≤ : F ≤ᵉ E′}
+  → Γ≤ ⊢ gvalue v ≤ᴹ V′ ⦂ ⟨ F≤ ⟩ A≤
+gvalue≤ ($ _) ($ _) ($≤$ κ) = $≤$ κ
+gvalue≤ (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤ v v′ V≤)
+gvalue≤ v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤ v v′ V≤)
+gvalue≤ (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
+gvalue≤ (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
+gvalue≤ (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
 ```
