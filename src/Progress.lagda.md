@@ -517,13 +517,14 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 Notation to hide the fording indices.
 ```
 pattern ξ ℰ M—→N = ξξ ℰ refl refl M—→N
-{-
-  ξ  :  (ℰ : Frame Γ A B)
-     →  M ↦ N
-        --------
-     →  ℰ ⟦ M ⟧ —→ ℰ ⟦ N ⟧
--}
 ```
+
+That makes `ξ` a constructor with the following type:
+
+    ξ  :  (ℰ : Frame Γ A B)
+       →  M ↦ N
+          --------
+       →  ℰ ⟦ M ⟧ —→ ℰ ⟦ N ⟧
 
 ## Reflexive and transitive closure of reduction
 
@@ -585,51 +586,40 @@ L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++↠ M—↠N
 
 ## Irreducible terms
 
-Values are irreducible.  The auxiliary definition rearranges the
-order of the arguments because it works better for Agda.
+Values are irreducible.
 ```
-value-irreducible : ∀ {Γ A} {V M : Γ ⊢ A} → Value V → ¬ (V —→ M)
-value-irreducible v V—→M = nope V—→M v
-   where
-   nope : ∀ {Γ A} {V M : Γ ⊢ A} → V —→ M → Value V → ⊥
-   nope (ξ □ (β x)) ()
-   nope (ξ □ δ) ()
-   nope (ξ □ (ident e v)) ()
-   nope (ξ □ (wrap e)) ()
-   nope (ξ □ (expand v g)) ()
-   nope (ξ □ (collapse v g)) ()
-   nope (ξ □ (collide v g h G≢H)) ()
-   nope (ξ □ (castᵉ-blame ¬∈ e//ℰ v′ eq)) ()
-   nope (ξ ([ E ]⇑ g) V—→M) (v ⇑ g)  =  nope (ξ E V—→M) v
-   nope (ξξ (″perform _ [ _ ] _) refl _ _) ()
+value-irreducible : ∀ {Γ A} {V M : Γ ⊢ A}
+  →  Value V
+     ----------
+  →  ¬ (V —→ M)
+value-irreducible () (ξ □ (β x))
+value-irreducible () (ξξ (″perform _ [ _ ] _) refl _ _)
+value-irreducible (v ⇑ g) (ξ ([ E ]⇑ g) V—→M)  =  value-irreducible v (ξ E V—→M)
 ```
 
 Variables are irreducible.
 ```
 variable-irreducible : ∀ {x : Γ ∋ A} {N : Γ ⊢ ⟨ E ⟩ A}
-    ------------
-  → ¬ (` x —→ N)
+     ------------
+  →  ¬ (` x —→ N)
 variable-irreducible (ξξ □ refl _ ())
 ```
 
 Boxes are irreducible (at the top level)
 ```
 box-irreducible : ∀ {Γ G} {M : Γ ⊢ ⟨ E ⟩ G} {N : Γ ⊢ ⟨ E ⟩ ★}
-  → (g : Ground G)
-    --------------
-  → ¬ (M ⇑ g ↦ N)
+  →  (g : Ground G)
+     --------------
+  →  ¬ (M ⇑ g ↦ N)
 box-irreducible g ()
 ```
 
 Blame is irreducible.
 ```
-blame-irreducible : ∀ {M′ : Γ ⊢ P}  → ¬ (blame —→ M′)
+blame-irreducible : ∀ {M′ : Γ ⊢ P}
+    ---------------
+ →  ¬ (blame —→ M′)
 blame-irreducible (ξ □ ())
-```
-
-```
-unframe-blame : ∀ {M} (ℰ : Frame Γ P Q) → blame ≡ ℰ ⟦ M ⟧ → blame ≡ M
-unframe-blame □ blame≡ = blame≡
 ```
 
 ## Progress
