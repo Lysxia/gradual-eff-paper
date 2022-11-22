@@ -57,8 +57,8 @@ interleaved mutual
 ```
 
 ```
-  data _⊢_ : Context → Typeᶜ → Set
-  record _⊢_⇒ʰ_ (Γ : Context) (P Q : Typeᶜ) : Set
+  data _⊢_ : Context → CType → Set
+  record _⊢_⇒ʰ_ (Γ : Context) (P Q : CType) : Set
 ```
 
 The data type `Γ ⊢ P` represents a term of computation type `P` in context `Γ`.
@@ -215,12 +215,12 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
 `All` is the type of list indexed by lists.
 
 ```
-  On-Perform : Context → Typeᶜ → List Op → Set
+  On-Perform : Context → CType → List Op → Set
   On-Perform Γ Q Hooks = All (λ e → Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q) Hooks
 
   record _⊢_⇒ʰ_ Γ P Q where
     inductive
-    open Typeᶜ
+    open CType
     field
       Hooks : List Op
       Hooks-handled : P .effects ≡ (Hooks ++☆ Q .effects)

@@ -46,7 +46,7 @@ private variable
   Γ Γ′ Δ Δ′ : Context
   Γ≤ : Γ ≤ᴳ Γ′
   Δ≤ : Δ ≤ᴳ Δ′
-  P P′ Q Q′ : Typeᶜ
+  P P′ Q Q′ : CType
   A A′ B B′ C : Type
   E E′ F F′ : Effect
   P≤ : P ≤ᶜ P′

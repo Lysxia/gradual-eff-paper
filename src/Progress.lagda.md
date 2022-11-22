@@ -35,7 +35,7 @@ under which reduction may happen, as well as to represent continuations for
 effect handlers.
 
 ```
-data Frame (Γ : Context) (C : Typeᶜ) : Typeᶜ → Set where
+data Frame (Γ : Context) (C : CType) : CType → Set where
 ```
 
 The base case is the empty frame.
@@ -181,14 +181,14 @@ liftʰ = renʰ S_
 private
   variable
     A A′ B G : Type
-    P P′ Q Q′ : Typeᶜ
+    P P′ Q Q′ : CType
     E E′ F : Effect
     Γ : Context
 ```
 
 The effect in the codomain of the cast. 
 ```
-cast-effect : {P Q : Typeᶜ} → P =>ᶜ Q → Effect
+cast-effect : {P Q : CType} → P =>ᶜ Q → Effect
 cast-effect {Q = ⟨ E ⟩ B} _ = E
 ```
 
@@ -217,7 +217,7 @@ effects are handled by `ℰ₀`.
 upcast-safety : ∀ {Γ P Q} (P≤Q : P ≤ᶜ Q) →
   let  ℰ₀ : Frame Γ P Q
        ℰ₀ = `cast (+ P≤Q) [ □ ] in
-  ∀ (e : Op) → e ∈☆ Typeᶜ.effects P → ¬ handled e ℰ₀
+  ∀ (e : Op) → e ∈☆ CType.effects P → ¬ handled e ℰ₀
 upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆ ☆
 upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
 ```
@@ -701,7 +701,7 @@ progress± (v ⇑ g) (- ⟨ _ ⟩ (_ ⇑ h)) | other
 ... | no  G≢H                                =  _ , collide v g h G≢H
 ```
 
-Safe casts `* q` are either identity casts or function casts, so the `other` case is
+Safe casts `(* q`) are either identity casts or function casts, so the `other` case is
 vacuous for those.
 ```
 progress± _ (* ⟨ _ ⟩ q) | other              =  ⊥-elim (split-*≢other q e)
@@ -835,8 +835,8 @@ record Gas : Set where
     amount : ℕ
 ```
 When our evaluator returns a term `N`, it will either give evidence that
-`N` is a value, or indicate that blame occurred or it ran out of gas.
-\lyx{TODO: what to do/say about `pending`}
+`N` is a value, or indicate that blame occurred, or an operation was unhandled,
+or it ran out of gas.
 ```
 data Finished {P} : (∅ ⊢ P) → Set where
 

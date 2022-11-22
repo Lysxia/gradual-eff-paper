@@ -52,8 +52,8 @@ data _∋_⦂_ : Context → Var → Type → Set where
 ```
 infixl 4 _⊢_⦂_ _⊢_⦂_⇒ʰ_
 
-data _⊢_⦂_ (Γ : Context) : Term → Typeᶜ → Set
-data _⊢_⦂_⇒ʰ_ (Γ : Context) : Handler → Typeᶜ → Typeᶜ → Set
+data _⊢_⦂_ (Γ : Context) : Term → CType → Set
+data _⊢_⦂_⇒ʰ_ (Γ : Context) : Handler → CType → CType → Set
 
 data _⊢_⦂_ Γ where
   `_ : ∀ {E A x}
@@ -110,7 +110,7 @@ data _⊢_⦂_ Γ where
 ```
 
 ```
-Op-Clauses : Context → Typeᶜ → List (Op × Var × Var × Term) → Set
+Op-Clauses : Context → CType → List (Op × Var × Var × Term) → Set
 Op-Clauses Γ Q Ns
   = All (λ{ (e , x , k , N) → Γ ▷ x ⦂ request e ▷ k ⦂ (response e ⇒ Q) ⊢ N ⦂ Q }) Ns
 

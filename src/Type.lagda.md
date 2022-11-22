@@ -113,11 +113,11 @@ infix 7 ⟨_⟩_
 ```
 
 We distinguish computations from the values they return, assigning them different notions
-of types. Computation types `Typeᶜ` \lyx{or CType?} are pairs of effects `Effect` and value types `Type`.
+of types. Computation types `CType` \lyx{or CType?} are pairs of effects `Effect` and value types `Type`.
 Computation types and value types are defined mutually recursively, so we declare both of their
 type signatures before giving their definitions.
 ```
-record Typeᶜ : Set
+record CType : Set
 data Type : Set
 ```
 
@@ -128,7 +128,7 @@ and a codomain which is a computation type: when a function is applied, it may p
 data Type where
   ★ : Type
   $_ : (ι : Base) → Type
-  _⇒_ : (A : Type) → (P : Typeᶜ) → Type
+  _⇒_ : (A : Type) → (P : CType) → Type
 ```
 
 Computation types are pairs of an effect and a value type,
@@ -136,7 +136,7 @@ respectively describing the operations that a computation may perform,
 and the values that it may return.
 
 ```
-record Typeᶜ where
+record CType where
   inductive
   constructor ⟨_⟩_
   field
@@ -179,7 +179,7 @@ _≡ᵉ?_ : Decidable {A = Effect} _≡_
 ¡ _ ≡ᵉ? ☆ = no λ()
 ☆ ≡ᵉ? ¡ _ = no λ()
 
-_≡ᶜ?_ : (P Q : Typeᶜ) → Dec (P ≡ Q)
+_≡ᶜ?_ : (P Q : CType) → Dec (P ≡ Q)
 
 _≡?_ : (A : Type) → (B : Type) → Dec (A ≡ B)
 ★       ≡? ★                                   =  yes refl
@@ -279,7 +279,7 @@ Since computation types and value types are mutually recursive, their
 respective precision relations are also mutually recursive. We declare
 the signature of one before defining the other.
 ```
-record _≤ᶜ_ (_ _ : Typeᶜ) : Set
+record _≤ᶜ_ (_ _ : CType) : Set
 ```
 
 A staple of gradual typing is that the function type is covariant in both domain and codomain
@@ -327,8 +327,8 @@ record _≤ᶜ_ P Q where
   inductive
   constructor ⟨_⟩_
   field
-    effects : Typeᶜ.effects P ≤ᵉ Typeᶜ.effects Q
-    returns : Typeᶜ.returns P ≤  Typeᶜ.returns Q
+    effects : CType.effects P ≤ᵉ CType.effects Q
+    returns : CType.returns P ≤  CType.returns Q
 ```
 
 Domain and codomain of function precision.
@@ -538,7 +538,7 @@ relations between value types and computation types.
 
 ```
 data _⊑_ : Type → Type → Set
-record _⊑ᶜ_ (P Q : Typeᶜ) : Set
+record _⊑ᶜ_ (P Q : CType) : Set
 ```
 
 Subtyping is contravariant in the domain of a function type,
@@ -558,8 +558,8 @@ record _⊑ᶜ_ P Q where
   inductive
   constructor ⟨_⟩_
   field
-    effects : Typeᶜ.effects P ⊑ᵉ Typeᶜ.effects Q
-    returns : Typeᶜ.returns P ⊑  Typeᶜ.returns Q
+    effects : CType.effects P ⊑ᵉ CType.effects Q
+    returns : CType.returns P ⊑  CType.returns Q
 ```
 
 ```
@@ -611,7 +611,7 @@ are obtaines by applying `Cast` to their respective precision and subtyping rela
 _=>_ : Type → Type → Set
 _=>_ = Cast _≤_ _⊑_
 
-_=>ᶜ_ : Typeᶜ → Typeᶜ → Set
+_=>ᶜ_ : CType → CType → Set
 _=>ᶜ_ = Cast _≤ᶜ_ _⊑ᶜ_
 
 _=>ᵉ_ : Effect → Effect → Set
