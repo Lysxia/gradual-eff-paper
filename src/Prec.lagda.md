@@ -518,14 +518,10 @@ given `ƛ N ≤ᴹ ƛ N′` and `M ≤ᴹ M′`. This is witnessed by `cast≤` 
 term, `wrap≤` for the second term, and a combination of `cast≤` and `·≤·` for
 the last term.
 
-    cast ±p (ƛ N) · M
-    —→
-    ƛ-wrap ∓s ±t (ƛ N) · M
-    =
-    (ƛ (cast ±t (lift (ƛ N) · cast ∓s (` Z)))) · M
-    —→
-    cast ±t ((ƛ N) · cast ∓s M)
-
+                                     cast ±p (ƛ N) · M
+    —→                          ƛ-wrap ∓s ±t (ƛ N) · M
+    =   (ƛ (cast ±t (lift (ƛ N) · cast ∓s (` Z)))) · M
+    —→                      cast ±t ((ƛ N) · cast ∓s M)
 
 ```
   ≤wrap : ∀ {A A′ A″ B B′ B″ E E′}
@@ -600,20 +596,20 @@ Here is the derivation of upcast congruence:
     Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
     s ⨟ q ≡ r
     ---------------------- ≤+
-    Γ≤ ⊢ M ≤ᴹ (M′ + q) ⦂ r
+    Γ≤ ⊢ M ≤ᴹ (cast (+ q) M′) ⦂ r
     p ⨟ t ≡ r
     ---------------------------- +≤
-    Γ≤ ⊢ (M + p) ≤ᴹ (M′ + q) ⦂ t
+    Γ≤ ⊢ (cast (+ p) M) ≤ᴹ (cast (+ q) M′) ⦂ t
 
 Here it is illustrated:
 
-                   s
-         M : A    ---→    M′ : A′
-           |       \         |
-         p |      r \        | q
-           -         ↘       -
-      (M + p) : B ---→ (M′ + q) : B′
-                   t
+                             s
+                   M : A    ---→           M′ : A′
+                     |       \                |
+                   p |      r \               | q
+                     -         ↘              -
+      (cast (+ p) M) : B ---→ (cast (+ q) M′) : B′
+                          t
 
 Downcast congruence:
 ```
@@ -631,20 +627,20 @@ Here is the derivation of downcast congruence:
     Γ≤ ⊢ M ≤ᴹ M′ ⦂ t
     p ⨟ t ≡ r
     ---------------------- ≤+
-    Γ≤ ⊢ (M - p) ≤ᴹ M′ ⦂ r
+    Γ≤ ⊢ (cast (- p) M) ≤ᴹ M′ ⦂ r
     s ⨟ q ≡ r
     ---------------------------- +≤
-    Γ≤ ⊢ (M - p) ≤ᴹ (M′ - q) ⦂ t
+    Γ≤ ⊢ (cast (- p) M) ≤ᴹ (cast (- q) M′) ⦂ t
 
 Here it is illustrated:
 
-                   s
-         M : A    ---→    M′ : A′
-           |       \         |
-         p |      r \        | q
-           -         ↘       -
-      (M + p) : B ---→ (M′ + q) : B′
-                   t
+                             s
+                   M : A    ---→           M′ : A′
+                     -       \                -
+                   p |      r \               | q
+                     |         ↘              |
+      (cast (- p) M) : B ---→ (cast (- q) M′) : B′
+                          t
 
 ## Reflexivity of term precision
 

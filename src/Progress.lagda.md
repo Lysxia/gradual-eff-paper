@@ -34,6 +34,7 @@ They are used to define a congruence rule for reduction, \ie{} the contexts
 under which reduction may happen, as well as to represent continuations for
 effect handlers.
 
+`\begin{AgdaAlign}`{=tex}
 ```
 data Frame (Γ : Context) (C : CType) : CType → Set where
 ```
@@ -62,7 +63,8 @@ only focus on the right operand once the left one is a value.
     →  Frame Γ C (⟨ E ⟩ B)
 ```
 
-Primitive operators follow the same logic as applications.
+Primitive operators follow the same logic, requiring the left operand
+to be a value before reducing the right operand.
 ```
   [_]⦅_⦆_ : ∀ {E ι ι′ ι″}
     →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι)))
@@ -109,6 +111,7 @@ with only one immediate subterm.
 
 pattern ′perform_[_] e ℰ = ″perform e [ ℰ ] refl
 ```
+`\end{AgdaAlign}`{=tex}
 
 The plug function inserts an expression into the hole of a frame.
 ```

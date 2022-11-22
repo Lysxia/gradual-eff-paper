@@ -16,6 +16,8 @@ and `N ≤ᴹ N′`.
 
 ## Cast lemma
 
+The cast lemma says that when the term on the left of `≤ᴹ` is a value,
+reducing a cast on the right preserves precision.
 If `V ≤ᴹ V′`, then `cast ±q V′ —↠ W` and `V ≤ᴹ W`.
 ```
 cast-lemma : ∀ {Γ Γ′ A B C} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ B} {r : A ≤ᶜ C}
@@ -57,7 +59,8 @@ cast-lemma v v′ (+ ⟨ E≤E′ ⟩ (q ⇑ g)) refl V≤V′ | other
     =  (W′ ⇑ g) , (w ⇑ g) , (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′+—↠W′) , ≤⇑ g V≤W′
 ```
 
-Box downcast TODO
+For a box downcast `(- (q ⇑ g))`, the cast value must be a box `(v′ ⇑ g)`.
+The commutative diagram ensures that the tag `g` in the cast matches the tag in the box.
 ```
 cast-lemma v (v′ ⇑ g) (- ⟨ E′≤E ⟩ (q ⇑ .g)) refl (≤⇑ .g  V≤V′) | other
     with cast-lemma v v′ (- ⟨ E′≤E ⟩ q) refl V≤V′
@@ -67,17 +70,27 @@ cast-lemma v (v′ ⇑ g) (- ⟨ E′≤E ⟩ (q ⇑ .g)) refl (≤⇑ .g  V≤V
 
 ## Catch up lemma
 
-Catch up Lemma.  If `V ≤ᴹ M′` then `M′ —↠ V′` and `V ≤ᴹ V′` for some `V′`.
+The catch up lemma says that once the left side is a value, the right side must also step to
+a value. If `V ≤ᴹ M′` then `M′ —↠ V′` and `V ≤ᴹ V′` for some `V′`.
 ```
 catchup : ∀ {Γ Γ′ A A′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ A′} {V : Γ ⊢ A} {M′ : Γ′ ⊢ A′}
   → Value V
   → Γ≤ ⊢ V ≤ᴹ M′ ⦂ p
     ----------------------------------------------------
   → ∃[ V′ ](Value V′ × (M′ —↠ V′) × (Γ≤ ⊢ V ≤ᴹ V′ ⦂ p))
+```
+
+When the right side is already a value, we are done.
+```
 catchup (ƛ _) (ƛ≤ƛ {N′ = N′} ƛN≤ƛN′)
     =  ƛ N′ , ƛ N′ , (ƛ N′ ∎) , ƛ≤ƛ ƛN≤ƛN′
 catchup ($ _) ($≤$ k)
     =  $ k , $ k , ($ k ∎) , ($≤$ k)
+```
+
+When the right side is a box (whether via `⇑≤⇑` or `≤⇑`),
+we reduce its contents, and a boxed value is a value.
+```
 catchup (v ⇑ g) (⇑≤⇑ {M = V} {M′ = M′} .g V≤M′)
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
@@ -86,12 +99,21 @@ catchup v (≤⇑ h V≤M′)
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
     =  V′ ⇑ h , v′ ⇑ h , ξ* ([ □ ]⇑ h) M′—↠V′ , ≤⇑ h V≤V′
+```
+
+When the right side is a cast, we reduce the cast computation, and call
+`cast-lemma` to reduce the cast itself.
+```
 catchup v (≤cast {M′ = M′} {±q = ±q} e V≤M′)
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
     with cast-lemma v v′ ±q e V≤V′
 ... |  W , w , V⟨±q⟩—↠W , V≤W
     =  W , w , (ξ* (`cast ±q [ □ ]) M′—↠V′ ++↠ V⟨±q⟩—↠W) , V≤W
+```
+
+`ƛ-wrap` is already a value.
+```
 catchup (ƛ _) (wrap≤ e′ e ƛN≤ƛN′)
     =  _ , ƛ _ , (_ ∎) , wrap≤ e′ e ƛN≤ƛN′
 catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
@@ -150,7 +172,10 @@ simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ 
     rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (gvalue w)
     =  (ƛ N′) · W′ , (_ ∎) , cast≤ (cod≤ e′ e) (·≤· ƛN≤ƛN′ (cast≤ {r = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
   where qq = (cod≤ e′ e)
+```
 
+TODO: explain this
+```
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′
     with cast-lemma w (gValue w′) (pure± ∓s) (≤pure {E≤F = _≤ᶜ_.effects (cod p)} (≤dom e′ e)) (≤gvalue w w′ W≤W′)
 ... |  W″ , w″ , W′-—↠W″ , W≤W″
@@ -169,6 +194,7 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
        (≤cast (≤cod e′ e) N[W]≤M′)
 ```
 
+We prove a similar catchup lemma when the left side has a pending operation.
 ```
 Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
   → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤

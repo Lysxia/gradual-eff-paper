@@ -90,9 +90,10 @@ $(src_lagda_tex)/%.lagda.tex : $(SRC)/%.lagda.md $(FILTERS)/codeblocks.lua
 	@echo "Transpiling $< into $@"
 	@mkdir -p '$(@D)'
 	pandoc $< --indented-code-classes=default \
-	--lua-filter=$(FILTERS)/codeblocks.lua \
-	--filter=pandoc-latex-environment \
-	-o $@
+		--lua-filter=$(FILTERS)/codeblocks.lua \
+		--filter=pandoc-latex-environment \
+		-o $@
+	sed -i 's/{verbatim}/{Verbatim}/' $@
 
 AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex) --only-scope-checking
 

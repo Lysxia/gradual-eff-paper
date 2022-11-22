@@ -1,9 +1,3 @@
-Simple Blame Calculus with proof relevant casts.
-Uses polarity to unify upcasts and downcasts.
-Uses nested evaluation contexts.
-
-Siek, Thiemann, and Wadler
-
 ```
 module Sim where
 
