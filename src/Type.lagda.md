@@ -569,34 +569,43 @@ record _⊑ᶜ_ P Q where
 
 ## Casts
 
+`\begin{AgdaAlign}`{=tex}
 ```
 infix  6 _=>_ _=>ᶜ_ _=>ᵉ_
 infix  4 +_ -_ *_
 ```
 
-Casts are either upcasts (reducing precision, \eg{} casting from `$ ι`
-to `★`); downcasts (increasing precision); or safe casts
-(upcasts along the subtyping relation).
 We define notions of casts for the different precision relations
 `_≤_`, `_≤ᶜ_`, `_≤ᵉ_` uniformly with the `Cast` combinator.
 
 ```
 data Cast {S : Set} (_<_ _⊏_ : S → S → Set) (A B : S) : Set where
+```
 
+There are three kinds of casts. Upcasts reduce precision, \eg{} casting from `$ ι` to `★`,
+```
   +_  : A < B
-        ---------
-      → Cast _<_ _⊏_ A B
-
-  -_  : B < A
-        ---------
-      → Cast _<_ _⊏_ A B
-
-  *_  : A ⊏ B
+        ----------------
       → Cast _<_ _⊏_ A B
 ```
 
+Downcasts increase precision.
+```
+  -_  : B < A
+        ----------------
+      → Cast _<_ _⊏_ A B
+```
+
+Safe casts are upcasts along the subtyping relation.
+```
+  *_  : A ⊏ B
+        ----------------
+      → Cast _<_ _⊏_ A B
+```
+`\end{AgdaAlign}`{=tex}
+
 The types of casts for value types, computation types, and effects
-are the symmetric closures of their respective precision relations.
+are obtaines by applying `Cast` to their respective precision and subtyping relations.
 
 ```
 _=>_ : Type → Type → Set
@@ -609,10 +618,14 @@ _=>ᵉ_ : Effect → Effect → Set
 _=>ᵉ_ = Cast _≤ᵉ_ _⊑ᵉ_
 ```
 
+The empty list, viewed as a set, is a subset of any other list.
 ```
 []⊆ : ∀ {A : Set} {xs : List A} → [] ⊆ xs
 []⊆ ()
+```
 
+The empty effect is a subeffect of any other effect.
+```
 ε=>ᵉ : ∀ {E} → ε =>ᵉ E
 ε=>ᵉ {☆} = + ¡≤☆
 ε=>ᵉ {¡ _} = * (¡ []⊆)
