@@ -272,6 +272,34 @@
 
 \section{Introduction}
 
+An important criterion in the design of a programming language is whether
+to be statically or dynamically typed. The merits of either discipline have been
+a flourishing topic of debate for theorists and practitioners alike.
+As project requirements evolve, it may become necessary to migrate from one
+paradigm to the other, but doing so in large projects has a prohibitive
+cost.
+Gradual typing allows programs to use both statically typed and
+gradually typed components, enabling them to interoperate smoothly
+while the migration of legacy code is carried out progressively.
+Ideas of gradual typing can already be found in mainstream languages,
+notably in TypeScript and in Python, but there remains significant gaps between
+theory and practice.
+
+Algebraic effects and their handlers are an approach to computational effects
+that has also seen rapid development in recent years, inspiring numerous
+libraries, experimental programming languages. Algebraic effects already have a
+foothold in industrial programming languages. While dedicated languages such as
+Eff, Koka, Frank, and Links demonstrate the possibility of type systems for
+algebraic effects, the question of integrating such them with an extant system
+remains an open challenge, as evidenced by the untyped implementations of
+algebraic effects in WebAssembly, OCaml, and Haskell.
+
+Thus, I propose to use gradual types to study how the programs with today's
+untyped algebraic effects are to interact with the effect systems of tomorrow.
+I will present a formalization of a calculus marrying gradual types with
+algebraic effects, discussing the lessons I learned in formalizing gradual types
+and challenges in mechanized verifications.
+
 This is a formalization of a calculus with algebraic effects,
 based on Core Eff~\citep{bauer2015programming}, and gradual types~\citep{siek2015}.
 
