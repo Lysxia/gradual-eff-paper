@@ -451,7 +451,7 @@ under the cast performs an effect which:
 is not handled by any inner handler and is not a member of the target effect `F` of the cast.
 
 ```
-  castᵉ-blame : ∀ {e} {e∈E′ : e ∈☆ E′} {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)} {V} {M}
+  blameᵉ : ∀ {e} {e∈E′ : e ∈☆ E′} {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)} {V} {M}
       {±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B}
     → ¬ e ∈☆ F
     → ¬ handled e ℰ
@@ -781,13 +781,13 @@ When a computation under a cast performs an operation `e`,
 the effect cast validates that the operation is expected,
 \ie{} it checks whether `e` is a member of the effect `F`
 at that point. If it is (`yes`), then `e` remains unhandled.
-If `e` is not allowed (`no`), then blame is raised by `castᵉ-blame`.
+If `e` is not allowed (`no`), then blame is raised by `blameᵉ`.
 ```
 progress (cast {Q = ⟨ F ⟩ _} ±p M)
     | pending {e = e} ℰ e∈E v ¬e//ℰ
         with e ∈☆? F
 ...     | yes e∈F = pending (`cast ±p [ ℰ ]) e∈E v (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
-...     | no  ¬∈  = step (ξ □ (castᵉ-blame ¬∈ ¬e//ℰ v refl))
+...     | no  ¬∈  = step (ξ □ (blameᵉ ¬∈ ¬e//ℰ v refl))
 ```
 
 Finally, when a cast is applied to a value, we apply the lemma `progress±`

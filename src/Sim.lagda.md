@@ -49,8 +49,25 @@ sim blame≤ M—→N
 
 In every other case of the derivation of `M ≤ M′`,
 we proceed by case analysis on the reduction step `M —→ N`.
-Either the reduction happens further down in the term
-or `M` is a redex (the evaluation context must be `□`).
+
+We first list all cases where the evaluation context is
+distinct from `□`. They follow by induction hypothesis.
+
+Reduction under `″perform _ [ ℰ ] _`.
+```
+sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
+... |  N′ , M′—↠N′ , N≤N′
+    = perform- _ N′ _ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
+```
+
+Reduction under `′handle _ [ ℰ ]`.
+```
+sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
+    with sim M≤ (ξ ℰ M↦N)
+... |  N′ , M′—↠N′ , N≤N′
+    = handle _ N′ , ξ* (′handle _ [ □ ]) M′—↠N′ , handle≤handle H≤ N≤N′
+```
 
 For the application rule `·≤·`, this leads to three subcases.
 
@@ -162,8 +179,9 @@ sim (≤⇑ g M≤M′) M—→N
     =  N′ ⇑ g , ξ* ([ □ ]⇑ g) M′—↠N′ , ≤⇑ g N≤N′
 ```
 
-Inverting `cast≤` yields `M ≤ M′` from `M ≤ cast ±p M′`.
-We apply the induction hypothesis.
+Inverting `cast≤` yields `M ≤ M′` from `cast ±p M ≤ M′`.
+If the reduction happens under the evaluation context ``cast ±p [ ℰ ]`,
+we apply the induction hypothesis.
 ```
 sim (cast≤ e M≤M′) (ξ (`cast ±p [ ℰ ]) M↦N)
     with sim M≤M′ (ξ ℰ M↦N)
@@ -171,8 +189,18 @@ sim (cast≤ e M≤M′) (ξ (`cast ±p [ ℰ ]) M↦N)
     =  N′ , M′—↠N′ , cast≤ e N≤N′
 ```
 
-Here we must apply `catchup` because of effects. Without
-effects, we could conclude immediately with `V≤M′`.
+Otherwise, if the reduction happens under the evaluation context `□`,
+the reduction rules that may apply are
+`ident`, `wrap`, `expand`, `collapse`, `collide`, or `blameᵉ`.
+In each of those cases except the last one, the cast is of the form `cast ±p
+V`, where `V` is a value, and `V ≤ M′`. We apply `catchup` to reduce `M′` to a
+value `V′` such that `V ≤ V′`, which we can wrap into an inequality
+between the reduct of `cast ± V` and `V′`.
+\lyx{Turn this into a left cast lemma?}
+
+The application of `catchup` here is made necessary by the presence of effects
+in our type system. Otherwise, the `ident` rule would reduce
+`cast ±p V` to `V`, and we could conclude immediately with `V≤M′`.
 ```
 sim (cast≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
     with catchup v V≤M′
@@ -182,24 +210,11 @@ sim (cast≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
 ```
 
 ```
-sim (cast≤ {q = ⟨ _ ⟩ id} e V≤M′) (ξ □ (wrap e′))
-    with catchup (ƛ _) V≤M′
-... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
+sim (cast≤ {q = ⟨ _ ⟩ q} e V≤M′) (ξ □ (wrap e′)) with q | catchup (ƛ _) V≤M′
+... | q |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
-```
-
-```
-sim (cast≤ {q = ⟨ _ ⟩ _ ⇒ _} e V≤M′) (ξ □ (wrap e′))
-    with catchup (ƛ _) V≤M′
-... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
-```
-
-```
-sim (cast≤ {q = ⟨ _ ⟩ (q ⇑ ★⇒★)} e V≤M′) (ξ □ (wrap e′))
-    with catchup (ƛ _) V≤M′
-... |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
-    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ e′ {! drop⇑ e !} (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
+... | q ⇑ ★⇒★ |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
+    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ e′ (drop⇑ (returns≤ e)) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
 ```
 
 ```
@@ -237,6 +252,11 @@ sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ (r ⇑
 ```
 
 ```
+sim (cast≤ e M≤M′) (ξ □ (blameᵉ e∌F ¬e//ℰ v refl))
+    =  _ , (_ ∎) , blame≤
+```
+
+```
 sim (≤cast {±q = ±q} e M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
@@ -252,30 +272,16 @@ sim (*≤* V≤M′) (ξ □ (wrap e′))
 ```
 
 ```
-sim (*≤* V≤M′) (ξ z w) = ?
+sim (*≤* V≤M′) (ξξ □ refl eq M₀↦N) = ?
 ```
 
 ```
-sim (cast≤ e M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//ℰ v refl))
-    =  _ , (_ ∎) , blame≤
+sim (*≤* M≤M′) (ξξ (`cast ±q [ ℰ ]) refl eq M₀↦N) = ?
 ```
 
-```
-sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
-    with sim M≤M′ (ξ ℰ M↦N)
-... |  N′ , M′—↠N′ , N≤N′
-    = perform- _ N′ _ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
-```
-
+`perform` is not a redex: reduction cannot happen under context `□`.
 ```
 sim (perform≤perform M≤M′) (ξξ □ refl _ ())
-```
-
-```
-sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
-    with sim M≤ (ξ ℰ M↦N)
-... |  N′ , M′—↠N′ , N≤N′
-    = handle _ N′ , ξ* (′handle _ [ □ ]) M′—↠N′ , handle≤handle H≤ N≤N′
 ```
 
 ```
