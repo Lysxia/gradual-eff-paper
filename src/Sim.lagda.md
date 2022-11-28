@@ -11,7 +11,9 @@ open import SimAux
 
 ## Term precision is a simulation (Gradual Guarantee)
 
-
+The main lemma towards proving gradual guarantee is the following
+simulation proof. If `M ≤ M′` and `M` takes a step `M —→ N`, then `M′` takes
+some sequence of steps `M′ —↠ N′` to a less precise reduct `N ≤ N′`
 
 ```
 sim : ∀ {Γ Γ′ A A′ E E′ M M′ N} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ A′} {E≤ : E ≤ᵉ E′}
@@ -19,38 +21,111 @@ sim : ∀ {Γ Γ′ A A′ E E′ M M′ N} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤
   → M —→ N
     -----------------------------------------
   → ∃[ N′ ]((M′ —↠ N′) × (Γ≤ ⊢ N ≤ᴹ N′ ⦂ ⟨ E≤ ⟩ p))
+```
+
+Proof by induction on the derivation of `M ≤ M′`.
+
+Cases where the left term `M` is a value are vacuous,
+because values are irreducible.
+
+```
 sim (`≤` x≤x′) M—→N
     =  ⊥-elim (variable-irreducible M—→N)
+sim ($≤$ k) M—→N
+    =  ⊥-elim (value-irreducible ($ _) M—→N)
 sim (ƛ≤ƛ ƛN≤ƛN′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
-sim (·≤· L≤L′ M≤M′) (ξ ([ E ]· _) L↦N)
-    with sim L≤L′ (ξ E L↦N)
+sim (wrap≤ i e V≤V′) M—→N
+    =  ⊥-elim (value-irreducible (ƛ _) M—→N)
+sim (≤wrap i e V≤V′) M—→N
+    =  ⊥-elim (value-irreducible (ƛ _) M—→N)
+```
+
+`blame` is irreducible as well.
+```
+sim blame≤ M—→N
+    =  ⊥-elim (blame-irreducible M—→N)
+```
+
+In every other case of the derivation of `M ≤ M′`,
+we proceed by case analysis on the reduction step `M —→ N`.
+Either the reduction happens further down in the term
+or `M` is a redex (the evaluation context must be `□`).
+
+For the application rule `·≤·`, this leads to three subcases.
+
+If the reduction happens under the evaluation context `[ ℰ ]· M`,
+we have `L ≤ L′`, `M ≤ M′` and `L —→ N`.
+We apply the induction hypothesis on `L ≤ L′` to reduce `L′` to `N′`.
+We thus reduce `L′ · M′` to `N′ · M′` and prove
+`N · M′ ≤ N′ · M′` by the rule `·≤·`.
+
+```
+sim (·≤· {L′ = L′} {M′ = M′} L≤L′ M≤M′) (ξ ([ ℰ ]· L) L↦N)
+    with sim L≤L′ (ξ ℰ L↦N)
 ... |  N′ , L′—↠N′ , N≤N′
-    =  N′ · _ , ξ* ([ □ ]· _) L′—↠N′ , ·≤· N≤N′ M≤M′
-sim (·≤· V≤L′ M≤M′) (ξ (v ·[ E ]) M↦N)
+    =  N′ · M′ ,
+       (begin
+         L′ · M′   —↠⟨ ξ* ([ □ ]· _) L′—↠N′ ⟩   N′ · M′
+        ∎) ,
+       ·≤· N≤N′ M≤M′
+```
+
+If the reduction happens under `V ·[ ℰ ]`, the left
+operand `V` must be a value. We apply the `catchup` lemma
+to reduce `L′ · M′` to `V′ · M′` where `V′` is a value,
+and the induction hypothesis `sim` to reduce `V′ · M′` to `V′ · N′`.
+
+```
+sim (·≤· {L′ = L′} {M′ = M′} V≤L′ M≤M′) (ξ (v ·[ ℰ ]) M↦N)
     with catchup v V≤L′
 ... |  V′ , v′ , L′—↠V′ , V≤V′
-    with sim M≤M′ (ξ E M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
-    =  V′ · N′ , (ξ* ([ □ ]· _) L′—↠V′ ++↠ ξ* (v′ ·[ □ ]) M′—↠N′) , ·≤· V≤V′ N≤N′
-sim (·≤· ƛN≤L′ W≤M′) (ξ □ (β w))
+    =  V′ · N′ ,
+       (begin
+         L′ · M′  —↠⟨ ξ* ([ □ ]· _) L′—↠V′ ⟩
+         V′ · M′  —↠⟨ ξ* (v′ ·[ □ ]) M′—↠N′ ⟩
+         V′ · N′
+       ∎) ,
+       ·≤· V≤V′ N≤N′
+```
+
+The last subcase for `·≤·` is `β`-reduction.
+`(ƛ N) · W ≤ L′ · M′` is inverted to `ƛ N ≤ L′` and `W ≤ M′`.
+By two applications of `catchup`, we reduce
+`L′ · M′` to `(ƛ N′) · M′` and then to `(ƛ N′) · W′`.
+by induction hypothesis `simβ`, we find the remaining steps to simulate the
+reduct `N [ gvalue W ]` on the left hand side.
+
+```
+sim (·≤· {L′ = L′} {M′ = M′} ƛN≤L′ W≤M′) (ξ □ (β w))
     with catchup (ƛ _) ƛN≤L′
 ... |  ƛ N′ , v′ , L′—↠ƛN′ , ƛN≤ƛN′
     with catchup w W≤M′
 ... |  W′ , w′ , M′—↠W′ , W≤W′
     with simβ w w′ ƛN≤ƛN′ W≤W′
-... |  M′ , ƛN′·W′—↠M′ , N[V]≤M′
-    =  M′ , (ξ* ([ □ ]· _) L′—↠ƛN′ ++↠ ξ* (v′ ·[ □ ]) M′—↠W′ ++↠ ƛN′·W′—↠M′) , N[V]≤M′
-sim ($≤$ k) M—→N
-    =  ⊥-elim (value-irreducible ($ _) M—→N)
-sim (⦅⦆≤⦅⦆ _⊕_ L≤L′ M≤M′) (ξ ([ E ]⦅ ._⊕_ ⦆ _) L↦N)
-    with sim L≤L′ (ξ E L↦N)
+... |  N″ , ƛN′·W′—↠N″ , N[V]≤N″
+    =  N″ ,
+       (begin
+         L′ · M′     —↠⟨ ξ* ([ □ ]· _) L′—↠ƛN′ ⟩
+         (ƛ N′) · M′ —↠⟨ ξ* (v′ ·[ □ ]) M′—↠W′ ⟩
+         (ƛ N′) · W′ —↠⟨ ƛN′·W′—↠N″ ⟩
+         N″
+       ∎) ,
+       N[V]≤N″
+```
+
+The case of `⦅⦆≤⦅⦆` is analogous to `·≤·`.
+```
+sim (⦅⦆≤⦅⦆ _⊕_ L≤L′ M≤M′) (ξ ([ ℰ ]⦅ ._⊕_ ⦆ _) L↦N)
+    with sim L≤L′ (ξ ℰ L↦N)
 ... |  N′ , L′—↠N′ , N≤N′
     =  N′ ⦅ _⊕_ ⦆ _ , ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠N′ , ⦅⦆≤⦅⦆ _⊕_ N≤N′ M≤M′
-sim (⦅⦆≤⦅⦆ _⊕_ V≤L′ M≤M′) (ξ (v ⦅ ._⊕_ ⦆[ E ]) M↦N)
+sim (⦅⦆≤⦅⦆ _⊕_ V≤L′ M≤M′) (ξ (v ⦅ ._⊕_ ⦆[ ℰ ]) M↦N)
     with catchup v V≤L′
 ... |  V′ , v′ , L′—↠V′ , V≤V′
-    with sim M≤M′ (ξ E M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     =  V′ ⦅ _⊕_ ⦆ N′ , (ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠V′ ++↠ ξ* (v′ ⦅ _⊕_ ⦆[ □ ]) M′—↠N′) , ⦅⦆≤⦅⦆ _⊕_ V≤V′ N≤N′
 sim (⦅⦆≤⦅⦆ _⊕_ V≤L′ W≤M′) (ξ □ δ)
@@ -59,81 +134,159 @@ sim (⦅⦆≤⦅⦆ _⊕_ V≤L′ W≤M′) (ξ □ δ)
     with catchup ($ _) W≤M′
 ... |  $ k′ , $ .k′ , M′—↠W′ , ($≤$ .k′)
     =  $ (k ⊕ k′) , (ξ* ([ □ ]⦅ _⊕_ ⦆ _) L′—↠V′ ++↠ ξ* ($ k ⦅ _⊕_ ⦆[ □ ]) M′—↠W′ ++↠ unit δ) , $≤$ (k ⊕ k′)
+```
+
+For the rule `⇑≤⇑`, the left-hand side is `M ⇑ g`, which is not a redex: the
+reduction cannot happen in the empty evaluation context `□`.
+```
 sim (⇑≤⇑ g M≤M′) (ξ □ M↦N)
     =  ⊥-elim (box-irreducible g M↦N)
-sim (⇑≤⇑ g M≤M′) (ξ ([ E ]⇑ .g) M↦N)
-    with sim M≤M′ (ξ E M↦N)
+```
+
+The reduction must happen under the context `[ ℰ ]⇑ g`,
+and we conclude by the induction hypothesis `sim`.
+```
+sim (⇑≤⇑ g M≤M′) (ξ ([ ℰ ]⇑ .g) M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     =  N′ ⇑ g , ξ* ([ □ ]⇑ g) M′—↠N′ , ⇑≤⇑ g N≤N′
+```
+
+Inverting the rule `≤⇑` yields `M ≤ M′` from `M ≤ M′ ⇑ g`,
+and we apply the induction hypothesis to reduce `M′` to `N′`,
+which we lift to a step from `M′ ⇑ g` to `N′ ⇑ g`.
+```
 sim (≤⇑ g M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
     =  N′ ⇑ g , ξ* ([ □ ]⇑ g) M′—↠N′ , ≤⇑ g N≤N′
-sim (cast≤ e M≤M′) (ξ (`cast ∓s [ E ]) M↦N)
-    with sim M≤M′ (ξ E M↦N)
+```
+
+Inverting `cast≤` yields `M ≤ M′` from `M ≤ cast ±p M′`.
+We apply the induction hypothesis.
+```
+sim (cast≤ e M≤M′) (ξ (`cast ±p [ ℰ ]) M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     =  N′ , M′—↠N′ , cast≤ e N≤N′
+```
+
+Here we must apply `catchup` because of effects. Without
+effects, we could conclude immediately with `V≤M′`.
+```
 sim (cast≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
+    with catchup v V≤M′
+... | V′ , v′ , M′—↠V′ , V≤V′
     rewrite ident≤ ±p e′ e
-    =  _ , (_ ∎) , ? -- gvalue≤ v ? V≤M′
+    =  V′ , M′—↠V′ , gvalue≤ v v′ V≤V′
+```
+
+```
 sim (cast≤ {q = ⟨ _ ⟩ id} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+```
+
+```
 sim (cast≤ {q = ⟨ _ ⟩ _ ⇒ _} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+```
+
+```
 sim (cast≤ {q = ⟨ _ ⟩ (q ⇑ ★⇒★)} e V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
     =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ e′ {! drop⇑ e !} (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
+```
+
+```
 sim (cast≤ {M = V} {±p = + ⟨ _ ⟩ (p ⇑ .g)} {q = ⟨ _ ⟩ id} {r = r} refl V≤M′) (ξ □ (expand v g))
     with catchup v V≤M′
 ... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ≤⇑ _ V≤V′
     =  V′ ⇑ g , M′—↠V′⇑ , ⇑≤⇑ g (cast≤ refl V≤V′)
+```
+
+```
 sim (cast≤ {M = V} {±p = + ⟨ _ ⟩ (p ⇑ .g)} {q = ⟨ _ ⟩ (q ⇑ h)} refl V≤M′) (ξ □ (expand v g))
     =  ⊥-elim (¬★≤G h q)
+```
+
+```
 sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .g)} {r = ⟨ _ ⟩ id} refl V⇑≤M′) (ξ □ (collapse v g))
    with catchup (v ⇑ g) V⇑≤M′
 ... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ⇑≤⇑ .g V≤V′
     =  V′ ⇑ g , M′—↠V′⇑ , ≤⇑ g (cast≤ refl V≤V′)
+```
+
+```
 sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ id} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
     =  _ , (_ ∎) , blame≤
+```
+
+```
 sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .g)} {r = ⟨ _ ⟩ (r ⇑ h)} refl V⇑≤M′) (ξ □ (collapse v g))
     =  ⊥-elim (¬★≤G h r)
+```
+
+```
 sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ (r ⇑ h′)} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
     =  ⊥-elim (¬★≤G h′ r)
+```
+
+```
 sim (≤cast {±q = ±q} e M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
     =  cast ±q N′ , ξ* (`cast ±q [ □ ]) M′—↠N′ , ≤cast e N≤N′
+```
+
+```
 sim (*≤* V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  _ , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit ?) , ? -- wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
-sim blame≤ M—→N
-    =  ⊥-elim (blame-irreducible M—→N)
-sim (wrap≤ i e V≤V′) M—→N
-    =  ⊥-elim (value-irreducible (ƛ _) M—→N)
-sim (≤wrap i e V≤V′) M—→N
-    =  ⊥-elim (value-irreducible (ƛ _) M—→N)
+... |  (V′ ⇑ g) , v′ ⇑ g , M′—↠V′⇑g , λN≤λN′ = {!!}
+```
+
+```
+sim (*≤* V≤M′) (ξ z w) = ?
+```
+
+```
 sim (cast≤ e M≤M′) (ξ □ (castᵉ-blame e∌F ¬e//ℰ v refl))
     =  _ , (_ ∎) , blame≤
+```
+
+```
 sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
     with sim M≤M′ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     = perform- _ N′ _ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
+```
+
+```
 sim (perform≤perform M≤M′) (ξξ □ refl _ ())
+```
+
+```
 sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
     with sim M≤ (ξ ℰ M↦N)
 ... |  N′ , M′—↠N′ , N≤N′
     = handle _ N′ , ξ* (′handle _ [ □ ]) M′—↠N′ , handle≤handle H≤ N≤N′
+```
+
+```
 sim (handle≤handle H≤ V≤M′) (ξ □ (handle-value v))
     with catchup v V≤M′
 ... | V′ , v′ , M′—↠V′ , V≤V′
     = _ , (ξ* (′handle _ [ □ ]) M′—↠V′ ++↠ unit (handle-value v′))
         , []≤[] (on-return H≤) (gvalue≤gvalue v v′ V≤V′)
+```
+
+```
 sim (handle≤handle H≤ M≤) (ξ □ (handle-perform {ℰ = ℰ} v ¬e//ℰ eq))
     with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ | lookup-All₂′ (on-perform H≤) eq
 ... | Mk v′ V≤V′ ℰ≤ ¬e//ℰ′ M′—↠N′ | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
