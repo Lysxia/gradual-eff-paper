@@ -943,7 +943,14 @@ inc2≤inc★′2★ = ·≤·★ inc≤inc★′ ($≤$★ 2)
 
 ## Precision on frames
 
-This is necessary for handlers.
+In the graduality proof, in the case for the rule `handle-perform`,
+we have a relation `M ≤ᴹ M′` where `M` is of the form
+`handle H (ℰ [ perform e V ])`. This implies that `M′` is also
+of that form `handle H′ (ℰ′ [ perform e V′ ])`, with
+`H ≤ʰ H′`, `ℰ ≤ ℰ′`, and `V ≤ᴹ V′`. Thus, we need to define precision
+on frames `ℰ ≤ ℰ′`, whose rules can be derived from the rules
+of precision on terms.
+
 ```
 infix 3 _⊢_⇒ᶠ_∋_≤_
 

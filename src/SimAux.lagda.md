@@ -120,8 +120,10 @@ catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
     =  _ , ƛ _ , (_ ∎) , ≤wrap e′ e ƛN≤ƛN′
 ```
 
-## Substitution lemma
-
+The following lemma formalizes the intuition that substituting for a variable
+which does not occur in a term yields the same term. `lift V` extends `V` with a fresh
+variable in its context, which thus does not occur in `V`, and the
+substitution operator `_[_]` substitutes for that variable.
 ```
 lift[] : ∀ {Γ A P}
   → (V : Γ ⊢ P)
@@ -136,8 +138,8 @@ lift[] {Γ = Γ} V W = trans (sub∘ren σ∘ V) (subId σId V)
   σId x = refl
 ```
 
-The following lemma describes β-reduction of a wrap applied to a
-value, using the lemma above to simplify the right-hand side of the
+The following lemma describes β-reduction of the application of a
+`ƛ-wrap` value, using the lemma above to simplify the right-hand side of the
 reduction as required.
 
 ```
@@ -155,6 +157,9 @@ wrapβ {∓s = ∓s}{±t = ±t}{V = V}{W} e w  =
 
 ## β-reduction is a simulation
 
+Given a `β`-reduction step `(ƛ N) W ↦ N [ gvalue w ]` on the left of an
+inequality `(ƛ N) · W ≤ᴹ (ƛ N′) · W′`, we construct a reduction sequence on the
+right, `(ƛ N′) · W′ —↠ M′` such that the reducts are related `N [ gvalue w] ≤ᴹ M′`.
 ```
 simβ : ∀ {Γ Γ′ A A′ B B′ E E′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ⇒  ⟨ E ⟩ B ≤ A′ ⇒  ⟨ E′ ⟩ B′} {E≤ : E ≤ᵉ E′}
     {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {N′ : Γ′ ▷ A′ ⊢ ⟨ E′ ⟩ B′} {W : Γ ⊢ ⟨ E ⟩ A} {W′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
@@ -164,44 +169,96 @@ simβ : ∀ {Γ Γ′ A A′ B B′ E E′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ⇒
   → Γ≤ ⊢ W ≤ᴹ W′ ⦂ ⟨ E≤ ⟩ dom p
     -----------------------------------------------------------
   → ∃[ M′ ](((ƛ N′) · W′ —↠ M′) × (Γ≤ ⊢ N [ gvalue w ] ≤ᴹ M′ ⦂ cod p))
-
-simβ w w′ (ƛ≤ƛ N≤N′) W≤W′
-    =  _ , (unit (β w′)) , ([]≤[] N≤N′ (gvalue≤gvalue w w′ W≤W′))
-
-simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ e ƛN≤ƛN′) W≤W′
-    rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (gvalue w)
-    =  (ƛ N′) · W′ , (_ ∎) , cast≤ (cod≤ e′ e) (·≤· ƛN≤ƛN′ (cast≤ {r = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
-  where qq = (cod≤ e′ e)
 ```
 
-TODO: explain this
+Proceed by induction on the derivation of `ƛ N ≤ᴹ ƛ N′`. There
+are three rules to consider: `ƛ≤ƛ`, `wrap≤`, and `≤wrap`.
+
+In the `ƛ≤ƛ` case, the bodies of the abstractions are related `N ≤ᴹ N′`,
+so we can take a `β` step on the right, and conclude with the
+following derivation:
+
+                                ------ W≤W′
+                                W ≤ W′
+    ------ N≤N′   -------------------- gvalue≤gvalue
+    N ≤ N′        gvalue w ≤ gvalue w′
+    ---------------------------------- []≤[]
+    N [ gvalue w ] ≤ᴹ N′ [ gvalue w′ ]
+
+```
+simβ {W′ = W′} w w′ (ƛ≤ƛ {N′ = N′} N≤N′) W≤W′
+    =  _ ,
+       (begin
+         (ƛ N′) · W′   —→⟨ ξ □ (β w′) ⟩    N′ [ gvalue w′ ]
+        ∎) ,
+       []≤[] N≤N′ (gvalue≤gvalue w w′ W≤W′)
+```
+
+In the `wrap≤` case, the reduct on the left is an application
+interspersed with casts.
+
+    ƛ-wrap ∓s ±t (ƛ N) · W               —↠⟨ ξ □ (β w) ⟩
+    cast ±t ((ƛ N) · cast ∓s (gvalue w))
+
+We take no step on the right by giving the empty reduction sequence `_ ∎`,
+and we construct the following precision derivation using the rule for
+applications `·≤·` and for casts on the left `cast≤`:
+
+                                                ------ W≤W′
+                                                W ≤ W′
+                                         ------------- gvalue≤
+                                         gvalue w ≤ W′
+         ---------- ƛN≤ƛN′     ----------------------- cast≤
+         ƛ N ≤ ƛ N′            cast ∓s (gvalue w) ≤ W′
+         --------------------------------------------- ·≤·
+             (ƛ N) · cast ∓s (gvalue w)  ≤ (ƛ N′) · W′
+    ------------------------------------------------- cast≤
+    cast ±t ((ƛ N) · cast ∓s (gvalue w)) ≤ (ƛ N′) · W′
+
+```
+simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ e ƛN≤ƛN′) W≤W′
+    rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (gvalue w)
+    =  (ƛ N′) · W′ , (_ ∎) , deriv
+  where
+    deriv =
+      cast≤ (cod≤ e′ e)
+        (·≤· ƛN≤ƛN′
+             (cast≤ {r = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
+```
+\lyx{Can avoid the implicit argument `r`?}
+
+In the `≤wrap` case, the reduction sequence on the right is displayed below.
+We first take a β step for the application of `ƛ-wrap` using the `wrapβ` lemma.
+We reduce the subsequent value cast using `cast-lemma`.
+The last step reduces an application by the induction hypothesis `simβ`.
+There remains a cast that was introduced by `ƛ-wrap`,
+and which is covered by the `≤wrap` rule.
 ```
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′
     with cast-lemma w (gValue w′) (pure± ∓s) (≤pure {E≤F = _≤ᶜ_.effects (cod p)} (≤dom e′ e)) (≤gvalue w w′ W≤W′)
 ... |  W″ , w″ , W′-—↠W″ , W≤W″
     with simβ w w″ ƛN≤ƛN′ W≤W″
 ... |  M′ , [ƛN′]·W″—↠M′ , N[W]≤M′
-    =  cast ±t M′ ,
-       (  begin
-            ƛ-wrap ∓s ±t (ƛ N′) · W′
-          —→⟨ wrapβ {V = ƛ N′} e′ w′ ⟩
-            cast ±t ((ƛ N′) · cast (pure± ∓s) (gvalue w′))
-          —↠⟨ ξ* (`cast _ [ (ƛ _) ·[ □ ] ]) W′-—↠W″ ⟩
-            cast ±t ((ƛ N′) · W″)
-          —↠⟨ ξ* (`cast _ [ □ ]) [ƛN′]·W″—↠M′ ⟩
-            cast ±t M′
-          ∎) ,
+    =  _ ,
+       (begin
+          ƛ-wrap ∓s ±t (ƛ N′) · W′ —→⟨ wrapβ {V = ƛ N′} e′ w′ ⟩
+          cast ±t ((ƛ N′) · cast (pure± ∓s) (gvalue w′))
+                                   —↠⟨ ξ* (`cast _ [ (ƛ _) ·[ □ ] ]) W′-—↠W″ ⟩
+          cast ±t ((ƛ N′) · W″)    —↠⟨ ξ* (`cast _ [ □ ]) [ƛN′]·W″—↠M′ ⟩
+          cast ±t M′
+        ∎) ,
        (≤cast (≤cod e′ e) N[W]≤M′)
 ```
 
-We prove a similar catchup lemma when the left side has a pending operation.
-```
-Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
-  → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
-  → Hooks H ≡ Hooks H′
-Hooks-≤ H≤ = All₂′-≡ (on-perform H≤)
+When the left side of an inequality has a pending operation, `ℰ ⟦ perform e∈E V ⟧`,
+we shall prove a catchup lemma similar to when it is a value.
 
-data CatchupPerform {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′} (P≤ : P ≤ᶜ P′) {E} e (ℰ : Frame Γ (⟨ E ⟩ response e) P) (V : Γ ⊢ ⟨ E ⟩ request e) (M′ : Γ′ ⊢ P′) : Set where
+The conclusion of the lemma is a fairly large conjunction.
+We declare a data type for it, to hide existential witnesses which
+can be inferred from the other conjuncts.
+```
+data CatchupPerform {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′} (P≤ : P ≤ᶜ P′) {E}
+       e (ℰ : Frame Γ (⟨ E ⟩ response e) P) (V : Γ ⊢ ⟨ E ⟩ request e) (M′ : Γ′ ⊢ P′) : Set where
   Mk : ∀ {E′} {E≤ : E ≤ᵉ E′} {e∈E′ : e ∈☆ E′} {V′}
          {ℰ′ : Frame Γ′ (⟨ E′ ⟩ response e) P′}
     → Value V′
@@ -210,7 +267,15 @@ data CatchupPerform {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) {P P′} (P≤ : P ≤�
     → ¬ handled e ℰ′
     → M′ —↠ ℰ′ ⟦ perform e∈E′ V′ ⟧
     → CatchupPerform Γ≤ P≤ e ℰ V M′
+```
 
+The term on the right side of the inequality `ℰ ⟦ perform e∈E V ⟧ ≤ M′` must
+step to a pending operation `ℰ′ ⟦ perform e∈E′ V′ ⟧`, where each subterm
+is related to the corresponding one on the left. The performed operation
+`e` must be the same on both sides (definitionally), and it must not be
+handled by the frame `ℰ′`.
+\lyx{This is quite similar to catchup. should we still explain it?}
+```
 catchup-⟦perform⟧≤ : ∀ {Γ Γ′ E P P′ e} {e∈E : e ∈☆ E}
     {Γ≤ : Γ ≤ᴳ Γ′} {P≤ : P ≤ᶜ P′} {V M′}
     (v : Value V)
@@ -271,4 +336,9 @@ catchup-⟦perform⟧≤ v (′handle H [ ℰ ]) (handle≤handle {H′ = H′} 
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
     = Mk v′ V≤V′ (′handle H≤ [ ℰ≤ℰ′ ]) (¬handled-handle {H = H′} ℰ′ (subst (λ Eh → ¬ _ ∈ Eh) (Hooks-≤ H≤) (¬e//ℰ ∘ inj₁)) ¬e//ℰ′) (ξ* (′handle _ [ □ ]) M′—↠ℰV′)
+  where
+    Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
+      → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
+      → Hooks H ≡ Hooks H′
+    Hooks-≤ H≤ = All₂′-≡ (on-perform H≤)
 ```

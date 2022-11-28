@@ -10,6 +10,9 @@ open import SimAux
 ```
 
 ## Term precision is a simulation (Gradual Guarantee)
+
+
+
 ```
 sim : ∀ {Γ Γ′ A A′ E E′ M M′ N} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ A′} {E≤ : E ≤ᵉ E′}
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ p
