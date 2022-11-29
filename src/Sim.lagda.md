@@ -1,3 +1,4 @@
+
 ```
 module Sim where
 
@@ -50,24 +51,8 @@ sim blame≤ M—→N
 In every other case of the derivation of `M ≤ M′`,
 we proceed by case analysis on the reduction step `M —→ N`.
 
-We first list all cases where the evaluation context is
-distinct from `□`. They follow by induction hypothesis.
-
-Reduction under `″perform _ [ ℰ ] _`.
-```
-sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
-    with sim M≤M′ (ξ ℰ M↦N)
-... |  N′ , M′—↠N′ , N≤N′
-    = perform- _ N′ _ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
-```
-
-Reduction under `′handle _ [ ℰ ]`.
-```
-sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
-    with sim M≤ (ξ ℰ M↦N)
-... |  N′ , M′—↠N′ , N≤N′
-    = handle _ N′ , ξ* (′handle _ [ □ ]) M′—↠N′ , handle≤handle H≤ N≤N′
-```
+When the evaluation context is distinct from `□`,
+the proof is relies on the induction hypothesis `sim`.
 
 For the application rule `·≤·`, this leads to three subcases.
 
@@ -160,8 +145,8 @@ sim (⇑≤⇑ g M≤M′) (ξ □ M↦N)
     =  ⊥-elim (box-irreducible g M↦N)
 ```
 
-The reduction must happen under the context `[ ℰ ]⇑ g`,
-and we conclude by the induction hypothesis `sim`.
+For a reduction under the context `[ ℰ ]⇑ g`,
+we conclude by the induction hypothesis `sim`.
 ```
 sim (⇑≤⇑ g M≤M′) (ξ ([ ℰ ]⇑ .g) M↦N)
     with sim M≤M′ (ξ ℰ M↦N)
@@ -169,17 +154,21 @@ sim (⇑≤⇑ g M≤M′) (ξ ([ ℰ ]⇑ .g) M↦N)
     =  N′ ⇑ g , ξ* ([ □ ]⇑ g) M′—↠N′ , ⇑≤⇑ g N≤N′
 ```
 
-Inverting the rule `≤⇑` yields `M ≤ M′` from `M ≤ M′ ⇑ g`,
-and we apply the induction hypothesis to reduce `M′` to `N′`,
-which we lift to a step from `M′ ⇑ g` to `N′ ⇑ g`.
+The two cases for `≤⇑` and `≤cast` are also straightforward
+consequences of the induction hypothesis, simply wrapping
+right-hand side terms under `_ ⇑ g` or `cast ±q _`.
 ```
 sim (≤⇑ g M≤M′) M—→N
     with sim M≤M′ M—→N
 ... |  N′ , M′—↠N′ , N≤N′
     =  N′ ⇑ g , ξ* ([ □ ]⇑ g) M′—↠N′ , ≤⇑ g N≤N′
+
+sim (≤cast {±q = ±q} e M≤M′) M—→N
+    with sim M≤M′ M—→N
+... |  N′ , M′—↠N′ , N≤N′
+    =  cast ±q N′ , ξ* (`cast ±q [ □ ]) M′—↠N′ , ≤cast e N≤N′
 ```
 
-Inverting `cast≤` yields `M ≤ M′` from `cast ±p M ≤ M′`.
 If the reduction happens under the evaluation context ``cast ±p [ ℰ ]`,
 we apply the induction hypothesis.
 ```
@@ -192,96 +181,46 @@ sim (cast≤ e M≤M′) (ξ (`cast ±p [ ℰ ]) M↦N)
 Otherwise, if the reduction happens under the evaluation context `□`,
 the reduction rules that may apply are
 `ident`, `wrap`, `expand`, `collapse`, `collide`, or `blameᵉ`.
-In each of those cases except the last one, the cast is of the form `cast ±p
-V`, where `V` is a value, and `V ≤ M′`. We apply `catchup` to reduce `M′` to a
-value `V′` such that `V ≤ V′`, which we can wrap into an inequality
-between the reduct of `cast ± V` and `V′`.
-\lyx{Turn this into a left cast lemma?}
-
-The application of `catchup` here is made necessary by the presence of effects
-in our type system. Otherwise, the `ident` rule would reduce
-`cast ±p V` to `V`, and we could conclude immediately with `V≤M′`.
 ```
-sim (cast≤ {±p = ±p}{q = q}{r = r} e V≤M′) (ξ □ (ident e′ v))
-    with catchup v V≤M′
-... | V′ , v′ , M′—↠V′ , V≤V′
-    rewrite ident≤ ±p e′ e
-    =  V′ , M′—↠V′ , gvalue≤ v v′ V≤V′
+sim (cast≤ comm M≤M′) (ξ □ castM↦N) = cast≤-lemma comm M≤M′ castM↦N
 ```
 
-```
-sim (cast≤ {q = ⟨ _ ⟩ q} e V≤M′) (ξ □ (wrap e′)) with q | catchup (ƛ _) V≤M′
-... | q |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  V′ , M′—↠V′ , wrap≤ e′ (returns≤ e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
-... | q ⇑ ★⇒★ |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
-    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ e′ (drop⇑ (returns≤ e)) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
-```
-
-```
-sim (cast≤ {M = V} {±p = + ⟨ _ ⟩ (p ⇑ .g)} {q = ⟨ _ ⟩ id} {r = r} refl V≤M′) (ξ □ (expand v g))
-    with catchup v V≤M′
-... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ≤⇑ _ V≤V′
-    =  V′ ⇑ g , M′—↠V′⇑ , ⇑≤⇑ g (cast≤ refl V≤V′)
-```
-
-```
-sim (cast≤ {M = V} {±p = + ⟨ _ ⟩ (p ⇑ .g)} {q = ⟨ _ ⟩ (q ⇑ h)} refl V≤M′) (ξ □ (expand v g))
-    =  ⊥-elim (¬★≤G h q)
-```
-
-```
-sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .g)} {r = ⟨ _ ⟩ id} refl V⇑≤M′) (ξ □ (collapse v g))
-   with catchup (v ⇑ g) V⇑≤M′
-... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ⇑≤⇑ .g V≤V′
-    =  V′ ⇑ g , M′—↠V′⇑ , ≤⇑ g (cast≤ refl V≤V′)
-```
-
-```
-sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ id} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
-    =  _ , (_ ∎) , blame≤
-```
-
-```
-sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .g)} {r = ⟨ _ ⟩ (r ⇑ h)} refl V⇑≤M′) (ξ □ (collapse v g))
-    =  ⊥-elim (¬★≤G h r)
-```
-
-```
-sim (cast≤ {M = V ⇑ .g} {±p = - ⟨ _ ⟩ (p ⇑ .h)} {r = ⟨ _ ⟩ (r ⇑ h′)} refl V⇑≤M′) (ξ □ (collide v g h G≢H))
-    =  ⊥-elim (¬★≤G h′ r)
-```
-
-```
-sim (cast≤ e M≤M′) (ξ □ (blameᵉ e∌F ¬e//ℰ v refl))
-    =  _ , (_ ∎) , blame≤
-```
-
-```
-sim (≤cast {±q = ±q} e M≤M′) M—→N
-    with sim M≤M′ M—→N
-... |  N′ , M′—↠N′ , N≤N′
-    =  cast ±q N′ , ξ* (`cast ±q [ □ ]) M′—↠N′ , ≤cast e N≤N′
-```
-
+Subtyping TODO
 ```
 sim (*≤* V≤M′) (ξ □ (wrap e′))
     with catchup (ƛ _) V≤M′
 ... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  _ , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit ?) , ? -- wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+    =  _ , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit {!!}) , {!!} -- wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 ... |  (V′ ⇑ g) , v′ ⇑ g , M′—↠V′⇑g , λN≤λN′ = {!!}
 ```
 
 ```
-sim (*≤* V≤M′) (ξξ □ refl eq M₀↦N) = ?
+sim (*≤* V≤M′) (ξξ □ refl eq M₀↦N) = {!!}
 ```
 
 ```
-sim (*≤* M≤M′) (ξξ (`cast ±q [ ℰ ]) refl eq M₀↦N) = ?
+sim (*≤* M≤M′) (ξξ (`cast ±q [ ℰ ]) refl eq M₀↦N) = {!!}
+```
+
+Reduction under `″perform _ [ ℰ ] _`.
+```
+sim (perform≤perform M≤M′) (ξ (″perform _ [ ℰ ] _) M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
+... |  N′ , M′—↠N′ , N≤N′
+    = perform- _ N′ _ , ξ* (″perform _ [ □ ] _) M′—↠N′ , perform≤perform N≤N′
 ```
 
 `perform` is not a redex: reduction cannot happen under context `□`.
 ```
 sim (perform≤perform M≤M′) (ξξ □ refl _ ())
+```
+
+Reduction under `′handle _ [ ℰ ]`.
+```
+sim (handle≤handle H≤ M≤) (ξ (′handle _ [ ℰ ]) M↦N)
+    with sim M≤ (ξ ℰ M↦N)
+... |  N′ , M′—↠N′ , N≤N′
+    = handle _ N′ , ξ* (′handle _ [ □ ]) M′—↠N′ , handle≤handle H≤ N≤N′
 ```
 
 ```
@@ -366,7 +305,7 @@ yields the reduction sequence `inc★2★—↠3★`, and similarly for
 ```
 _ : gg inc2≤inc★2★ inc2—↠3 ($ 3) ≡
       ($★ 3 , $ 3 ⇑ $ℕ , inc★2★—↠3★ , $≤$★ 3)
-_ = {! refl !}
+_ = refl
 
 {-
 _ : gg inc2≤inc★′2★ inc2—↠3 ($ 3) ≡

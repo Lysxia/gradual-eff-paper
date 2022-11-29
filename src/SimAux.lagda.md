@@ -14,9 +14,9 @@ We now prove the gradual guarantee:
 if `M ≤ᴹ M′` and `M —→ N`, then `M′ —→ N′`
 and `N ≤ᴹ N′`.
 
-## Cast lemma
+## Right cast lemma
 
-The cast lemma says that when the term on the left of `≤ᴹ` is a value,
+The right cast lemma says that when the term on the left of `≤ᴹ` is a value,
 reducing a cast on the right preserves precision.
 If `V ≤ᴹ V′`, then `cast ±q V′ —↠ W` and `V ≤ᴹ W`.
 ```
@@ -223,9 +223,8 @@ simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ 
     deriv =
       cast≤ (cod≤ e′ e)
         (·≤· ƛN≤ƛN′
-             (cast≤ {r = ⟨ _≤ᶜ_.effects (cod r) ⟩ _} (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
+             (cast≤ (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
 ```
-\lyx{Can avoid the implicit argument `r`?}
 
 In the `≤wrap` case, the reduction sequence on the right is displayed below.
 We first take a β step for the application of `ƛ-wrap` using the `wrapβ` lemma.
@@ -250,8 +249,83 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
        (≤cast (≤cod e′ e) N[W]≤M′)
 ```
 
-When the left side of an inequality has a pending operation, `ℰ ⟦ perform e∈E V ⟧`,
-we shall prove a catchup lemma similar to when it is a value.
+## Right cast lemma
+
+The right cast lemma completes the simulation diagram for a step from a `cast` term.
+
+```
+cast≤-lemma : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P Q P′} {±p : P =>ᶜ Q} {Q≤P′ : Q ≤ᶜ P′} {P≤P′ : P ≤ᶜ P′} {M N M′}
+  → commute≤ᶜ ±p Q≤P′ P≤P′
+  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤P′
+  → cast ±p M ↦ N
+  → ∃[ N′ ] (M′ —↠ N′) × Γ≤ ⊢ N ≤ᴹ N′ ⦂ Q≤P′
+```
+
+Proof by case analysis on the derivation of `cast ±p M ↦ N`.
+In each of those cases except the last one, `M` is actually a value `V`.
+We apply `catchup` to reduce `M′` to a value `V′` such that `V ≤ V′`,
+which we can wrap into an inequality between the reduct of `cast ± V` and `V′`.
+
+The application of `catchup` in this lemma is made necessary by the presence of effects
+in our type system. Otherwise, the `ident` rule would reduce
+`cast ±p V` to `V`, and we could conclude immediately with `V≤M′`.
+```
+cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} comm V≤M′ (ident eq v)
+    with catchup v V≤M′
+... | V′  , v′ , M′—↠V′ , V≤V′
+    rewrite ident≤ _ eq comm
+    =  V′ , M′—↠V′ ,  gvalue≤ v v′ V≤V′ 
+```
+
+```
+cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} comm V≤M′ (wrap eq)
+    with B≤ | catchup (ƛ _) V≤M′
+... | B≤ |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
+    =  V′ , M′—↠V′ , wrap≤ eq (returns≤ comm) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+... | B≤ ⇑ ★⇒★ |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
+    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ eq (drop⇑ (returns≤ comm)) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
+```
+
+```
+cast≤-lemma {±p = + ⟨ _ ⟩ (p ⇑ .g)} {Q≤P′ = ⟨ _ ⟩ id} refl V≤M′ (expand v g)
+    with catchup v V≤M′
+... |  V′ ⇑ .g , v′ ⇑ .g , M′—↠V′⇑ , ≤⇑ .g V≤V′
+    =  V′ ⇑ g , M′—↠V′⇑ , ⇑≤⇑ g (cast≤ refl V≤V′)
+```
+
+```
+cast≤-lemma {±p = + ⟨ _ ⟩ (p ⇑ .g)} {Q≤P′ = ⟨ _ ⟩ (q ⇑ h)} refl V≤M′ (expand v g)
+    =  ⊥-elim (¬★≤G h q)
+```
+
+```
+cast≤-lemma {±p = - ⟨ _ ⟩ (p ⇑ .g)} {P≤P′ = ⟨ _ ⟩ id} {M = W ⇑ .g} refl V≤M′ (collapse w g)
+   with catchup (w ⇑ g) V≤M′
+... |  W′ ⇑ .g , w′ ⇑ .g , M′—↠W′⇑ , ⇑≤⇑ .g W≤W′
+    =  W′ ⇑ g , M′—↠W′⇑ , ≤⇑ g (cast≤ refl W≤W′)
+```
+
+```
+cast≤-lemma {±p = - ⟨ _ ⟩ (p ⇑ .g)} {P≤P′ = ⟨ _ ⟩ (r ⇑ h)} {M = W ⇑ .g} refl V≤M′ (collapse v g)
+    =  ⊥-elim (¬★≤G h r)
+```
+
+The two rules for raising blame are `collide` and `blameᵉ`.
+When the left-hand side of an inequality raises blame,
+there are no guarantees about the right-hand side.
+```
+cast≤-lemma refl V≤M′ (collide v g h G≢H)
+    =  _ , (_ ∎) , blame≤
+cast≤-lemma comm M≤M′ (blameᵉ e∌F ¬e//ℰ v refl)
+    =  _ , (_ ∎) , blame≤
+```
+
+## Catchup lemma for operations
+
+The following catchup lemma applies when the left side of an inequality
+is a pending operation, of the form `ℰ ⟦ perform e∈E V ⟧`. In contrast the previous
+`catchup` lemma applies when the left side of an inequality is a value.
+
 
 The conclusion of the lemma is a fairly large conjunction.
 We declare a data type for it, to hide existential witnesses which

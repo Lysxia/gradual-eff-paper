@@ -184,15 +184,15 @@ returns≤ {±p = - _} refl = refl
 ≤returns {±q = + _} refl = refl
 ≤returns {±q = - _} refl = refl
 
-pure≤ : ∀ {E A B R} {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ R} {r : ⟨ E ⟩ A ≤ᶜ R}
-  → commute≤ ±p (_≤ᶜ_.returns q) (_≤ᶜ_.returns r) → commute≤ᶜ (pure± ±p) q r
+pure≤ : ∀ {E F A B C} {E≤F : E ≤ᵉ F} {±p : A => B} {q : B ≤ C} {r : A ≤ C}
+  → commute≤ ±p q r → commute≤ᶜ (pure± ±p) (⟨ E≤F ⟩ q) (⟨ E≤F ⟩ r)
 pure≤ {±p = + _} refl = cong (⟨_⟩ _) unique-≤ᵉ
 pure≤ {±p = - _} refl = cong (⟨_⟩ _) unique-≤ᵉ
 
 ≤pure : ∀ {E F A B C} {p : A ≤ B} {±q : B => C} {r : A ≤ C} {E≤F : E ≤ᵉ F}
   → ≤commute p ±q r → ≤commuteᶜ (⟨ E≤F ⟩ p) (pure± ±q) (⟨ E≤F ⟩ r)
-≤pure {±q = + _} refl = cong₂ ⟨_⟩_ refl refl
-≤pure {±q = - _} refl = cong₂ ⟨_⟩_ refl refl
+≤pure {±q = + _} refl = refl
+≤pure {±q = - _} refl = refl
 ```
 
 An inversion lemma on commutative triangles where the two precision sides
