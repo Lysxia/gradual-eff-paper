@@ -19,6 +19,11 @@ and `N ≤ᴹ N′`.
 The right cast lemma says that when the term on the left of `≤ᴹ` is a value,
 reducing a cast on the right preserves precision.
 If `V ≤ᴹ V′`, then `cast ±q V′ —↠ W` and `V ≤ᴹ W`.
+
+$$
+\input{figures/right-cast-lemma}
+$$
+
 ```
 cast-lemma : ∀ {Γ Γ′ A B C} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ B} {r : A ≤ᶜ C}
            {V : Γ ⊢ A} {V′ : Γ′ ⊢ B}
@@ -47,7 +52,9 @@ cast-lemma {p = ⟨ _ ⟩ _}  v v′ ±q e V≤V′ | id
 If `±q` is a function cast, the value is wrapped.
 ```
 cast-lemma (ƛ _) (ƛ _) ±q e ƛN≤ƛN′ | ∓s ⇒ ±t
-    =  ƛ _ , ƛ _ , unit (wrap e′) , ≤wrap e′ (≤returns e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+    =  ƛ _ , ƛ _ ,
+       unit (wrap e′) ,
+       ≤wrap e′ (≤returns e) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 ```
 
 If `±q` is a box upcast `q ⇑ g`, the value is boxed,
@@ -56,7 +63,9 @@ and that box is related to the left-hand side using `≤⇑`.
 cast-lemma v v′ (+ ⟨ E≤E′ ⟩ (q ⇑ g)) refl V≤V′ | other
     with cast-lemma v v′ (+ ⟨ E≤E′ ⟩ q) refl V≤V′
 ... |  W′ , w , V′+—↠W′ , V≤W′
-    =  (W′ ⇑ g) , (w ⇑ g) , (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′+—↠W′) , ≤⇑ g V≤W′
+    =  (W′ ⇑ g) , (w ⇑ g) ,
+       (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′+—↠W′) ,
+       ≤⇑ g V≤W′
 ```
 
 For a box downcast `(- (q ⇑ g))`, the cast value must be a box `(v′ ⇑ g)`.
@@ -65,7 +74,9 @@ The commutative diagram ensures that the tag `g` in the cast matches the tag in 
 cast-lemma v (v′ ⇑ g) (- ⟨ E′≤E ⟩ (q ⇑ .g)) refl (≤⇑ .g  V≤V′) | other
     with cast-lemma v v′ (- ⟨ E′≤E ⟩ q) refl V≤V′
 ... |  W′ , w′ , V′-—↠W′ , V≤W′
-    =  W′ , w′ , (unit (collapse v′ g) ++↠ V′-—↠W′) , V≤W′
+    =  W′ , w′ ,
+       (unit (collapse v′ g) ++↠ V′-—↠W′) ,
+       V≤W′
 ```
 
 ## Catch up lemma
@@ -249,9 +260,9 @@ simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}
        (≤cast (≤cod e′ e) N[W]≤M′)
 ```
 
-## Right cast lemma
+## Left cast lemma
 
-The right cast lemma completes the simulation diagram for a step from a `cast` term.
+The left cast lemma completes the simulation diagram for a step from a `cast` term.
 
 ```
 cast≤-lemma : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P Q P′} {±p : P =>ᶜ Q} {Q≤P′ : Q ≤ᶜ P′} {P≤P′ : P ≤ᶜ P′} {M N M′}
@@ -277,13 +288,16 @@ cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} comm V≤M′ (ident eq v)
     =  V′ , M′—↠V′ ,  gvalue≤ v v′ V≤V′ 
 ```
 
+For `wrap`, we have two subcases depending on whether the right-hand side
+reduces to an abstraction or to a box.
 ```
 cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} comm V≤M′ (wrap eq)
     with B≤ | catchup (ƛ _) V≤M′
 ... | B≤ |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  V′ , M′—↠V′ , wrap≤ eq (returns≤ comm) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 ... | B≤ ⇑ ★⇒★ |  V′ ⇑ ★⇒★ , (ƛ _) ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
-    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ , ≤⇑ ★⇒★ (wrap≤ eq (drop⇑ (returns≤ comm)) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
+    =  V′ ⇑ ★⇒★ , M′—↠V′⇑ ,
+       ≤⇑ ★⇒★ (wrap≤ eq (drop⇑ (returns≤ comm)) (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
 ```
 
 ```
@@ -367,7 +381,9 @@ catchup-⟦perform⟧≤ v ℰ (≤⇑ g M≤) ¬e//ℰ
 catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = P≤} v ℰ (≤cast {±q = ±q} comm M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (≤cast comm ℰ≤ℰ′) (¬handled-cast {±p = ±q} ℰ′ (∈-≤ (_≤ᶜ_.effects P≤) (¬handled-∈ ℰ ¬e//ℰ e∈E)) ¬e//ℰ′) (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
+    = Mk  v′ V≤V′ (≤cast comm ℰ≤ℰ′)
+          (¬handled-cast {±p = ±q} ℰ′ (∈-≤ (_≤ᶜ_.effects P≤) (¬handled-∈ ℰ ¬e//ℰ e∈E)) ¬e//ℰ′)
+          (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v ([ ℰ ]· M) (·≤· N≤ M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ N≤ ¬e//ℰ
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ N′—↠ℰV′
@@ -376,8 +392,9 @@ catchup-⟦perform⟧≤ v (w ·[ ℰ ]) (·≤· N≤ M≤) ¬e//ℰ
   with catchup w N≤
 ... | W′ , w′ , N′—↠W′ , W≤
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ ((w , w′ , W≤) ·[ ℰ≤ℰ′ ]) ¬e//ℰ′ (ξ* ([ □ ]· _) N′—↠W′ ++↠ ξ* (w′ ·[ □ ]) M′—↠ℰV′)
+... | Mk   v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
+    = Mk   v′ V≤V′ ((w , w′ , W≤) ·[ ℰ≤ℰ′ ]) ¬e//ℰ′
+           (ξ* ([ □ ]· _) N′—↠W′ ++↠ ξ* (w′ ·[ □ ]) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v ([ ℰ ]⦅ f ⦆ N) (⦅⦆≤⦅⦆ .f M≤ N≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
@@ -397,11 +414,15 @@ catchup-⟦perform⟧≤ v (`cast ±p [ ℰ ]) (cast≤ comm M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
     = Mk v′ V≤V′ (cast≤ comm ℰ≤ℰ′) ¬e//ℰ′ M′—↠ℰV′
-catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = ⟨ F≤ ⟩ _} v (`cast ±p [ ℰ ]) (*≤* {P′⊑Q′ = P′⊑Q′} M≤) ¬e//ℰ
+catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = ⟨ F≤ ⟩ _} v
+  (`cast ±p [ ℰ ])
+  (*≤* {P′⊑Q′ = P′⊑Q′} M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
     = Mk v′ V≤V′ (*≤* ℰ≤ℰ′) ¬e//cast[ℰ′] (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
-  where ¬e//cast[ℰ′] = ¬handled-cast {±p = * P′⊑Q′} ℰ′ (∈-≤ F≤ (¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e∈E)) ¬e//ℰ′
+  where ¬e//cast[ℰ′] = ¬handled-cast {±p = * P′⊑Q′} ℰ′
+                                     (∈-≤ F≤ (¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e∈E))
+                                     ¬e//ℰ′
 catchup-⟦perform⟧≤ v (″perform e∈E [ ℰ ] eq) (perform≤perform M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
@@ -409,7 +430,9 @@ catchup-⟦perform⟧≤ v (″perform e∈E [ ℰ ] eq) (perform≤perform M≤
 catchup-⟦perform⟧≤ v (′handle H [ ℰ ]) (handle≤handle {H′ = H′} H≤ M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (′handle H≤ [ ℰ≤ℰ′ ]) (¬handled-handle {H = H′} ℰ′ (subst (λ Eh → ¬ _ ∈ Eh) (Hooks-≤ H≤) (¬e//ℰ ∘ inj₁)) ¬e//ℰ′) (ξ* (′handle _ [ □ ]) M′—↠ℰV′)
+    = Mk  v′ V≤V′ (′handle H≤ [ ℰ≤ℰ′ ])
+          (¬handled-handle {H = H′} ℰ′ (subst (λ Eh → ¬ _ ∈ Eh) (Hooks-≤ H≤) (¬e//ℰ ∘ inj₁)) ¬e//ℰ′)
+          (ξ* (′handle _ [ □ ]) M′—↠ℰV′)
   where
     Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {P P′} {P≤ : P ≤ᶜ P′} {Q Q′} {Q≤ : Q ≤ᶜ Q′} {H H′}
       → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤

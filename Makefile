@@ -20,6 +20,8 @@ latex_files := $(patsubst $(SRC)/%.lagda.md,$(src_tex)/%.tex,$(lagda_md_files))
 html_files := $(patsubst $(SRC)/%.lagda.md,html/%.html,$(lagda_md_files))
 agda_sty := $(src_tex)/agda.sty
 
+EXTRA_DIRS := $(build_latex)/figures
+
 all: pdf draft # html
 all_lagda_tex: $(transpiled_files)
 all_latex: $(latex_files)
@@ -33,12 +35,14 @@ draft: all_lagda_tex all_latex draft.pdf
 
 LATEXMK_OPTS := -quiet -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelatex
 
+LATEX_DEPS := $(latex_files) $(agda_sty) references.bib $(EXTRA_DIRS)
+
 # A pdf for the whole book
-$(main_pdf): main.tex $(latex_files) $(agda_sty) references.bib
+$(main_pdf): main.tex $(LATEX_DEPS)
 	latexmk $(LATEXMK_OPTS) $<
 	ln -sfT $(main_pdf) main.pdf
 
-draft.pdf: draft.tex main.tex $(latex_files) $(agda_sty) references.bib
+draft.pdf: draft.tex main.tex $(LATEX_DEPS)
 	latexmk $(LATEXMK_OPTS) $<
 	ln -sfT $(draft_pdf) draft.pdf
 
@@ -100,6 +104,9 @@ AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex) 
 # run agda under same directory with lagda.tex	
 $(src_tex)/%.tex : $(src_lagda_tex)/%.lagda.tex 
 	$(AGDA) $(AGDA_LATEX_OPTS) $<
+
+$(build_latex)/figures:
+	ln -sfT ../../figures $@
 
 clean:
 	$(RM) -rf _build main.pdf
