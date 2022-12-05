@@ -10,3 +10,9 @@ code.tiny pre {
   margin: 0;
   padding: 10px;
 }
+
+.footnote {
+  text-align: right;
+  height: 100%;
+  font-size: 14px;
+}
