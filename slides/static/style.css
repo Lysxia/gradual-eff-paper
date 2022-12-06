@@ -1,4 +1,4 @@
-code {
+code.big {
   font-size: 50px;
 }
 
@@ -15,4 +15,66 @@ code.tiny pre {
   text-align: right;
   height: 100%;
   font-size: 14px;
+}
+
+.left {
+  text-align: left;
+}
+
+.right {
+  text-align: right;
+}
+
+.float-bottom-right {
+    z-index: 9999999999999;
+    position: absolute;
+    top: 300px;
+    right: 3px;
+}
+
+.flexbox {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-0 {
+  flex: 0;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.height-half {
+  height: 50pt;
+}
+
+.gradual-box > .gradual-label {
+  font-size: 20px;
+  margin-bottom: 0;
+  margin-left: 30px;
+  margin-right: 30px;
+}
+
+.gradual-box > pre {
+  margin-top: 0;
+}
+
+.gradual-box pre > code {
+  padding: 10px 20px;
+}
+
+.border {
+  border: 2px solid;
+}
+
+.reveal blockquote {
+  font-style: normal;
+}
+
+.medium-small {
+  font-size: 25px;
 }

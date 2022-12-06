@@ -4,14 +4,14 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>Gradual algebraic effects</title>
 
 		<link rel="stylesheet" href="reveal.js/dist/reset.css">
 		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
 		<link rel="stylesheet" href="reveal.js/dist/theme/serif.css">
 
 		<!-- Theme used for syntax highlighted code -->
-		<link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css">
+		<link rel="stylesheet" href="reveal.js/plugin/highlight/default.css">
 		<link rel="stylesheet" href="Agda.css">
 		<link rel="stylesheet" href="style.css">
 	</head>
@@ -27,6 +27,7 @@
         \def\colortype#1{{\color{Blue}#1}}
         \def\colorterm#1{{\color{deemph}#1}}
         \def\importantcolortype#1{{\color{bbb}#1}}
+        \def\precision#1#2{{\color{Blue}#1 \color{Green} \le \color{Blue} #2}}
 
         \def\lam#1#2{\lambda#1. #2}
         \def\app#1#2{#1\,#2}
@@ -50,7 +51,101 @@
         </section>
 {#{ NEW SECTION }#}
         <section>
-				  <section>Gradual types</section>
+				  <section data-background-gradient="conic-gradient(at 50% 35%, #F0F1EB, #61584D)">
+            <div class="flexbox">
+              <div style="color: white;">Dynamic</div>
+              <div class="flex-1"></div>
+              <div>Static</div>
+            </div>
+            <div style="height: 150px;"></div>
+            <h3 class="height-half">Gradual types</h3>
+            <div style="height: 150px;"></div>
+          </section>
+          <section>
+            <div class="flexbox">
+              <div class="flex-1">
+<div>Library</div>
+<div class="gradual-box"><div class="gradual-label right">Dynamic</div>
+<pre><code data-trim data-noescape class="language-ocaml">
+write_to_db(row : Any) : Any
+ 
+</code></pre>
+</div>
+<div class="fragment gradual-box" data-fragment-index="1"><div class="gradual-label right">Static</div>
+<pre class="border"><code data-trim data-noescape class="language-ocaml">
+write_to_db(row : N × N) : ()
+ 
+</code></pre>
+</div>
+<div class="fragment gradual-box" data-fragment-index="2"><div class="gradual-label right">Dynamic</div>
+<pre><code data-trim data-noescape class="language-ocaml">
+write_to_db(row : Any) : Any
+ 
+</code></pre>
+</div>
+<div class="fragment gradual-box" data-fragment-index="0"><div class="gradual-label right">Static</div>
+<pre class="border"><code data-trim data-noescape class="language-ocaml">
+write_to_db(row : N × N) : ()
+ 
+</code></pre>
+</div>
+              </div>
+              <div class="flex-1">
+<div>Application</div>
+<div class="gradual-box"><div class="gradual-label left">Dynamic</div>
+<pre><code data-trim data-noescape class="language-ocaml">
+get_data() : Any
+write_to_db(get_data()) : Any
+</code></pre>
+</div>
+<div class="fragment gradual-box" data-fragment-index="1"><div class="gradual-label left">Dynamic</div>
+<pre><code data-trim data-noescape class="language-ocaml">
+get_data() : Any
+write_to_db(get_data()) : Any
+</code></pre>
+</div>
+<div class="fragment gradual-box" data-fragment-index="2"><div class="gradual-label left">Static</div>
+<pre class="border"><code data-trim data-noescape class="language-ocaml">
+get_data() : N × N
+write_to_db(get_data()) : ()
+</code></pre>
+</div>
+<div class="fragment gradual-box" data-fragment-index="0"><div class="gradual-label left">Static</div>
+<pre class="border"><code data-trim data-noescape class="language-ocaml">
+get_data() : N × N
+write_to_db(get_data()) : ()
+</code></pre>
+</div>
+              </div>
+            </div>
+            <div>Well-typed throughout gradual migration</div>
+          </section>
+          <section>
+            <blockquote class="medium-small">
+            But languages with dynamic typing also have a flexibility which is hard to emulate with a static type system.
+            <br>— <a href="https://kar.kent.ac.uk/88959/1/history.pdf_nocoversheet">Turner (2012)</a>
+            </blockquote>
+            <div>When static types go ¯\_(ツ)_/¯</div>
+            <pre><code data-trim data-noescape>
+tauto : nat -> ★ -> bool
+tauto 0 b = b
+tauto n f = tauto (n-1) (f false) && tauto (n-1) (f true)
+            </code></pre>
+
+            <div class="fragment">
+            <pre><code data-trim data-noescape>
+tauto n f = true   iff   ∀ x1 ... xn, f x1 ... xn = true 
+            </code></pre>
+            </div>
+            <div class="fragment">
+            <pre><code data-trim data-noescape>
+tauto 1 :                 (bool -> bool) -> bool
+tauto 2 :         (bool -> bool -> bool) -> bool
+tauto 3 : (bool -> bool -> bool -> bool) -> bool
+            </code></pre>
+            </div>
+          </section>
+{#{
           <section>
             <div class="footnote">Siek and Taha (2006)</div>
             <div style="text-align:left;">Gradual type system</div>
@@ -104,6 +199,47 @@
             \end{prooftree}\]
             <div style="text-align:left; font-size:35px;">NB: \(\sim\) not transitive! \(\implies\) subsumption rule = bad idea</div>
           </section>
+}#}
+          <section>
+            <div class="left">Gradual type system</div>
+            \[\begin{prooftree}
+                \AxiomC{\(\precision{A}{B}\)}
+                \AxiomC{\(\hastype{\Gamma}{M}{B}\)}
+              \BinaryInfC{\(\hastype{\Gamma}{M}{A}\)}
+            \end{prooftree}\]
+            <div class="left">Precision \(\precision{A}{B}\)</div>
+            \[\begin{prooftree}
+              \AxiomC{\(\precision{A}{\star}\)}
+            \end{prooftree}
+            \quad
+            \begin{prooftree}
+              \AxiomC{\(\precision{A}{A}\)}
+            \end{prooftree}
+            \quad
+            \begin{prooftree}
+                \AxiomC{\(\precision{A}{A'}\)}
+                \AxiomC{\(\precision{B}{B'}\)}
+              \BinaryInfC{\(\precision{A \to B}{A' \to B'}\)}
+            \end{prooftree}
+            \]
+            Covariant in the domain!
+            <br> Precision aka. "Naive Subtyping"
+          </section>
+          <section>
+            <div class="left">
+              \(\colorterm{f} : \colortype{\star \to \star}\)
+              <br>\(\colorterm{x} : \colortype{\nat}\)
+              <br>\(\colorterm{\app{f}{x}} : \colortype{\nat}\)
+            </div>
+            \[\begin{prooftree}
+                    \AxiomC{\(\precision{\nat \to \nat}{\star \to \star}\)}
+                    \AxiomC{\(\hastype{\Gamma}{f}{\star \to \star}\)}
+                  \BinaryInfC{\(\hastype{\Gamma}{f}{\nat \to \nat}\)}
+                  \AxiomC{\(\hastype{\Gamma}{x}{\nat}\)}
+                \BinaryInfC{\(\hastype{\Gamma}{\app{f}{x}}{\nat}\)}
+              \end{prooftree}
+            \]
+          </section>
         </section>
 {#{ NEW SECTION }#}
         <section>
@@ -134,7 +270,7 @@
         </section>
         <section>
           <p>Some code</p>
-          <code>
+          <code class="big">
             {% block test %}{% endblock %}
           </code>
         </section>
