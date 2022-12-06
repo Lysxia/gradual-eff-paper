@@ -24,14 +24,16 @@
         \def\bool{\texttt{bool}}
         \definecolor{deemph}{RGB}{75,75,75}
         \definecolor{bbb}{RGB}{0,100,255}
-        \def\colortype#1{{\color{Blue}#1}}
-        \def\colorterm#1{{\color{deemph}#1}}
-        \def\importantcolortype#1{{\color{bbb}#1}}
+        \def\typecolor#1{{\color{Blue}#1}}
+        \def\termcolor#1{{\color{deemph}#1}}
+        \def\castcolor#1{{\color{Orange}#1}}
+        \def\importanttypecolor#1{{\color{bbb}#1}}
         \def\precision#1#2{{\color{Blue}#1 \color{Green} \le \color{Blue} #2}}
 
         \def\lam#1#2{\lambda#1. #2}
         \def\app#1#2{#1\,#2}
-        \def\hastype#1#2#3{\colortype{#1} \vdash \colorterm{#2} : \colortype{#3}}
+        \def\castof#1{\texttt{cast}^{#1}}
+        \def\hastype#1#2#3{\typecolor{#1} \vdash \termcolor{#2} : \typecolor{#3}}
       \)
     </div>
 		<div class="reveal">
@@ -126,11 +128,13 @@ write_to_db(get_data()) : ()
             <br>— <a href="https://kar.kent.ac.uk/88959/1/history.pdf_nocoversheet">Turner (2012)</a>
             </blockquote>
             <div>When static types go ¯\_(ツ)_/¯</div>
+            <div class="fragment">
             <pre><code data-trim data-noescape>
 tauto : nat -> ★ -> bool
 tauto 0 b = b
 tauto n f = tauto (n-1) (f false) && tauto (n-1) (f true)
             </code></pre>
+            </div>
 
             <div class="fragment">
             <pre><code data-trim data-noescape>
@@ -145,6 +149,18 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             </code></pre>
             </div>
           </section>
+          <section>
+            <div>Anatomy of a gradually typed language</div>
+            <ul style="list-style: none;">
+              <li class="fragment"><b>Dynamic type</b> "\(\star\)" (aka. <code>Any</code>)</li>
+              <li class="fragment margin-top-10"><b>Surface language:</b> \(f : \nat \to \bool, x : \star \vdash \app{f}{x} : \bool\)</li>
+              <li class="fragment">⮩ Some flexibility, but not too loose either</li>
+              <li class="fragment margin-top-10">Core language = <b>cast calculus:</b> \(f : \nat \to \bool, x : \star \vdash \app{f}{(\castof{-p}\,x)} : \bool\)</li>
+              <li class="fragment">⮩ Operational semantics</li>
+              <li class="fragment">⮩ <b>Gradual guarantee:</b> how code should behave when type annotations
+                are added incrementally.</li>
+            </ul>
+          </section>
 {#{
           <section>
             <div class="footnote">Siek and Taha (2006)</div>
@@ -152,32 +168,32 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             \[\begin{prooftree}
                 \AxiomC{\(\hastype{\Gamma}{N}{A' \to B}\)}
                 \AxiomC{\(\hastype{\Gamma}{M}{A}\)}
-                \AxiomC{\(\importantcolortype{A' \sim A}\)}
+                \AxiomC{\(\importanttypecolor{A' \sim A}\)}
               \TrinaryInfC{\(\hastype{\Gamma}{\app{N}{M}}{B}\)}
             \end{prooftree}\]
 
             \[\begin{prooftree}
-                \AxiomC{\(\hastype{\Gamma}{N}{\importantcolortype{\star}}\)}
+                \AxiomC{\(\hastype{\Gamma}{N}{\importanttypecolor{\star}}\)}
                 \AxiomC{\(\hastype{\Gamma}{M}{A}\)}
-              \BinaryInfC{\(\hastype{\Gamma}{\app{N}{M}}{\importantcolortype{\star}}\)}
+              \BinaryInfC{\(\hastype{\Gamma}{\app{N}{M}}{\importanttypecolor{\star}}\)}
             \end{prooftree}\]
 
             <div style="text-align:left;">Type consistency \(A \sim B\)</div>
             \[
             \begin{prooftree}
                 \AxiomC{}
-              \UnaryInfC{\(\colortype{A \sim \star}\)}
+              \UnaryInfC{\(\typecolor{A \sim \star}\)}
             \end{prooftree}
             \quad
             \begin{prooftree}
                 \AxiomC{}
-              \UnaryInfC{\(\colortype{\star \sim A}\)}
+              \UnaryInfC{\(\typecolor{\star \sim A}\)}
             \end{prooftree}
             \quad
             \begin{prooftree}
-                \AxiomC{\(\colortype{A \sim A'}\)}
-                \AxiomC{\(\colortype{B \sim B'}\)}
-              \BinaryInfC{\(\colortype{A \to B \sim A' \to B'}\)}
+                \AxiomC{\(\typecolor{A \sim A'}\)}
+                \AxiomC{\(\typecolor{B \sim B'}\)}
+              \BinaryInfC{\(\typecolor{A \to B \sim A' \to B'}\)}
             \end{prooftree}
             \]
           </section>
@@ -185,16 +201,16 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             <div style="text-align:left;">Why not this?</div>
             \[\begin{prooftree}
                 \AxiomC{\(\hastype{\Gamma}{M}{A}\)}
-                \AxiomC{\(\colortype{A \sim B}\)}
+                \AxiomC{\(\typecolor{A \sim B}\)}
               \BinaryInfC{\(\hastype{\Gamma}{M}{B}\)}
             \end{prooftree}\]
 
             <div style="text-align:left;">Cast between all types:</div>
             \[\begin{prooftree}
                   \AxiomC{\(\hastype{\Gamma}{M}{A}\)}
-                  \AxiomC{\(\colortype{A \sim \star}\)}
+                  \AxiomC{\(\typecolor{A \sim \star}\)}
                 \BinaryInfC{\(\hastype{\Gamma}{M}{\star}\)}
-                \AxiomC{\(\colortype{\star \sim B}\)}
+                \AxiomC{\(\typecolor{\star \sim B}\)}
               \BinaryInfC{\(\hastype{\Gamma}{M}{B}\)}
             \end{prooftree}\]
             <div style="text-align:left; font-size:35px;">NB: \(\sim\) not transitive! \(\implies\) subsumption rule = bad idea</div>
@@ -226,10 +242,23 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             <br> Precision aka. "Naive Subtyping"
           </section>
           <section>
+            <div>Precision relation <code>A ≤ B</code></div>
+          <code class="big">
+            {% block precision %}{% endblock %}
+          </code>
+          </section>
+          <section>
+            <div>Well-typed terms <code>Γ ⊢ M ⦂ A</code></div>
+          <code class="big">
+            {% block precisionsubsumption %}{% endblock %}
+          </code>
+          </section>
+          <section>
+            <div>Example derivation</div>
             <div class="left">
-              \(\colorterm{f} : \colortype{\star \to \star}\)
-              <br>\(\colorterm{x} : \colortype{\nat}\)
-              <br>\(\colorterm{\app{f}{x}} : \colortype{\nat}\)
+              \(\termcolor{f} : \typecolor{\star \to \star}\)
+              <br>\(\termcolor{x} : \typecolor{\nat}\)
+              <br>\(\termcolor{\app{f}{x}} : \typecolor{\nat}\)
             </div>
             \[\begin{prooftree}
                     \AxiomC{\(\precision{\nat \to \nat}{\star \to \star}\)}
@@ -239,6 +268,128 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
                 \BinaryInfC{\(\hastype{\Gamma}{\app{f}{x}}{\nat}\)}
               \end{prooftree}
             \]
+            <code>
+              {% block exampletyping %}{% endblock %}
+            </code>
+          </section>
+          <section>
+            <div>Gradual typing as a superset of static typing</div>
+            <div>
+              <p class="medium">
+              If \(M\) is static (all binders annotated with non-\(\star\) types), then
+              </p>
+              \[\vdash_{\mathrm{Gradual}} M : A \iff \vdash_{\mathrm{STLC}} M : A\]
+            </div>
+          </section>
+          <section>
+            <div>Towards operational semantics</div>
+            <div>Via compilation to a cast calculus</div>
+            <div class="left">Surface language:
+              \[\begin{prooftree}
+                  \AxiomC{\(\precision{A}{B}\)}
+                  \AxiomC{\(\hastype{\Gamma}{M}{B}\)}
+                \BinaryInfC{\(\hastype{\Gamma}{M}{A}\)}
+              \end{prooftree}\]
+            </div>
+            <div class="fragment left">Cast calculus:
+              \[\begin{prooftree}
+                  \AxiomC{\(\castcolor{p :}\precision{A}{B}\)}
+                  \AxiomC{\(\hastype{\Gamma}{M}{B}\)}
+                \BinaryInfC{\(\hastype{\Gamma}{\castcolor{\castof{p}\,}M}{A}\)}
+              \end{prooftree}\]
+            </div>
+          </section>
+          <section>
+            <div class="left">Surface:</div>
+            <code>
+              {% block precisionsubsumption2 %}{% endblock %}
+            </code>
+            <div>The derivation already has the right structure.</div>
+          </section>
+          <section>
+            <div class="left">Cast calculus, intrinsically typed <code>M : Γ ⊢ A</code>:</div>
+            <code>
+              {% block castcalculus %}{% endblock %}
+            </code>
+          </section>
+          <section>
+            <div class="left">Cast rule <code>M : Γ ⊢ A</code>:</div>
+            <code>
+              {% block castrule %}{% endblock %}
+            </code>
+            <div class="left fragment">
+              <div>Casts = upcasts and downcasts:</div>
+              <code>
+                {% block castdef %}{% endblock %}
+              </code>
+            </div>
+          </section>
+          <section>
+            <div>Boxes: values of type \(\star\)</div>
+            <code>
+              {% block boxrule %}{% endblock %}
+            </code>
+            <div class="fragment">
+              <div>Ground type is a "tag"</div>
+              <code>
+                {% block ground %}{% endblock %}
+              </code>
+            </div>
+            <div class="fragment">
+              <div class="medium">A more informative encoding of precision/casts</div>
+              <code>
+                {% block precisionbis %}{% endblock %}
+              </code>
+            </div>
+          </section>
+          <section>
+            <div>Operational semantics of boxes <code>V ⇑ g</code></div>
+            <code>
+              {% block opsem %}{% endblock %}
+            </code>
+            <code class="fragment">
+              {% block opsem1 %}{% endblock %}
+            </code>
+            <code class="fragment">
+              {% block opsem2 %}{% endblock %}
+            </code>
+            <code class="fragment">
+              {% block opsem3 %}{% endblock %}
+            </code>
+          </section>
+          <section>
+            <div>Operational semantics of function casts <code>(∓s ⇒ ±t)</code></div>
+            <code>
+              {% block wrap %}{% endblock %}
+            </code>
+            <div>Rewritten with variable names:<br>
+              <code class="medium-small">cast (∓s ⇒ ±t) f  ↦  λ x. cast ±t (f (cast ∓s x)) </code></div>
+          </section>
+          <section>
+            <div>Progress <span class="strike">and preservation</span></div>
+            <div class="flexbox">
+            <code class="flex-2">
+              {% block progress %}{% endblock %}
+            </code>
+            <code class="fragment flex-1">
+              {% block progress2 %}{% endblock %}
+            </code>
+            </div>
+            <div class="fragment">Progress proof \(\overset{\text{Curry-Howard}}{=}\) Interpreter</div>
+          </section>
+          <section>
+            <div class="medium-small">Example: how to box <code>f : nat → nat</code> in \(\star\)</div>
+            <div>
+              <code class="fragment">
+                {% block boxexample %}{% endblock %}
+              </code>
+              <code class="fragment">
+                {% block boxexample2 %}{% endblock %}
+              </code>
+              <code class="fragment">
+                {% block boxexample3 %}{% endblock %}
+              </code>
+            </div>
           </section>
         </section>
 {#{ NEW SECTION }#}

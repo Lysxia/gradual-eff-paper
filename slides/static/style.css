@@ -48,6 +48,14 @@ code.tiny pre {
   flex: 1;
 }
 
+.flex-2 {
+  flex: 2;
+}
+
+.flex-3 {
+  flex: 3;
+}
+
 .height-half {
   height: 50pt;
 }
@@ -75,6 +83,22 @@ code.tiny pre {
   font-style: normal;
 }
 
+.margin-top-10 {
+  margin-top: 20px;
+}
+
+.medium {
+  font-size: 30px;
+}
+
 .medium-small {
   font-size: 25px;
+}
+
+.small {
+  font-size: 15px;
+}
+
+.strike {
+  text-decoration: line-through;
 }

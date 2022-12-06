@@ -18,7 +18,7 @@ static/Agda.css: html/Agda.css
 	cp $< $@
 
 html/$(MODULE).md html/Agda.css: src/$(MODULE).lagda.md
-	$(AGDA) --verbose=0 -i../src -isrc --html --html-highlight=code $<
+	$(AGDA) --verbose=0 -i../src -isrc --html --html-highlight=code --only-scope-checking $<
 
 svg: static/cast-left-plus-tex.svg static/cast-left-minus-tex.svg
 

@@ -25,7 +25,7 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax;
 open import Data.String as String using (String) public
 open import Data.Sum using (_⊎_; inj₁; inj₂) public
 open import Relation.Nullary using (¬_; Dec; does; yes; no) public
-open import Relation.Nullary.Decidable using (_×-dec_) public
+open import Relation.Nullary.Product using (_×-dec_) public
 open import Relation.Nullary.Decidable.Core using (map′)
 open import Relation.Binary using (REL; Rel; Decidable) public
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; trans; sym; cong; cong₂; subst) public
