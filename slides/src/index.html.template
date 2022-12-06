@@ -20,13 +20,13 @@
       \(
         \def\N{\mathbb{N}}
         \def\B{\mathbb{B}}
-        \def\nat{\texttt{nat}}
-        \def\bool{\texttt{bool}}
+        \def\nat{\N}
+        \def\bool{\B}
         \definecolor{deemph}{RGB}{75,75,75}
         \definecolor{bbb}{RGB}{0,100,255}
         \def\typecolor#1{{\color{Blue}#1}}
         \def\termcolor#1{{\color{deemph}#1}}
-        \def\castcolor#1{{\color{Orange}#1}}
+        \def\castcolor#1{{\color{RedOrange}#1}}
         \def\importanttypecolor#1{{\color{bbb}#1}}
         \def\precision#1#2{{\color{Blue}#1 \color{Green} \le \color{Blue} #2}}
 
@@ -46,12 +46,6 @@
             <div>Philip Wadler</div>
           </div>
         </section>
-{#{ NEW SECTION }#}
-        <section>
-				  <section>Algebraic effects</section>
-          <section>handler = fold</section>
-        </section>
-{#{ NEW SECTION }#}
         <section>
 				  <section data-background-gradient="conic-gradient(at 50% 35%, #F0F1EB, #61584D)">
             <div class="flexbox">
@@ -161,6 +155,11 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
                 are added incrementally.</li>
             </ul>
           </section>
+        </section>
+        <section>
+				  <section data-background-gradient="conic-gradient(at 50% 35%, #F0F1EB, #61584D)">
+            Surface language: a gradual type system
+          </section>
 {#{
           <section>
             <div class="footnote">Siek and Taha (2006)</div>
@@ -217,12 +216,6 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
           </section>
 }#}
           <section>
-            <div class="left">Gradual type system</div>
-            \[\begin{prooftree}
-                \AxiomC{\(\precision{A}{B}\)}
-                \AxiomC{\(\hastype{\Gamma}{M}{B}\)}
-              \BinaryInfC{\(\hastype{\Gamma}{M}{A}\)}
-            \end{prooftree}\]
             <div class="left">Precision \(\precision{A}{B}\)</div>
             \[\begin{prooftree}
               \AxiomC{\(\precision{A}{\star}\)}
@@ -238,8 +231,16 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
               \BinaryInfC{\(\precision{A \to B}{A' \to B'}\)}
             \end{prooftree}
             \]
-            Covariant in the domain!
-            <br> Precision aka. "Naive Subtyping"
+            <div class="fragment">Covariant in the domain!</div>
+            <div class="fragment">Precision aka. "Naive Subtyping"</div>
+            <div class="left fragment margin-top-10">
+            <div>Gradual type system</div>
+            \[\begin{prooftree}
+                \AxiomC{\(\precision{A}{B}\)}
+                \AxiomC{\(\hastype{\Gamma}{M}{B}\)}
+              \BinaryInfC{\(\hastype{\Gamma}{M}{A}\)}
+            \end{prooftree}\]
+            </div>
           </section>
           <section>
             <div>Precision relation <code>A ≤ B</code></div>
@@ -268,7 +269,7 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
                 \BinaryInfC{\(\hastype{\Gamma}{\app{f}{x}}{\nat}\)}
               \end{prooftree}
             \]
-            <code>
+            <code class="fragment">
               {% block exampletyping %}{% endblock %}
             </code>
           </section>
@@ -281,9 +282,13 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
               \[\vdash_{\mathrm{Gradual}} M : A \iff \vdash_{\mathrm{STLC}} M : A\]
             </div>
           </section>
+        </section>
+        <section>
+				  <section data-background-gradient="conic-gradient(at 50% 35%, #F0F1EB, #61584D)">
+            <div>Towards an operational semantics</div>
+            <div>Compilation to a cast calculus</div>
+          </section>
           <section>
-            <div>Towards operational semantics</div>
-            <div>Via compilation to a cast calculus</div>
             <div class="left">Surface language:
               \[\begin{prooftree}
                   \AxiomC{\(\precision{A}{B}\)}
@@ -305,6 +310,9 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
               {% block precisionsubsumption2 %}{% endblock %}
             </code>
             <div>The derivation already has the right structure.</div>
+            <code class="fragment">
+              {% block exampletyping2 %}{% endblock %}
+            </code>
           </section>
           <section>
             <div class="left">Cast calculus, intrinsically typed <code>M : Γ ⊢ A</code>:</div>
@@ -313,7 +321,7 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             </code>
           </section>
           <section>
-            <div class="left">Cast rule <code>M : Γ ⊢ A</code>:</div>
+            <div class="left">Cast rule:</div>
             <code>
               {% block castrule %}{% endblock %}
             </code>
@@ -324,8 +332,13 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
               </code>
             </div>
           </section>
+        </section>
+        <section>
+				  <section data-background-gradient="conic-gradient(at 50% 35%, #F0F1EB, #61584D)">
+            Operational Semantics of Cast Calculus
+          </section>
           <section>
-            <div>Boxes: values of type \(\star\)</div>
+            <div>Values of type \(\star\): boxes</div>
             <code>
               {% block boxrule %}{% endblock %}
             </code>
@@ -335,6 +348,8 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
                 {% block ground %}{% endblock %}
               </code>
             </div>
+          </section>
+          <section>
             <div class="fragment">
               <div class="medium">A more informative encoding of precision/casts</div>
               <code>
@@ -392,7 +407,59 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             </div>
           </section>
         </section>
+        <section>
+				  <section data-background-gradient="conic-gradient(at 50% 35%, #F0F1EB, #61584D)">
+            The Gradual Guarantee
+          </section>
+          <section>
+            <div class="medium">Starting from a statically typed program (no \(\star\)), removing type annotations
+              \(\importanttypecolor{\text{cannot change}}\) its behavior in any way.</div>
+            <div><img class="col-2" src="graduality-1-tex.svg" width="250" height="250"/></div>
+{#{
+            <div style="height: 20px;"></div>
+            <div class="fragment">\(\vdash M : A \;{}\wedge{}\; \importanttypecolor{M \le M'} \implies \exists A', \vdash M' : A'\)</div>
+            <div class="fragment">If also \(M \Downarrow v\), then \(\exists v', M' \Downarrow v' \wedge \importanttypecolor{v \le v'}\)</div>
+            <div style="height: 20px;"></div>
+}#}
+          </section>
+          <section>
+            <div class="medium">If you add more type annotations to a program, then you may cause a \(\castcolor{\text{type error}}\), but otherwise \(\importanttypecolor{\text{no change}}\) to the value of a program.</div>
+            <div><img class="col-2" src="graduality-2-tex.svg" width="250" height="250"/></div>
+{#{
+            <div style="height: 20px;"></div>
+            <div class="fragment">\(\vdash M : A \;{}\wedge{}\; \importanttypecolor{M \le M'} \;{}\wedge{}\; M' \Downarrow v'\)<br> \(\implies{} M \Downarrow \castcolor{\mathrm{blame}} \vee \exists v, M \Downarrow v \wedge \importanttypecolor{v \le v'}\)</div>
+            <div style="height: 20px;"></div>
+            <div class="fragment medium">This is a consequence of the previous implication if the language is deterministic.</div>
+            <div style="height: 50px;"></div>
+            <div class="small right"><em>Refined Criteria for Gradual Typing</em>, Siek et al., SNAPL 2015</div>
+}#}
+          </section>
+          <section>
+            <style>
+              .container { display: flex; align-items: center; }
+              .col-1 { flex: 2; } .col-2 { flex: 1; }
+            </style>
+            <div class="container">
+              <code class="col-1 tiny">{% block cast_left_plus %}{% endblock %}</code>
+              <img class="col-2" src="cast-left-plus-tex.svg" width="250" height="250"/>
+            </div>
+            <div class="container">
+              <code class="col-1 tiny">{% block cast_left_minus %}{% endblock %}</code>
+              <img class="col-2" src="cast-left-minus-tex.svg" width="250" height="250"/>
+            </div>
+          </section>
+        </section>
 {#{ NEW SECTION }#}
+{#{
+        <section>
+				  <section>Algebraic effects</section>
+          <section>handler = fold</section>
+        </section>
+}#}
+        <section>
+          END
+        </section>
+{#{
         <section>
           \[\begin{prooftree}
               \AxiomC{\(\hastype{\Gamma,x:A}{M}{B}\)}
@@ -433,20 +500,8 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
           \end{CD}
           \]
         </section>
-        <section>
-          <style>
-            .container { display: flex; align-items: center; }
-            .col-1 { flex: 2; } .col-2 { flex: 1; }
-          </style>
-          <div class="container">
-            <code class="col-1 tiny">{% block cast_left_plus %}{% endblock %}</code>
-            <img class="col-2" src="cast-left-plus-tex.svg" width="250" height="250"/>
-          </div>
-          <div class="container">
-            <code class="col-1 tiny">{% block cast_left_minus %}{% endblock %}</code>
-            <img class="col-2" src="cast-left-minus-tex.svg" width="250" height="250"/>
-          </div>
-        </section>
+}#}
+{#{
         <section>
           <style>
             .container { display: flex; align-items: center; }
@@ -461,6 +516,7 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             <img class="col-2" src="cast-left-minus-tex.svg" width="250" height="250"/>
           </div>
         </section>
+}#}
 			</div>
 		</div>
 

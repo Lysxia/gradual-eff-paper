@@ -20,7 +20,7 @@ static/Agda.css: html/Agda.css
 html/$(MODULE).md html/Agda.css: src/$(MODULE).lagda.md
 	$(AGDA) --verbose=0 -i../src -isrc --html --html-highlight=code --only-scope-checking $<
 
-svg: static/cast-left-plus-tex.svg static/cast-left-minus-tex.svg
+svg: static/cast-left-plus-tex.svg static/cast-left-minus-tex.svg static/graduality-1-tex.svg static/graduality-2-tex.svg
 
 static/%-tex.svg: src/%.tex
 	latexmk -auxdir=build -outdir=build -shell-escape -pdf $<

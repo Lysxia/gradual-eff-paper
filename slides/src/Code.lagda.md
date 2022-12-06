@@ -60,10 +60,7 @@ module T where
       → (g : Ground G)
         -----
       → A ≤ ★
-```
-{% endblock %}
 
-```
     id :
         -----
         A ≤ A
@@ -74,6 +71,7 @@ module T where
         -------------------
       → (A ⇒ B) ≤ (A′ ⇒ B′)
 ```
+{% endblock %}
 
 ```
   data Context : Set where
@@ -172,7 +170,7 @@ module T where
 {% block castrule %}
 ```
     cast :
-         A => B
+         A => B  -- New cast construct
       →  Γ ⊢ A
          ---------
       →  Γ ⊢ B
@@ -204,12 +202,14 @@ module T where
 ```
 
 {% block exampletyping %}
+{% block exampletyping2 %}
 ```
     λ (f : Γ ⊢ ★ ⇒ ★)
       (x : Γ ⊢ ′ℕ) →
       ------------------------------------
       (materialize ℕ⇒ℕ≤★⇒★ f) · x  -- : ′ℕ
 ```
+{% endblock %}
 {% endblock %}
 
 ```
