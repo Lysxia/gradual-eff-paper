@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>Gradual algebraic effects</title>
+		<title>Formalizing gradual types in Agda</title>
 
 		<link rel="stylesheet" href="reveal.js/dist/reset.css">
 		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
@@ -39,8 +39,7 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-          <h2>Gradual algebraic effects</h2>
-          <h3>formalized in Agda</h3>
+          <h2>Formalizing gradual types in Agda</h2>
           <div style="text-align:right;">
             <div><b>Li-yao Xia</b></div>
             <div>Philip Wadler</div>
@@ -56,6 +55,7 @@
             <div style="height: 150px;"></div>
             <h3 class="height-half">Gradual types</h3>
             <div style="height: 150px;"></div>
+            <div class="medium-small">Credit to Siek, Thiemannm, Wadler</div>
           </section>
           <section>
             <div class="flexbox">
@@ -148,7 +148,6 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             <ul style="list-style: none;">
               <li class="fragment"><b>Dynamic type</b> "\(\star\)" (aka. <code>Any</code>)</li>
               <li class="fragment margin-top-10"><b>Surface language:</b> \(f : \nat \to \bool, x : \star \vdash \app{f}{x} : \bool\)</li>
-              <li class="fragment">⮩ Some flexibility, but not too loose either</li>
               <li class="fragment margin-top-10">Core language = <b>cast calculus:</b> \(f : \nat \to \bool, x : \star \vdash \app{f}{(\castof{-p}\,x)} : \bool\)</li>
               <li class="fragment">⮩ Operational semantics</li>
               <li class="fragment">⮩ <b>Gradual guarantee:</b> how code should behave when type annotations
@@ -241,6 +240,7 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
               \BinaryInfC{\(\hastype{\Gamma}{M}{A}\)}
             \end{prooftree}\]
             </div>
+            <div class="right small"><em>A New Perspective</em>, Castagna et al., 2019</div>
           </section>
           <section>
             <div>Precision relation <code>A ≤ B</code></div>
@@ -309,7 +309,7 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
             <code>
               {% block precisionsubsumption2 %}{% endblock %}
             </code>
-            <div>The derivation already has the right structure.</div>
+            <div>The derivation has (mostly) the right structure already.</div>
             <code class="fragment">
               {% block exampletyping2 %}{% endblock %}
             </code>
@@ -456,6 +456,20 @@ tauto 3 : (bool -> bool -> bool -> bool) -> bool
           <section>handler = fold</section>
         </section>
 }#}
+        <section>
+          <h3>Ongoing and Future Work</h3>
+          <ul>
+            <li>Integrate algebraic effects and handlers</li>
+            <li>Complete formalization of gradual guarantee
+              <ul>
+                <li>Done: Simulation proof for the cast calculus</li>
+                <li>Todo: Relate back to surface syntax</li>
+              </ul>
+            </li>
+            <li>Odd difficulties with effect subtyping and fine-grained CBV</li>
+            <li>Agda. Very fun, very slow.</li>
+          </ul>
+        </section>
         <section>
           END
         </section>
