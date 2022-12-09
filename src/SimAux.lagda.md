@@ -46,8 +46,9 @@ If `±q` is the identity cast, then the cast is removed.
 $$
 \input{figures/right-cast-case-id}
 $$
+\lyx{the p pattern somehow helps the typechecker}
 ```
-cast-lemma v v′ ±q e V≤V′ | id
+cast-lemma {p = ⟨ _ ⟩ _} v v′ ±q e V≤V′ | id
     rewrite ≤ident ±q e′ e
     =  _ , gValue v′ , unit (ident e′ v′) , ≤gvalue v v′ V≤V′
 ```
