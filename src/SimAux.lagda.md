@@ -43,13 +43,19 @@ cast-lemma v v′ ±q e V≤V′ with splitᶜ ±q in e′
 ```
 
 If `±q` is the identity cast, then the cast is removed.
+$$
+\input{figures/right-cast-case-id}
+$$
 ```
-cast-lemma {p = ⟨ _ ⟩ _}  v v′ ±q e V≤V′ | id
+cast-lemma v v′ ±q e V≤V′ | id
     rewrite ≤ident ±q e′ e
     =  _ , gValue v′ , unit (ident e′ v′) , ≤gvalue v v′ V≤V′
 ```
 
 If `±q` is a function cast, the value is wrapped.
+$$
+\input{figures/right-cast-case-fun}
+$$
 ```
 cast-lemma (ƛ _) (ƛ _) ±q e ƛN≤ƛN′ | ∓s ⇒ ±t
     =  ƛ _ , ƛ _ ,
@@ -59,23 +65,29 @@ cast-lemma (ƛ _) (ƛ _) ±q e ƛN≤ƛN′ | ∓s ⇒ ±t
 
 If `±q` is a box upcast `q ⇑ g`, the value is boxed,
 and that box is related to the left-hand side using `≤⇑`.
+$$
+\input{figures/right-cast-case-expand}
+$$
 ```
 cast-lemma v v′ (+ ⟨ E≤E′ ⟩ (q ⇑ g)) refl V≤V′ | other
     with cast-lemma v v′ (+ ⟨ E≤E′ ⟩ q) refl V≤V′
-... |  W′ , w , V′+—↠W′ , V≤W′
+... |  W′ , w , V′—↠W′ , V≤W′
     =  (W′ ⇑ g) , (w ⇑ g) ,
-       (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′+—↠W′) ,
+       (unit (expand v′ g) ++↠ ξ* ([ □ ]⇑ g) V′—↠W′) ,
        ≤⇑ g V≤W′
 ```
 
 For a box downcast `(- (q ⇑ g))`, the cast value must be a box `(v′ ⇑ g)`.
 The commutative diagram ensures that the tag `g` in the cast matches the tag in the box.
+$$
+\input{figures/right-cast-case-collapse}
+$$
 ```
 cast-lemma v (v′ ⇑ g) (- ⟨ E′≤E ⟩ (q ⇑ .g)) refl (≤⇑ .g  V≤V′) | other
     with cast-lemma v v′ (- ⟨ E′≤E ⟩ q) refl V≤V′
-... |  W′ , w′ , V′-—↠W′ , V≤W′
+... |  W′ , w′ , V′—↠W′ , V≤W′
     =  W′ , w′ ,
-       (unit (collapse v′ g) ++↠ V′-—↠W′) ,
+       (unit (collapse v′ g) ++↠ V′—↠W′) ,
        V≤W′
 ```
 
@@ -246,14 +258,14 @@ and which is covered by the `≤wrap` rule.
 ```
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′
     with cast-lemma w (gValue w′) (pure± ∓s) (≤pure {E≤F = _≤ᶜ_.effects (cod p)} (≤dom e′ e)) (≤gvalue w w′ W≤W′)
-... |  W″ , w″ , W′-—↠W″ , W≤W″
+... |  W″ , w″ , W′—↠W″ , W≤W″
     with simβ w w″ ƛN≤ƛN′ W≤W″
 ... |  M′ , [ƛN′]·W″—↠M′ , N[W]≤M′
     =  _ ,
        (begin
           ƛ-wrap ∓s ±t (ƛ N′) · W′ —→⟨ wrapβ {V = ƛ N′} e′ w′ ⟩
           cast ±t ((ƛ N′) · cast (pure± ∓s) (gvalue w′))
-                                   —↠⟨ ξ* (`cast _ [ (ƛ _) ·[ □ ] ]) W′-—↠W″ ⟩
+                                   —↠⟨ ξ* (`cast _ [ (ƛ _) ·[ □ ] ]) W′—↠W″ ⟩
           cast ±t ((ƛ N′) · W″)    —↠⟨ ξ* (`cast _ [ □ ]) [ƛN′]·W″—↠M′ ⟩
           cast ±t M′
         ∎) ,
