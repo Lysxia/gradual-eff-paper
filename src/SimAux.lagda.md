@@ -19,9 +19,15 @@ and `N ≤ᴹ N′`.
 The right cast lemma says that when the term on the left of `≤ᴹ` is a value,
 reducing a cast on the right preserves precision.
 If `V ≤ᴹ V′`, then `cast ±q V′ —↠ W` and `V ≤ᴹ W`.
+The situation is represented by the following diagrams, depending on whether
+`±q` is an upcast `+q` or downcast `-q`.
 
 $$
 \input{figures/right-cast-lemma}
+$$
+
+$$
+\input{figures/right-cast-lemma-minus}
 $$
 
 ```
@@ -96,6 +102,9 @@ cast-lemma v (v′ ⇑ g) (- ⟨ E′≤E ⟩ (q ⇑ .g)) refl (≤⇑ .g  V≤V
 
 The catch up lemma says that once the left side is a value, the right side must also step to
 a value. If `V ≤ᴹ M′` then `M′ —↠ V′` and `V ≤ᴹ V′` for some `V′`.
+
+$$ \input{figures/catchup} $$
+
 ```
 catchup : ∀ {Γ Γ′ A A′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ A′} {V : Γ ⊢ A} {M′ : Γ′ ⊢ A′}
   → Value V
@@ -105,6 +114,17 @@ catchup : ∀ {Γ Γ′ A A′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ᶜ A′} {V
 ```
 
 When the right side is already a value, we are done.
+
+`ƛ-wrap` is also a value.
+```
+catchup (ƛ _) (wrap≤ e′ e ƛN≤ƛN′)
+    =  _ , ƛ _ , (_ ∎) , wrap≤ e′ e ƛN≤ƛN′
+catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
+    =  _ , ƛ _ , (_ ∎) , ≤wrap e′ e ƛN≤ƛN′
+```
+
+$$ \input{figures/catchup-value} $$
+
 ```
 catchup (ƛ _) (ƛ≤ƛ {N′ = N′} ƛN≤ƛN′)
     =  ƛ N′ , ƛ N′ , (ƛ N′ ∎) , ƛ≤ƛ ƛN≤ƛN′
@@ -114,6 +134,9 @@ catchup ($ _) ($≤$ k)
 
 When the right side is a box (whether via `⇑≤⇑` or `≤⇑`),
 we reduce its contents, and a boxed value is a value.
+
+$$ \input{figures/catchup-box} $$
+
 ```
 catchup (v ⇑ g) (⇑≤⇑ {M = V} {M′ = M′} .g V≤M′)
     with catchup v V≤M′
@@ -127,6 +150,11 @@ catchup v (≤⇑ h V≤M′)
 
 When the right side is a cast, we reduce the cast computation, and call
 `cast-lemma` to reduce the cast itself.
+In the following diagram, the applications of `catchup` and `cast-lemma`
+are respectively represented by the left and bottom commutative triangles.
+
+$$ \input{figures/catchup-cast} $$
+
 ```
 catchup v (≤cast {M′ = M′} {±q = ±q} e V≤M′)
     with catchup v V≤M′
@@ -134,14 +162,6 @@ catchup v (≤cast {M′ = M′} {±q = ±q} e V≤M′)
     with cast-lemma v v′ ±q e V≤V′
 ... |  W , w , V⟨±q⟩—↠W , V≤W
     =  W , w , (ξ* (`cast ±q [ □ ]) M′—↠V′ ++↠ V⟨±q⟩—↠W) , V≤W
-```
-
-`ƛ-wrap` is already a value.
-```
-catchup (ƛ _) (wrap≤ e′ e ƛN≤ƛN′)
-    =  _ , ƛ _ , (_ ∎) , wrap≤ e′ e ƛN≤ƛN′
-catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
-    =  _ , ƛ _ , (_ ∎) , ≤wrap e′ e ƛN≤ƛN′
 ```
 
 The following lemma formalizes the intuition that substituting for a variable
@@ -184,6 +204,9 @@ wrapβ {∓s = ∓s}{±t = ±t}{V = V}{W} e w  =
 Given a `β`-reduction step `(ƛ N) W ↦ N [ gvalue w ]` on the left of an
 inequality `(ƛ N) · W ≤ᴹ (ƛ N′) · W′`, we construct a reduction sequence on the
 right, `(ƛ N′) · W′ —↠ M′` such that the reducts are related `N [ gvalue w] ≤ᴹ M′`.
+
+$$ \input{figures/simbeta} $$
+
 ```
 simβ : ∀ {Γ Γ′ A A′ B B′ E E′} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ⇒  ⟨ E ⟩ B ≤ A′ ⇒  ⟨ E′ ⟩ B′} {E≤ : E ≤ᵉ E′}
     {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {N′ : Γ′ ▷ A′ ⊢ ⟨ E′ ⟩ B′} {W : Γ ⊢ ⟨ E ⟩ A} {W′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
@@ -208,6 +231,8 @@ following derivation:
     N ≤ N′        gvalue w ≤ gvalue w′
     ---------------------------------- []≤[]
     N [ gvalue w ] ≤ᴹ N′ [ gvalue w′ ]
+
+$$ \input{figures/simbeta-lambda} $$
 
 ```
 simβ {W′ = W′} w w′ (ƛ≤ƛ {N′ = N′} N≤N′) W≤W′
@@ -239,6 +264,8 @@ applications `·≤·` and for casts on the left `cast≤`:
     ------------------------------------------------- cast≤
     cast ±t ((ƛ N) · cast ∓s (gvalue w)) ≤ (ƛ N′) · W′
 
+$$ \input{figures/simbeta-wrap-left} $$
+
 ```
 simβ {W = W}{W′} w w′ (wrap≤ {B = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ e ƛN≤ƛN′) W≤W′
     rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (gvalue w)
@@ -256,6 +283,9 @@ We reduce the subsequent value cast using `cast-lemma`.
 The last step reduces an application by the induction hypothesis `simβ`.
 There remains a cast that was introduced by `ƛ-wrap`,
 and which is covered by the `≤wrap` rule.
+
+$$ \input{figures/simbeta-wrap-right} $$
+
 ```
 simβ {W = W}{W′} w w′ (≤wrap {B′ = ⟨ E′ ⟩ _} {N = N}{N′}{p = p}{r = r}{∓s = ∓s}{±t = ±t} e′ e ƛN≤ƛN′) W≤W′
     with cast-lemma w (gValue w′) (pure± ∓s) (≤pure {E≤F = _≤ᶜ_.effects (cod p)} (≤dom e′ e)) (≤gvalue w w′ W≤W′)

@@ -1,0 +1,16 @@
+\begin{tikzcd}
+  \texttt{V} && \texttt{M'} && \texttt{cast +q M'} \\
+	\\
+  && \texttt{V'} && \texttt{cast +q V'} \\
+  \\
+  &&  && \texttt{W'}
+  \arrow["\texttt{p}", from=1-1, to=1-3]
+  \arrow["\texttt{p}"', from=1-1, to=3-3]
+	\arrow[""{name=0, anchor=center, inner sep=0}, ->, very thick, from=1-3, to=3-3]
+  \arrow["\texttt{q}", from=1-3, to=1-5]
+  \arrow["\texttt{q}"', from=3-3, to=3-5]
+	\arrow[""{name=1, anchor=center, inner sep=0}, ->, very thick, from=1-5, to=3-5]
+  \arrow["\texttt{ξ★}", shorten <=13pt, shorten >=13pt, Rightarrow, from=0, to=1]
+  \arrow["\texttt{q}"', from=3-3, to=5-5]
+	\arrow[""{name=2, anchor=center, inner sep=0}, ->, very thick, from=3-5, to=5-5]
+\end{tikzcd}

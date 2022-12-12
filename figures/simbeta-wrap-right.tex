@@ -1,0 +1,48 @@
+\begin{tikzcd}
+  \texttt{ƛ N} &&&& \texttt{ƛ N'} \\
+  %first square
+  \\
+  \texttt{ƛ N} &&&& \texttt{ƛ-wrap -s +t (ƛ N')} \\
+  %second square
+  \\
+  \texttt{(ƛ N) · W} &&&& \texttt{(ƛ-wrap -s +t (ƛ N')) · W'} \\
+  %third square
+	\\
+  \texttt{(ƛ N) · W} &&&& \texttt{cast +t ((ƛ N') · cast -s (gvalue w'))} \\
+  %fourth square
+	\\
+  \texttt{(ƛ N) · W} && \texttt{((ƛ N') · W")} && \texttt{cast +t ((ƛ N') · W")} \\
+  %fifth square
+	\\
+  \texttt{N [ gvalue w ]} && \texttt{M'} && \texttt{cast +t M'} \\
+  % first square
+  \arrow["\texttt{p}"', ""{name=0, anchor=center, inner sep=0}, from=1-1, to=1-5]
+  \arrow[equals, from=1-1, to=3-1]
+  \arrow["\texttt{ƛ-wrap}", hookrightarrow, from=1-5, to=3-5]
+  \arrow["\texttt{p ⨟ (s ⇒ t)}"', ""{name=1, anchor=center, inner sep=0}, from=3-1, to=3-5]
+  \arrow["\texttt{≤wrap}", shorten <=13pt, shorten >=13pt, Rightarrow, from=0, to=1]
+  % second square
+  \arrow["\texttt{(\_ · W)}"', hookrightarrow, from=3-1, to=5-1]
+  \arrow["\texttt{(\_ · W')}", hookrightarrow, from=3-5, to=5-5]
+  \arrow["\texttt{cod p ⨟ t}", ""{name=2, anchor=center, inner sep=0}, from=5-1, to=5-5]
+  \arrow["\texttt{·≤·}", shorten <=13pt, shorten >=13pt, Rightarrow, from=1, to=2]
+  % third square
+	\arrow[equals, from=5-1, to=7-1]
+  \arrow["\texttt{wrapβ}", ->, very thick, from=5-5, to=7-5]
+  \arrow["\texttt{cod p ⨟ t}", ""{name=3, anchor=center, inner sep=0}, from=7-1, to=7-5]
+  % fourth square
+	\arrow[equals, from=7-1, to=9-1]
+  \arrow["", ->, very thick, from=7-5, to=9-5]
+  \arrow["\texttt{cod p}", ""{name=4, anchor=center, inner sep=0}, from=9-1, to=9-3]
+  \arrow["\texttt{t}", from=9-3, to=9-5]
+  \arrow[draw=none, ""{name=5, anchor=center, inner sep=0}, from=9-1, to=9-5]
+  \arrow["\texttt{ξ★}\text{ and }\texttt{cast-lemma}", shorten <=13pt, shorten >=13pt, draw=none, from=3, to=5]
+  % fifth square
+  \arrow["\texttt{β}"', ->, very thick, from=9-1, to=11-1]
+  \arrow["", ""{name=10, anchor=center, inner sep=0}, ->, very thick, from=9-3, to=11-3]
+  \arrow["", ""{name=11, anchor=center, inner sep=0}, ->, very thick, from=9-5, to=11-5]
+  \arrow["\texttt{cod p}", ""{name=6, anchor=center, inner sep=0}, from=11-1, to=11-3]
+  \arrow["\texttt{t}", from=11-3, to=11-5]
+  \arrow["\texttt{simβ}", shorten <=13pt, shorten >=13pt, Rightarrow, from=4, to=6]
+  \arrow["\texttt{ξ★}", shorten <=13pt, shorten >=13pt, Rightarrow, from=10, to=11]
+\end{tikzcd}
