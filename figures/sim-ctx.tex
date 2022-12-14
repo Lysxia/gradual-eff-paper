@@ -1,0 +1,24 @@
+\begin{tikzcd}
+  \texttt{ℰ [ M ]}&&& \texttt{ℰ' [ M' ]} \\
+	& \texttt{M}& \texttt{M'} \\
+  & \texttt{N} & \texttt{N'} \\
+  \texttt{ℰ [ N ]}&&& \texttt{ℰ' [ N' ]}
+  % inner square
+	\arrow[from=2-2, to=2-3]
+	\arrow[from=3-2, to=3-3]
+	\arrow[->, very thick, from=2-2, to=3-2, ""{name=MN, anchor=center, inner sep=0}]
+	\arrow[->, very thick, from=2-3, to=3-3, ""{name=MN1, anchor=center, inner sep=0}]
+  % outer square
+	\arrow[from=1-1, to=1-4]
+	\arrow[from=4-1, to=4-4]
+	\arrow[->, very thick, from=1-1, to=4-1, ""{name=EMN, anchor=center, inner sep=0}]
+	\arrow[->, very thick, from=1-4, to=4-4, ""{name=EMN1, anchor=center, inner sep=0}]
+  % diagonals
+	\arrow[hook, from=2-3, to=1-4]
+	\arrow[hook, from=2-2, to=1-1]
+	\arrow[hook, from=3-2, to=4-1]
+	\arrow[hook, from=3-3, to=4-4]
+  % faces
+  \arrow["\texttt{ξ★}"', shorten <=13pt, shorten >=13pt, Rightarrow, from=MN, to=EMN]
+  \arrow["\texttt{ξ★}", shorten <=13pt, shorten >=13pt, Rightarrow, from=MN1, to=EMN1]
+\end{tikzcd}

@@ -16,6 +16,10 @@ The main lemma towards proving gradual guarantee is the following
 simulation proof. If `M ≤ M′` and `M` takes a step `M —→ N`, then `M′` takes
 some sequence of steps `M′ —↠ N′` to a less precise reduct `N ≤ N′`
 
+$$
+\input{figures/sim}
+$$
+
 ```
 sim : ∀ {Γ Γ′ A A′ E E′ M M′ N} {Γ≤ : Γ ≤ᴳ Γ′} {p : A ≤ A′} {E≤ : E ≤ᵉ E′}
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ p
@@ -53,6 +57,14 @@ we proceed by case analysis on the reduction step `M —→ N`.
 
 When the evaluation context is distinct from `□`,
 the proof is relies on the induction hypothesis `sim`.
+The following diagram pictures this method generally: the inner square is
+given by the induction hypothesis, upon which we build the outer square using
+congruence rules. In our Agda proof, this part of the proof is spelled out for
+each constructor of the context `ℰ`.
+
+$$
+\input{figures/sim-ctx}
+$$
 
 For the application rule `·≤·`, this leads to three subcases.
 
@@ -63,7 +75,7 @@ We thus reduce `L′ · M′` to `N′ · M′` and prove
 `N · M′ ≤ N′ · M′` by the rule `·≤·`.
 
 ```
-sim (·≤· {L′ = L′} {M′ = M′} L≤L′ M≤M′) (ξ ([ ℰ ]· L) L↦N)
+sim (·≤· {L′ = L′} {M′ = M′} L≤L′ M≤M′) (ξ ([ ℰ ]· M) L↦N)
     with sim L≤L′ (ξ ℰ L↦N)
 ... |  N′ , L′—↠N′ , N≤N′
     =  N′ · M′ ,
@@ -100,19 +112,23 @@ By two applications of `catchup`, we reduce
 by induction hypothesis `simβ`, we find the remaining steps to simulate the
 reduct `N [ gvalue W ]` on the left hand side.
 
+$$
+\input{figures/sim-case-beta}
+$$
+
 ```
-sim (·≤· {L′ = L′} {M′ = M′} ƛN≤L′ W≤M′) (ξ □ (β w))
+sim (·≤· {L′ = L′} {M′ = M′} ƛN≤L′ V≤M′) (ξ □ (β v))
     with catchup (ƛ _) ƛN≤L′
-... |  ƛ N′ , v′ , L′—↠ƛN′ , ƛN≤ƛN′
-    with catchup w W≤M′
-... |  W′ , w′ , M′—↠W′ , W≤W′
-    with simβ w w′ ƛN≤ƛN′ W≤W′
-... |  N″ , ƛN′·W′—↠N″ , N[V]≤N″
+... |  ƛ N′ , ƛ N′ , L′—↠ƛN′ , ƛN≤ƛN′
+    with catchup v V≤M′
+... |  V′ , v′ , M′—↠V′ , V≤V′
+    with simβ v v′ ƛN≤ƛN′ V≤V′
+... |  N″ , ƛN′·V′—↠N″ , N[V]≤N″
     =  N″ ,
        (begin
          L′ · M′     —↠⟨ ξ* ([ □ ]· _) L′—↠ƛN′ ⟩
-         (ƛ N′) · M′ —↠⟨ ξ* (v′ ·[ □ ]) M′—↠W′ ⟩
-         (ƛ N′) · W′ —↠⟨ ƛN′·W′—↠N″ ⟩
+         (ƛ N′) · M′ —↠⟨ ξ* ((ƛ N′) ·[ □ ]) M′—↠V′ ⟩
+         (ƛ N′) · V′ —↠⟨ ƛN′·V′—↠N″ ⟩
          N″
        ∎) ,
        N[V]≤N″

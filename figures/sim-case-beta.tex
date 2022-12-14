@@ -1,0 +1,17 @@
+\begin{tikzcd}
+  \texttt{(ƛ N) · V} && \texttt{L' · M'} \\
+	&& \texttt{(ƛ N') · M'} \\
+	&& \texttt{(ƛ N') · V'} \\
+	\texttt{N [ V ]} && \texttt{N"}
+  % Horiz/diag
+	\arrow[from=1-1, to=1-3]
+	\arrow[from=1-1, to=2-3]
+	\arrow[bend right=20, from=1-1, to=3-3]
+	\arrow[from=4-1, to=4-3]
+  % Vertical
+	\arrow[->, very thick, from=1-1, to=4-1]
+  \arrow[->, very thick, "\texttt{catchup}"', from=1-3, to=2-3]
+  \arrow[->, very thick, "\texttt{catchup}"', from=2-3, to=3-3]
+  \arrow[->, very thick, "\texttt{simβ}"', from=3-3, to=4-3]
+	\arrow[->, very thick, from=1-1, to=4-1]
+\end{tikzcd}
