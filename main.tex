@@ -20,7 +20,8 @@
 
 \let\latexdocument\document
 \let\latexenddocument\enddocument
-\documentclass[\ClassReview acmsmall,sigplan,screen,prologue,dvipsnames,style=authoryear,anonymous]{acmart}
+% TODO: add "sigplan" (puts in two columns :/)
+\documentclass[\ClassReview acmsmall,screen,prologue,dvipsnames,style=authoryear,anonymous]{acmart}
 %%% recover the original definitions
 \let\document\latexdocument
 \let\enddocument\latexenddocument
@@ -284,9 +285,9 @@ Links, Eff, Koka, and Frank. However, for bigger languages, it remains a
 challenge to integrate such \emph{effect systems} with a pre-existing type
 system.
 
-We propose that gradual types~\citep{siek2015} provide an adequate lens through
-which to study how the programs using the untyped algebraic effects of today are to
-interact with the effect systems of tomorrow. We present a formalization of a
+Gradual types~\citep{siek2015} provide a lens through which we may study how
+the programs using the untyped algebraic effects of today are to interact with
+the effect systems of tomorrow. We present a formalization of a
 calculus marrying gradual types with algebraic effects.
 % (using Core Eff~\citep{bauer2015programming}).
 
