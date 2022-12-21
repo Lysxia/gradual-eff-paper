@@ -784,7 +784,7 @@ progress± _ (* ⟨ _ ⟩ q) | other
   =  ⊥-elim (split-*≢other q e)
 ```
 
-We finally reach the progress proof.
+We finally reach the proof of progress.
 ```
 progress :
     (M : ∅ ⊢ P)
@@ -810,45 +810,56 @@ its argument. If both operands of the application are values (`done w`),
 we may take a `β` step.
 ```
 progress (L · M) with progress L
-... | blame ℰ                            =  blame ([ ℰ ]· M)
-... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]· M) L↦L′)
-... | pending ℰ e v ¬e//ℰ                =  pending ([ ℰ ]· M) e v ¬e//ℰ
+... | blame ℰ =  blame ([ ℰ ]· M)
+... | step (ξ ℰ L↦L′)
+    =  step (ξ ([ ℰ ]· M) L↦L′)
+... | pending ℰ e v ¬e//ℰ
+    = pending ([ ℰ ]· M) e v ¬e//ℰ
 ... | done (ƛ N) with progress M
-...     | blame ℰ                        =  blame ((ƛ N) ·[ ℰ ])
-...     | step (ξ ℰ M↦M′)                =  step (ξ ((ƛ N) ·[ ℰ ]) M↦M′)
-...     | pending ℰ e v ¬e//ℰ            =  pending ((ƛ N) ·[ ℰ ]) e v ¬e//ℰ
-...     | done w                         =  step (ξ □ (β w))
+...     | done w      =  step (ξ □ (β w))
+...     | blame ℰ =  blame ((ƛ N) ·[ ℰ ])
+...     | step (ξ ℰ M↦M′)
+        = step (ξ ((ƛ N) ·[ ℰ ]) M↦M′)
+...     | pending ℰ e v ¬e//ℰ
+        =  pending ((ƛ N) ·[ ℰ ]) e v ¬e//ℰ
 ```
 
 Primitive operators behave similarly. We try to reduce each operand,
 and if both are values, we may take a `δ` step.
 ```
 progress (L ⦅ _⊕_ ⦆ M) with progress L
-... | blame ℰ                            =  blame ([ ℰ ]⦅ _⊕_ ⦆ M)
-... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]⦅ _⊕_ ⦆ M) L↦L′)
-... | pending ℰ e v ¬e//ℰ                =  pending ([ ℰ ]⦅ _⊕_ ⦆ M) e v ¬e//ℰ
+... | blame ℰ =  blame ([ ℰ ]⦅ _⊕_ ⦆ M)
+... | step (ξ ℰ L↦L′)
+    =  step (ξ ([ ℰ ]⦅ _⊕_ ⦆ M) L↦L′)
+... | pending ℰ e v ¬e//ℰ
+    =  pending ([ ℰ ]⦅ _⊕_ ⦆ M) e v ¬e//ℰ
 ... | done ($ k) with progress M
-...     | blame ℰ                        =  blame (($ k) ⦅ _⊕_ ⦆[ ℰ ])
-...     | step (ξ ℰ M↦M′)                =  step (ξ (($ k) ⦅ _⊕_ ⦆[ ℰ ]) M↦M′)
-...     | pending ℰ e v ¬e//ℰ            =  pending (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e v ¬e//ℰ
-...     | done ($ k′)                    =  step (ξ □ δ)
+...     | done ($ k′) =  step (ξ □ δ)
+...     | blame ℰ =  blame (($ k) ⦅ _⊕_ ⦆[ ℰ ])
+...     | step (ξ ℰ M↦M′)
+        =  step (ξ (($ k) ⦅ _⊕_ ⦆[ ℰ ]) M↦M′)
+...     | pending ℰ e v ¬e//ℰ
+        =  pending (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e v ¬e//ℰ
 ```
 
 A box constructor reduces its argument, and a boxed value is a value.
 ```
 progress (M ⇑ g) with progress M
-... | blame ℰ                            =  blame ([ ℰ ]⇑ g)
-... | step (ξ ℰ M↦M′)                    =  step (ξ ([ ℰ ]⇑ g) M↦M′)
-... | pending ℰ e v ¬e//ℰ                =  pending ([ ℰ ]⇑ g) e v ¬e//ℰ
-... | done v                             =  done (v ⇑ g)
+... | done v =  done (v ⇑ g)
+... | blame ℰ =  blame ([ ℰ ]⇑ g)
+... | step (ξ ℰ M↦M′)
+    =  step (ξ ([ ℰ ]⇑ g) M↦M′)
+... | pending ℰ e v ¬e//ℰ
+    =  pending ([ ℰ ]⇑ g) e v ¬e//ℰ
 ```
 
 For casts, we also try to reduce the term under the cast.
 `blame` and `step` are wrapped by congruence.
 ```
 progress (cast ±p M) with progress M
-... | blame ℰ           =  blame (`cast ±p [ ℰ ])
-... | step (ξ ℰ M↦M′)   =  step (ξ (`cast ±p [ ℰ ]) M↦M′)
+... | blame ℰ         =  blame (`cast ±p [ ℰ ])
+... | step (ξ ℰ M↦M′)
+    =  step (ξ (`cast ±p [ ℰ ]) M↦M′)
 ```
 
 When a computation under a cast performs an operation `e`,
@@ -859,9 +870,12 @@ If `e` is not allowed (`no`), then blame is raised by `blameᵉ`.
 ```
 progress (cast {Q = ⟨ F ⟩ _} ±p M)
     | pending {e = e} ℰ e∈E v ¬e//ℰ
-        with e ∈☆? F
-...     | yes e∈F = pending (`cast ±p [ ℰ ]) e∈E v (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
-...     | no  ¬∈  = step (ξ □ (blameᵉ ¬∈ ¬e//ℰ v refl))
+      with e ∈☆? F
+...   | yes e∈F
+      = pending (`cast ±p [ ℰ ]) e∈E v
+          (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
+...   | no ¬∈
+      = step (ξ □ (blameᵉ ¬∈ ¬e//ℰ v refl))
 ```
 
 Finally, when a cast is applied to a value, we apply the lemma `progress±`
@@ -877,9 +891,11 @@ Before pending an operation, we reduce its argument.
 Once it is a value, the operation is `pending`.
 ```
 progress (perform- e M eq) with progress M
-... | blame ℰ                            = blame (″perform e [ ℰ ] eq)
-... | step (ξ ℰ M↦M′)                    = step (ξ (″perform e [ ℰ ] eq) M↦M′)
-... | pending ℰ e′∈E′ v ¬e′//ℰ           = pending (″perform e [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
+... | blame ℰ = blame (″perform e [ ℰ ] eq)
+... | step (ξ ℰ M↦M′)
+    = step (ξ (″perform e [ ℰ ] eq) M↦M′)
+... | pending ℰ e′∈E′ v ¬e′//ℰ
+    = pending (″perform e [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
 ... | done v with eq
 ...   | refl = pending □ e v (λ())
 ```
@@ -890,11 +906,16 @@ and forwards unhandled operations to outer handlers.
 ```
 progress (handle H M) with progress M
 ... | blame ℰ = blame (′handle H [ ℰ ])
-... | step (ξ ℰ M↦M′) = step (ξ (′handle H [ ℰ ]) M↦M′)
+... | step (ξ ℰ M↦M′)
+    = step (ξ (′handle H [ ℰ ]) M↦M′)
 ... | done v = step (ξ □ (handle-value v))
-... | pending {e = e} ℰ e∈E v ¬e//ℰ with e ∈? Hooks H in eq
-...   | yes e∈H = step (ξ □ (handle-perform v ¬e//ℰ eq))
-...   | no ¬e∈H = pending (′handle H [ ℰ ]) e∈E v (¬handled-handle {H = H} ℰ ¬e∈H ¬e//ℰ)
+... | pending {e = e} ℰ e∈E v ¬e//ℰ
+      with e ∈? Hooks H in eq
+...   | yes e∈H
+      = step (ξ □ (handle-perform v ¬e//ℰ eq))
+...   | no ¬e∈H
+      = pending (′handle H [ ℰ ]) e∈E v
+          (¬handled-handle {H = H} ℰ ¬e∈H ¬e//ℰ)
 ```
 
 ## Evaluation
@@ -957,35 +978,27 @@ eval : ∀ {A}
   → (L : ∅ ⊢ A)
     -----------
   → Steps L
-eval (gas zero) L          =  steps (L ∎) out-of-gas
+eval (gas zero) L     =  steps (L ∎) out-of-gas
 eval (gas (suc m)) L
     with progress L
-... | done v               =  steps (L ∎) (done v)
-... | blame E              =  steps (L ∎) (blame E)
-... | pending ℰ e v ¬e//ℰ  =  steps (L ∎) (pending e v ¬e//ℰ)
+... | done v          = steps (L ∎) (done v)
+... | blame E         = steps (L ∎) (blame E)
+... | pending ℰ e v ¬e//ℰ
+    =  steps (L ∎) (pending e v ¬e//ℰ)
 ... | step {L} {M} L—→M
     with eval (gas m) M
-... | steps M—↠N fin       =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
+... | steps M—↠N fin  =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
 ```
 
 ## Type erasure
 
+As a simple example, we consider two encodings of the
+term `inc = (λ x → x + 1)`: one typed, one untyped. 
+
+The `Static` predicate characterizes terms that
+make no use of dynamism: they contain no casts.
+
 ```
-infix 6 _≤★
-
-pattern  _≤★ ι   =  id ⇑ ($ ι)
-pattern  ★⇒★≤★   =  id ⇑ ★⇒★
-
-infix  6 _·★_
-infix  6 _⦅_⦆★_
-infix  8 $★_
-
-pattern  ƛ★_ N          =  cast (+ ⟨ id ⟩ ★⇒★≤★) (ƛ N)
-pattern  _·★_ L M       =  (cast (- ⟨ id ⟩ ★⇒★≤★) L) · M
-pattern  $★_ {ι = ι} k  =  $ k ⇑ $ ι
-pattern  _⦅_⦆★_ {ι = ι} {ι′} {ι″} M _⊕_ N
-  =  cast (+ ⟨ id ⟩ (ι″ ≤★)) (cast (- ⟨ id ⟩ (ι ≤★)) M ⦅ _⊕_ ⦆ cast (- ⟨ id ⟩ (ι′ ≤★)) N) 
-
 data Static {Γ E} : (Γ ⊢ ⟨ E ⟩ A) → Set where
 
   `_ :
@@ -998,7 +1011,9 @@ data Static {Γ E} : (Γ ⊢ ⟨ E ⟩ A) → Set where
       ------------
     → Static (ƛ N)
 
-  _·_ : ∀ {L : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)} {M : Γ ⊢ ⟨ E ⟩ A}
+  _·_ :
+      {L : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)}
+      {M : Γ ⊢ ⟨ E ⟩ A}
     → Static L
     → Static M
       --------------
@@ -1009,7 +1024,9 @@ data Static {Γ E} : (Γ ⊢ ⟨ E ⟩ A) → Set where
       -------------------
     → Static ($ k)
 
-  _⦅_⦆_ : ∀ {ι ι′ ι″} {M : Γ ⊢ ⟨ E ⟩ ($ ι)} {N : Γ ⊢ ⟨ E ⟩ ($ ι′)}
+  _⦅_⦆_ : ∀ {ι ι′ ι″}
+      {M : Γ ⊢ ⟨ E ⟩ ($ ι)}
+      {N : Γ ⊢ ⟨ E ⟩ ($ ι′)}
     → Static M
     → (_⊕_ : rep ι → rep ι′ → rep ι″)
     → Static N
@@ -1021,16 +1038,55 @@ static : ∀ {M : Γ ⊢ P}
     -------------
   → Γ ⊢ P
 static {M = M} m  =  M
+```
 
+(TODO: handlers)
+
+On the other end of the spectrum, we can embed untyped
+lambda-calculus terms as cast-calculus terms of type `★`,
+using the following constructs. Lambda abstractions are upcast to `★`,
+applications downcast functions from `★` to `★ ⇒ ★`,
+and primitive operators downcast their arguments and upcast the result.
+
+
+```
+infix 6 _≤★
+
+pattern  _≤★ ι   =  id ⇑ ($ ι)
+pattern  ★⇒★≤★   =  id ⇑ ★⇒★
+
+infix  6 _·★_
+infix  6 _⦅_⦆★_
+infix  8 $★_
+
+pattern  ƛ★_ N
+  =  cast (+ ⟨ id ⟩ ★⇒★≤★) (ƛ N)
+pattern  _·★_ L M
+  =  (cast (- ⟨ id ⟩ ★⇒★≤★) L) · M
+pattern  $★_ {ι = ι} k
+  =  $ k ⇑ $ ι
+pattern  _⦅_⦆★_ {ι = ι} {ι′} {ι″} M _⊕_ N
+  =  cast (+ ⟨ id ⟩ (ι″ ≤★))
+     ( cast (- ⟨ id ⟩ (ι ≤★)) M
+       ⦅ _⊕_ ⦆
+       cast (- ⟨ id ⟩ (ι′ ≤★)) N) 
+```
+
+The following functions define the embedding of a static term
+viewed as an untyped term.
+
+```
 ⌈_⌉ᴳ : Context → Context
 ⌈ ∅ ⌉ᴳ = ∅
 ⌈ Γ ▷ A ⌉ᴳ = ⌈ Γ ⌉ᴳ ▷ ★
 
-⌈_⌉ˣ : ∀ {Γ A} → (Γ ∋ A) → (⌈ Γ ⌉ᴳ ∋ ★)
+⌈_⌉ˣ : (Γ ∋ A) → (⌈ Γ ⌉ᴳ ∋ ★)
 ⌈ Z ⌉ˣ          = Z
 ⌈ S x ⌉ˣ        = S ⌈ x ⌉ˣ
 
-⌈_⌉ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} → Static M → (⌈ Γ ⌉ᴳ ⊢ ⟨ ☆ ⟩ ★)
+⌈_⌉ : {M : Γ ⊢ ⟨ E ⟩ A}
+  → Static M
+  → ⌈ Γ ⌉ᴳ ⊢ ⟨ ☆ ⟩ ★
 ⌈ ` x ⌉          =  ` ⌈ x ⌉ˣ
 ⌈ ƛ N ⌉          =  ƛ★ ⌈ N ⌉
 ⌈ L · M ⌉        =  ⌈ L ⌉ ·★ ⌈ M ⌉
@@ -1065,7 +1121,10 @@ infix  8 $𝔹★_
 pattern  $ℕ★_ k          =  $ k ⇑ $ℕ
 pattern  $𝔹★_ k          =  $ k ⇑ $𝔹
 pattern  _⦅_⦆ℕ★_ M _⊕_ N
-  =  cast (+ ⟨ id ⟩ ℕ≤★) (cast (- ⟨ id ⟩ ℕ≤★) M ⦅ _⊕_ ⦆ cast (- ⟨ id ⟩ ℕ≤★) N)
+  =  cast (+ ⟨ id ⟩ ℕ≤★)
+     ( cast (- ⟨ id ⟩ ℕ≤★) M
+       ⦅ _⊕_ ⦆
+       cast (- ⟨ id ⟩ ℕ≤★) N)
 
 inc     :  ∅ ⊢ ⟨ ε ⟩ $ℕ ⇒ ⟨ ε ⟩ $ℕ
 inc     =  ƛ (` Z ⦅ _+_ ⦆ $ 1)
@@ -1078,7 +1137,12 @@ inc★    =  ⌈ Inc ⌉
 
 inc★′   :  ∅ ⊢ ⟨ ☆ ⟩ ★
 inc★′   =  cast (+ ⟨ ≤☆ ⟩ ℕ⇒ℕ≤★) inc
+```
 
+The following are reductions of the statically typed `inc` and the dynamically
+typed `inc★`, both applied to the constant `2`.
+
+```
 inc2—↠3  : inc · ($ 2) —↠ $ 3
 inc2—↠3  =
   begin
@@ -1087,28 +1151,59 @@ inc2—↠3  =
     $ 2 ⦅ _+_ ⦆ $ 1
   —→⟨ ξ □ δ ⟩ $ 3
   ∎
+```
 
+```
 inc★2★—↠3★  : inc★ ·★ ($★ 2) —↠ $★ 3
+```
+
+```
 inc★2★—↠3★  =
   begin
     (ƛ★ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)) ·★ $ℕ★ 2
-  —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★) [ □ ] ]· $ℕ★ 2) (expand (ƛ _) ★⇒★) ⟩
-    (cast (+ ⟨ id ⟩ id) (ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)) ⇑ ★⇒★) ·★ $ℕ★ 2
-  —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★) [ [ □ ]⇑ ★⇒★ ] ]· $ℕ★ 2) (ident refl (ƛ _)) ⟩
-    ((ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)) ⇑ ★⇒★) ·★ $ℕ★ 2
+  —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★)
+                 [ □ ]
+         ]· $ℕ★ 2)
+        (expand (ƛ _) ★⇒★) ⟩
+    (cast (+ ⟨ id ⟩ id)
+          (ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)) ⇑ ★⇒★)
+      ·★ $ℕ★ 2
+  —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★)
+                 [ [ □ ]⇑ ★⇒★ ]
+         ]· $ℕ★ 2)
+        (ident refl (ƛ _)) ⟩
+    ((ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)) ⇑ ★⇒★)
+      ·★ $ℕ★ 2
   —→⟨ ξ ([ □ ]· $ℕ★ 2) (collapse (ƛ _) ★⇒★) ⟩
-    (cast (- ⟨ id ⟩ id) (ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1))) · $ℕ★ 2
+    (cast (- ⟨ id ⟩ id)
+          (ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)))
+      · $ℕ★ 2
   —→⟨ ξ ([ □ ]· $ℕ★ 2) (ident refl (ƛ _)) ⟩
     (ƛ (` Z ⦅ _+_ ⦆ℕ★ $ℕ★ 1)) · $ℕ★ 2
   —→⟨ ξ □ (β ($ℕ★ 2)) ⟩
     $ℕ★ 2 ⦅ _+_ ⦆ℕ★ $ℕ★ 1
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ _+_ ⦆ cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ]) (collapse ($ 2) $ℕ) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★) (cast (- ⟨ id ⟩ id) ($ 2) ⦅ _+_ ⦆ cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ _+_ ⦆ cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ]) (ident refl ($ 2)) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★) ($ 2 ⦅ _+_ ⦆ cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ $ 2 ⦅ _+_ ⦆[ □ ] ]) (collapse ($ 1) $ℕ) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★) ($ 2 ⦅ _+_ ⦆ cast (- ⟨ id ⟩ id) ($ 1))
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ $ 2 ⦅ _+_ ⦆[ □ ] ]) (ident refl ($ 1)) ⟩
+  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ _+_ ⦆
+            cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ])
+        (collapse ($ 2) $ℕ) ⟩
+    cast (+ ⟨ id ⟩ ℕ≤★)
+         ( cast (- ⟨ id ⟩ id) ($ 2)
+           ⦅ _+_ ⦆
+           cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
+  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ _+_ ⦆
+            cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ])
+        (ident refl ($ 2)) ⟩
+    cast (+ ⟨ id ⟩ ℕ≤★)
+         ($ 2 ⦅ _+_ ⦆
+          cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
+  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★)
+               [ $ 2 ⦅ _+_ ⦆[ □ ] ])
+        (collapse ($ 1) $ℕ) ⟩
+    cast (+ ⟨ id ⟩ ℕ≤★)
+         ($ 2 ⦅ _+_ ⦆
+          cast (- ⟨ id ⟩ id) ($ 1))
+  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★)
+               [ $ 2 ⦅ _+_ ⦆[ □ ] ])
+        (ident refl ($ 1)) ⟩
     cast (+ ⟨ id ⟩ ℕ≤★) ($ 2 ⦅ _+_ ⦆ $ 1)
   —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ □ ]) δ ⟩
     cast (+ ⟨ id ⟩ ℕ≤★) ($ 3)
@@ -1117,7 +1212,10 @@ inc★2★—↠3★  =
   —→⟨ ξ ([ □ ]⇑ $ℕ) (ident refl ($ 3)) ⟩
     $ℕ★ 3
   ∎
+```
 
+\iffalse
+```
 {- TODO
 inc★′2★—↠3★  : inc★′ ·★ ($★ 2) —↠ $★ 3
 inc★′2★—↠3★  =
@@ -1172,3 +1270,4 @@ inc★true★—↠blame =
   ∎
   -}
 ```
+\fi
