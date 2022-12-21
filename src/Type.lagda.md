@@ -2,11 +2,13 @@
 
 We define types, effects, and the *precision* relation on types.
 
+\iffalse
 ```
 module Type where
 
 open import Utils
 ```
+\fi
 
 The module `Utils` reexports the standard library and exports some additional
 general lemmas. It is in the \Cref{sec:appendix}.
@@ -31,7 +33,12 @@ rep ′𝕌  =  ⊤
 
 Decision procedure for equality of base types.
 ```
-_≡$?_ : (ι : Base) → (ι′ : Base) → Dec (ι ≡ ι′)
+_≡$?_ : (ι ι′ : Base) → Dec (ι ≡ ι′)
+```
+
+\iffalse
+
+```
 ′ℕ  ≡$? ′ℕ  =  yes refl
 ′ℕ  ≡$? ′𝔹  =  no λ()
 ′ℕ  ≡$? ′𝕌  =  no λ()
@@ -42,6 +49,8 @@ _≡$?_ : (ι : Base) → (ι′ : Base) → Dec (ι ≡ ι′)
 ′𝕌  ≡$? ′𝔹  =  no λ()
 ′𝕌  ≡$? ′𝕌  =  yes refl
 ```
+
+\fi
 
 ## Effects
 
@@ -97,7 +106,7 @@ E ++☆ (¡ F) = ¡ (E ++ F)
 
 Decision procedure for `_∈☆_`.
 ```
-_∈☆?_ : Decidable _∈☆_
+_∈☆?_ : ∀ e E → Dec (e ∈☆ E)
 e ∈☆? ☆ = yes ☆
 e ∈☆? (¡ E) with e ∈? E
 ... | yes e∈E = yes (¡ e∈E)
@@ -144,6 +153,15 @@ record CType where
     returns : Type
 ```
 
+\iffalse
+```
+private variable
+  A A′ A″ B B′ B″ C D : Type
+  P P′ P″ Q : CType
+  E F : Effect
+```
+\fi
+
 (TODO) the base type ′𝔹 doesn't have eliminators ("if") yet. In the meantime here's Church encoded booleans
 ```
 -- Church booleans
@@ -171,7 +189,13 @@ Decision procedure for equality of types.
 ```
 infix 4 _≡ᵉ?_ _≡ᶜ?_ _≡?_
 
-_≡ᵉ?_ : Decidable {A = Effect} _≡_
+_≡ᵉ?_ : (E F : Effect) → Dec (E ≡ F)
+_≡ᶜ?_ : (P Q : CType) → Dec (P ≡ Q)
+_≡?_ : (A B : Type) → Dec (A ≡ B)
+```
+
+\iffalse
+```
 ☆ ≡ᵉ? ☆ = yes refl
 ¡ E ≡ᵉ? ¡ F with E ≟ F
 ... | yes refl = yes refl
@@ -179,9 +203,6 @@ _≡ᵉ?_ : Decidable {A = Effect} _≡_
 ¡ _ ≡ᵉ? ☆ = no λ()
 ☆ ≡ᵉ? ¡ _ = no λ()
 
-_≡ᶜ?_ : (P Q : CType) → Dec (P ≡ Q)
-
-_≡?_ : (A : Type) → (B : Type) → Dec (A ≡ B)
 ★       ≡? ★                                   =  yes refl
 ★       ≡? ($ _)                               =  no (λ ())
 ★       ≡? (_ ⇒ _)                             =  no (λ ())
@@ -200,6 +221,7 @@ _≡?_ : (A : Type) → (B : Type) → Dec (A ≡ B)
 ... | yes (refl , refl) = yes refl
 ... | no ¬≡×≡ = no λ{ refl → ¬≡×≡ (refl , refl) }
 ```
+\fi
 
 Gradual types let us control how much information about the program's
 behavior we want to keep track of at compile time or at run time.
@@ -239,7 +261,7 @@ ground {G = G} g  =  G
 
 Evidence for a ground type is unique.
 ```
-uniqueG : ∀ {G} → (g : Ground G) → (h : Ground G) → g ≡ h
+uniqueG : ∀ {G} → (g h : Ground G) → g ≡ h
 uniqueG ($ ι) ($ .ι) = refl
 uniqueG ★⇒★   ★⇒★    = refl
 ```
@@ -405,10 +427,11 @@ A≤★ {A ⇒ B}  =  (A≤★ ⇒ ⟨ E≤☆ ⟩ A≤★) ⇑ ★⇒★
 
 Lemma. Every type is either `★` or more precise than a ground type. (Not true in general.)
 ```
-★⊎G : ∀ A → (A ≡ ★) ⊎ ∃[ G ](Ground G × A ≤ G)
-★⊎G ★        =  inj₁ refl
-★⊎G ($ ι)    =  inj₂ ($ ι , $ ι , id)
-★⊎G (A ⇒ B)  =  inj₂ (★ ⇒ ⟨ ☆ ⟩ ★ , ★⇒★ , A≤★ ⇒ ⟨ E≤☆ ⟩ A≤★)
+★⊎G : (A ≡ ★) ⊎ ∃[ G ](Ground G × A ≤ G)
+★⊎G {★}      =  inj₁ refl
+★⊎G {$ ι}    =  inj₂ ($ ι , $ ι , id)
+★⊎G {A ⇒ B}  =  inj₂
+  (★ ⇒ ⟨ ☆ ⟩ ★ , ★⇒★ , A≤★ ⇒ ⟨ E≤☆ ⟩ A≤★)
 ```
 
 Lemma. If a type is more precise than a ground type, it is not `★`.
@@ -434,59 +457,78 @@ _⨟_ {A = _ ⇒ _} p (q ⇒ r)  =  (dom p ⨟ q) ⇒ (cod p ⨟ᶜ r)
 
 Lemmas. Left and right identity.
 ```
-left-idᵉ : ∀ {A B} → (p : A ≤ᵉ B) → id ⨟ᵉ p ≡ p
+left-idᵉ : (p : E ≤ᵉ F) → id ⨟ᵉ p ≡ p
+left-idᶜ : (p : P ≤ᶜ Q) → (⟨ id ⟩ id) ⨟ᶜ p ≡ p
+left-id  : (p : A ≤ B) → id ⨟ p ≡ p
+```
+
+\iffalse
+```
 left-idᵉ id = refl
 left-idᵉ ¡≤☆ = refl
 
-left-idᶜ : ∀ {A B} → (p : A ≤ᶜ B) → (⟨ id ⟩ id) ⨟ᶜ p ≡ p
+left-id id                             =  refl
+left-id (p ⇑ g) rewrite left-id p      =  refl
+left-id (p ⇒ q) rewrite left-id p
+                      | left-idᶜ q     =  refl
 
-left-id : ∀ {A B} → (p : A ≤ B) → id ⨟ p ≡ p
-left-id id                                     =  refl
-left-id (p ⇑ g) rewrite left-id p              =  refl
-left-id (p ⇒ q) rewrite left-id p | left-idᶜ q =  refl
-
-left-idᶜ (⟨ d ⟩ p) rewrite left-idᵉ d | left-id p = refl
+left-idᶜ (⟨ d ⟩ p) rewrite left-idᵉ d
+                         | left-id p   = refl
 ```
+\fi
 
 ```
 right-id : ∀ {A B} → (p : A ≤ B) → p ⨟ id ≡ p
 right-id p  =  refl
 ```
 
+\iffalse
+```
+module _ where
+  private variable
+    G H : Effect
+    R S : CType
+```
+\fi
+
 Lemma. Associativity.
 ```
-assocᵉ : ∀ {A B C D} (p : A ≤ᵉ B) (q : B ≤ᵉ C) (r : C ≤ᵉ D)
-  → (p ⨟ᵉ q) ⨟ᵉ r ≡ p ⨟ᵉ (q ⨟ᵉ r)
-assocᵉ p q id = refl
-assocᵉ id id ¡≤☆ = refl
+  assocᵉ : ∀ (p : E ≤ᵉ F) (q : F ≤ᵉ G) (r : G ≤ᵉ H)
+    → (p ⨟ᵉ q) ⨟ᵉ r ≡ p ⨟ᵉ (q ⨟ᵉ r)
+  assocᵉ p q id = refl
+  assocᵉ id id ¡≤☆ = refl
 
-assocᶜ : ∀ {A B C D} (p : A ≤ᶜ B) (q : B ≤ᶜ C) (r : C ≤ᶜ D)
-  → (p ⨟ᶜ q) ⨟ᶜ r ≡ p ⨟ᶜ (q ⨟ᶜ r)
+  assocᶜ : ∀ (p : P ≤ᶜ Q) (q : Q ≤ᶜ R) (r : R ≤ᶜ S)
+    → (p ⨟ᶜ q) ⨟ᶜ r ≡ p ⨟ᶜ (q ⨟ᶜ r)
 
-assoc : ∀ {A B C D} (p : A ≤ B) (q : B ≤ C) (r : C ≤ D)
-  → (p ⨟ q) ⨟ r ≡ p ⨟ (q ⨟ r)
-assoc p q id                                     = refl
-assoc p id r rewrite left-id r                   = refl
-assoc id q r rewrite left-id q | left-id (q ⨟ r) = refl
-assoc p q (r ⇑ g) rewrite assoc p q r            = refl
-assoc (p ⇒ p′) (q ⇒ q′) (r ⇒ r′) rewrite assoc p q r | assocᶜ p′ q′ r′   =  refl
+  assoc : ∀ (p : A ≤ B) (q : B ≤ C) (r : C ≤ D)
+    → (p ⨟ q) ⨟ r ≡ p ⨟ (q ⨟ r)
+  assoc p q id                                     = refl
+  assoc p id r rewrite left-id r                   = refl
+  assoc id q r rewrite left-id q | left-id (q ⨟ r) = refl
+  assoc p q (r ⇑ g) rewrite assoc p q r            = refl
+  assoc (p ⇒ p′) (q ⇒ q′) (r ⇒ r′) rewrite assoc p q r | assocᶜ p′ q′ r′   =  refl
 
-assocᶜ (⟨ d ⟩ p) (⟨ e ⟩ q) (⟨ f ⟩ r)
-  rewrite assocᵉ d e f | assoc p q r = refl
+  assocᶜ (⟨ d ⟩ p) (⟨ e ⟩ q) (⟨ f ⟩ r)
+    rewrite assocᵉ d e f | assoc p q r = refl
 ```
 
 Lemma. `dom` and `cod` are functors.
 
 ```
-dom-⨟ : ∀ {A B A′ B′ A″ B″} (p : A ⇒ B ≤ A′ ⇒ B′) (q : A′ ⇒ B′ ≤  A″ ⇒ B″)
-    → dom p ⨟ dom q ≡ dom (p ⨟ q)
+dom-⨟ :
+       (p : A ⇒ P ≤ A′ ⇒ P′)
+    →  (q : A′ ⇒ P′ ≤  A″ ⇒ P″)
+    →  dom p ⨟ dom q ≡ dom (p ⨟ q)
 dom-⨟ id id = refl
 dom-⨟ id (_ ⇒ _) = refl
 dom-⨟ (_ ⇒ _) id = refl
 dom-⨟ (_ ⇒ _) (_ ⇒ _) = refl
 
-cod-⨟ : ∀ {A B A′ B′ A″ B″} (p : A ⇒ B ≤ A′ ⇒ B′) (q : A′ ⇒ B′ ≤  A″ ⇒ B″)
-    → cod p ⨟ᶜ cod q ≡ cod (p ⨟ q)
+cod-⨟ :
+       (p : A ⇒ P ≤ A′ ⇒ P′)
+    →  (q : A′ ⇒ P′ ≤  A″ ⇒ P″)
+    →  cod p ⨟ᶜ cod q ≡ cod (p ⨟ q)
 cod-⨟ id id = refl
 cod-⨟ id (_ ⇒ _) = refl
 cod-⨟ (_ ⇒ _) id = refl
@@ -507,6 +549,7 @@ Lemma. Consistent membership is preserved by decreases in precision.
 ∈-≤ ¡≤☆ _ = ☆
 ```
 
+\iffalse
 ## Subtyping
 
 ```
@@ -547,7 +590,11 @@ unlike precision.
 ```
 data _⊑_ where
   id : ∀ {E} → E ⊑ E
-  _⇒_ : ∀ {A A′ P P′} → A′ ⊑ A → P ⊑ᶜ P′ → (A ⇒ P) ⊑ (A′ ⇒ P′)
+  _⇒_ :
+       A′ ⊑ A
+    →  P ⊑ᶜ P′
+       -------------------
+    →  (A ⇒ P) ⊑ (A′ ⇒ P′)
 ```
 
 We use the subeffect relation above to define subtyping
@@ -566,6 +613,7 @@ record _⊑ᶜ_ P Q where
 ⊑ᶜ-refl : ∀ {P} → P ⊑ᶜ P
 ⊑ᶜ-refl = ⟨ ⊑ᵉ-refl ⟩ id
 ```
+\fi
 
 ## Casts
 
@@ -579,7 +627,8 @@ We define notions of casts for the different precision relations
 `_≤_`, `_≤ᶜ_`, `_≤ᵉ_` uniformly with the `Cast` combinator.
 
 ```
-data Cast {S : Set} (_<_ _⊏_ : S → S → Set) (A B : S) : Set where
+data Cast {S : Set}
+  (_<_ _⊏_ : S → S → Set) (A B : S) : Set where
 ```
 
 There are three kinds of casts. Upcasts reduce precision, \eg{} casting from `$ ι` to `★`,
@@ -637,12 +686,14 @@ The empty effect is a subeffect of any other effect.
 
 Projections of computation casts.
 ```
-=>ᶜ-effects : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → E =>ᵉ F
+=>ᶜ-effects : (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B)
+  → E =>ᵉ F
 =>ᶜ-effects (+ ⟨ p ⟩ _) = + p
 =>ᶜ-effects (- ⟨ p ⟩ _) = - p
 =>ᶜ-effects (* ⟨ p ⟩ _) = * p
 
-=>ᶜ-returns : ∀ {E F A B} (±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)) → A => B
+=>ᶜ-returns : (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B)
+  → A => B
 =>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
 =>ᶜ-returns (- ⟨ _ ⟩ q) = - q
 =>ᶜ-returns (* ⟨ _ ⟩ q) = * q
@@ -650,7 +701,7 @@ Projections of computation casts.
 
 Pure casts: the identity on effects.
 ```
-pure± : ∀ {E A B} → (A => B) → (⟨ E ⟩ A) =>ᶜ (⟨ E ⟩ B)
+pure± : A => B  →  ⟨ E ⟩ A =>ᶜ ⟨ E ⟩ B
 pure± (+ A≤) = + ⟨ id ⟩ A≤
 pure± (- A≤) = - ⟨ id ⟩ A≤
 pure± (* A⊑) = * ⟨ ⊑ᵉ-refl ⟩ A⊑

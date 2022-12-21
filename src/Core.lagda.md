@@ -1,11 +1,13 @@
 # Syntax
 
+\iffalse
 ```
 module Core where
 
 open import Utils
 open import Type
 ```
+\fi
 
 In this section, we define the syntax of the calculus,
 renaming, substitution, and prove some related lemmas.
@@ -37,6 +39,14 @@ data _∋_ : Context → Type → Set where
     → Γ ▷ B ∋ A
 ```
 
+\iffalse
+```
+private variable
+  A B : Type
+  Γ : Context
+```
+\fi
+
 ## Terms
 
 The type of terms `_⊢_` is defined recursively with the type of handlers
@@ -48,11 +58,9 @@ deinterleaving them.
 ```
 interleaved mutual
 
+  infix  4 _⊢_ _⊢_⇒ʰ_
   infix  5 ƛ_
-  infix  4 _⊢_
-  infix  4 _⊢_⇒ʰ_
-  infixl  6 _·_
-  infix  6 _⦅_⦆_
+  infixl  6 _·_ _⦅_⦆_
   infix  8 `_
 ```
 
@@ -216,14 +224,18 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
 
 ```
   On-Perform : Context → CType → List Op → Set
-  On-Perform Γ Q Hooks = All (λ e → Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q) Hooks
+  On-Perform Γ Q Hooks =
+    All (λ e →
+        Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q)
+      Hooks
 
   record _⊢_⇒ʰ_ Γ P Q where
     inductive
     open CType
     field
       Hooks : List Op
-      Hooks-handled : P .effects ≡ (Hooks ++☆ Q .effects)
+      Hooks-handled :
+        P .effects ≡ (Hooks ++☆ Q .effects)
       on-return : Γ ▷ P .returns ⊢ Q
       on-perform : On-Perform Γ Q Hooks
 
@@ -298,24 +310,25 @@ renʰ : ∀ {Γ Δ}
   →  (Γ →ᴿ Δ)
   →  (Γ →ʰ Δ)
 ren-on-perform : ∀ {Γ Δ}
-  →  (Γ →ᴿ Δ)
-  →  ∀ {Q Hooks} → On-Perform Γ Q Hooks → On-Perform Δ Q Hooks
+  →  (Γ →ᴿ Δ) → ∀ {Q Hooks}
+  →  On-Perform Γ Q Hooks → On-Perform Δ Q Hooks
 ```
 
 The term-renaming function `ren` hides no surprises. Under an abstraction,
 `ren▷` extends the renaming map `ρ` with the newly bound variable.
 And of course a handler is renamed using `renʰ`.
 ```
-ren ρ (` x)                =  ` (ρ x)
-ren ρ (ƛ N)                =  ƛ (ren (ren▷ ρ) N)
-ren ρ (L · M)              =  (ren ρ L) · (ren ρ M)
-ren ρ ($ k)                =  $ k
-ren ρ (L ⦅ _⊕_ ⦆ M)        =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
-ren ρ (M ⇑ g)              =  (ren ρ M) ⇑ g
-ren ρ (cast ±p M)          =  cast ±p (ren ρ M)
-ren ρ blame                =  blame
-ren ρ (perform- e∈E M eq)  =  perform- e∈E (ren ρ M) eq
-ren ρ (handle H M)         =  handle (renʰ ρ H) (ren ρ M)
+ren ρ (` x)          =  ` (ρ x)
+ren ρ (ƛ N)          =  ƛ (ren (ren▷ ρ) N)
+ren ρ (L · M)        =  (ren ρ L) · (ren ρ M)
+ren ρ ($ k)          =  $ k
+ren ρ (L ⦅ _⊕_ ⦆ M)  =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
+ren ρ (M ⇑ g)        =  (ren ρ M) ⇑ g
+ren ρ (cast ±p M)    =  cast ±p (ren ρ M)
+ren ρ blame          =  blame
+ren ρ (handle H M)   =  handle (renʰ ρ H) (ren ρ M)
+ren ρ (perform- e∈E M eq)
+  = perform- e∈E (ren ρ M) eq
 ```
 
 Renaming a handler is similarly straightforward: rename each field,
@@ -347,7 +360,7 @@ lift = ren S_
 
 The definition of substitution imitates renaming.
 The main difference is in the variable case:
-`ren` constructs another variable `\` ρ x`, whereas `sub`
+`ren` constructs another variable ``` ` ρ x```, whereas `sub`
 returns the term produced by the substitution map `σ x`.
 Moreover, the extension function `sub▷` uses `lift`,
 which we just defined in terms of renaming.
@@ -368,18 +381,21 @@ sub : ∀ {Γ Δ : Context}
   → (Γ →ᵀ Δ)
 
 subʰ : ∀ {Γ Δ} → (Γ →ˢ Δ) → (Γ →ʰ Δ)
-sub-on-perform : ∀ {Γ Δ} → (Γ →ˢ Δ) → ∀ {Q Hooks} → On-Perform Γ Q Hooks → On-Perform Δ Q Hooks
+sub-on-perform : ∀ {Γ Δ}
+  → (Γ →ˢ Δ) → ∀ {Q Hooks}
+  → On-Perform Γ Q Hooks → On-Perform Δ Q Hooks
 
-sub σ (` x)                =  σ x
-sub σ (ƛ  N)               =  ƛ (sub (sub▷ σ) N)
-sub σ (L · M)              =  (sub σ L) · (sub σ M)
-sub σ ($ k)                =  $ k
-sub σ (L ⦅ _⊕_ ⦆ M)        =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
-sub σ (M ⇑ g)              =  (sub σ M) ⇑ g
-sub σ (cast ±p M)          =  cast ±p (sub σ M)
-sub σ blame                =  blame
-sub σ (perform- e∈E M eq)  =  perform- e∈E (sub σ M) eq
-sub σ (handle H M)         =  handle (subʰ σ H) (sub σ M)
+sub σ (` x)          =  σ x
+sub σ (ƛ  N)         =  ƛ (sub (sub▷ σ) N)
+sub σ (L · M)        =  (sub σ L) · (sub σ M)
+sub σ ($ k)          =  $ k
+sub σ (L ⦅ _⊕_ ⦆ M)  =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
+sub σ (M ⇑ g)        =  (sub σ M) ⇑ g
+sub σ (cast ±p M)    =  cast ±p (sub σ M)
+sub σ blame          =  blame
+sub σ (handle H M)   =  handle (subʰ σ H) (sub σ M)
+sub σ (perform- e∈E M eq)
+ = perform- e∈E (sub σ M) eq
 
 subʰ σ H = record
   { Hooks = Hooks H
@@ -388,14 +404,16 @@ subʰ σ H = record
   ; on-perform = sub-on-perform σ (on-perform H) }
 
 sub-on-perform σ [] = []
-sub-on-perform σ (M ∷ Ms) = sub (sub▷ (sub▷ σ)) M ∷ sub-on-perform σ Ms
+sub-on-perform σ (M ∷ Ms)
+  = sub (sub▷ (sub▷ σ)) M ∷ sub-on-perform σ Ms
 ```
 
 `sub` implements the simultaneous substitution of multiple variables.
 A special case used in the `β` rule is the substitution of a single variable,
 the last one in the context. This operation is denoted `_[_]`.
 ```
-σ₀ : ∀ {Γ A} → (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ A) → (Γ ▷ A) →ˢ Γ
+σ₀ : (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ A)
+  → (Γ ▷ A) →ˢ Γ
 σ₀ M Z      =  M
 σ₀ M (S x)  =  ` x
 
@@ -404,9 +422,11 @@ _[_] : ∀ {Γ P A}
      →  (∀ {E} → Γ ⊢ ⟨ E ⟩ A)
         ---------
      →  Γ ⊢ P
-_[_] {Γ} {P} {A} N M =  sub {Γ ▷ A} {Γ} (σ₀ M) N
+_[_] {Γ} {P} {A} N M
+  = sub {Γ ▷ A} {Γ} (σ₀ M) N
 ```
 
+\iffalse
 ### Composition and identity
 
 Composing two renamings successively is equivalent to a single renaming with
@@ -674,6 +694,7 @@ subId σId blame                                             =  refl
 subId σId (perform- e∈E M eq) rewrite subId σId M           =  refl
 subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   =  refl
 ```
+\fi
 
 ## Values
 

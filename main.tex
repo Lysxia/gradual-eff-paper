@@ -20,8 +20,7 @@
 
 \let\latexdocument\document
 \let\latexenddocument\enddocument
-% TODO: add "sigplan" (puts in two columns :/)
-\documentclass[\ClassReview acmsmall,screen,prologue,dvipsnames,style=authoryear,anonymous]{acmart}
+\documentclass[\ClassReview acmsmall,sigplan,screen,prologue,dvipsnames,style=authoryear,anonymous]{acmart}
 %%% recover the original definitions
 \let\document\latexdocument
 \let\enddocument\latexenddocument
@@ -205,6 +204,8 @@
  {\end{verbatim}
  }
 
+\newenvironment{ignore}{}{}
+
 \def\tightlist{}  % pandoc output uses this command
 
 % Setup Agda fonts
@@ -291,7 +292,7 @@ the effect systems of tomorrow. We present a formalization of a
 calculus marrying gradual types with algebraic effects.
 % (using Core Eff~\citep{bauer2015programming}).
 
-\Cref{types}~defines types and the precision relation on types.
+\Cref{types-and-effects}~defines types and the precision relation on types.
 \Cref{syntax}~defines the syntax of terms.
 \Cref{operational-semantics}~defines the operational semantics, and proves progress;
 through the Curry-Howard isomorphism, this proof doubles as an evaluator.

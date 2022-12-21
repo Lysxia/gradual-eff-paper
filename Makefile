@@ -98,6 +98,7 @@ $(src_lagda_tex)/%.lagda.tex : $(SRC)/%.lagda.md $(FILTERS)/codeblocks.lua
 		--filter=pandoc-latex-environment \
 		-o $@
 	sed -i 's/{verbatim}/{Verbatim}/' $@
+	sed -i 's/^\\textbackslash /\\/' $@
 
 AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex) --only-scope-checking
 

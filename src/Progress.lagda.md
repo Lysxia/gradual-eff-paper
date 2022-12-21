@@ -4,6 +4,7 @@ In this section, we define the operational semantics as a small-step
 reduction relation. We prove progress, and since the proof is constructive,
 it doubles as an evaluation function which we can apply on examples.
 
+\iffalse
 ```
 module Progress where
 
@@ -14,6 +15,17 @@ open import Core
 import Data.List.Relation.Unary.All as All
 import Data.List.Relation.Unary.Any.Properties as Any
 ```
+\fi
+
+\iffalse
+```
+private variable
+  A A′ B C G : Type
+  E E′ F : Effect
+  P P′ Q Q′ R : CType
+  Γ Δ : Context
+```
+\fi
 
 ## Frames
 
@@ -36,7 +48,8 @@ effect handlers.
 
 `\begin{AgdaAlign}`{=tex}
 ```
-data Frame (Γ : Context) (C : CType) : CType → Set where
+data Frame (Γ : Context) (C : CType) :
+  CType → Set where
 ```
 
 The base case is the empty frame.
@@ -50,13 +63,13 @@ and one where the hole is on the right.
 To make the semantics deterministic, we require that we can
 only focus on the right operand once the left one is a value.
 ```
-  [_]·_ : ∀ {E A B}
-    →  (ℰ : Frame Γ C (⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)))
+  [_]·_ :
+       (ℰ : Frame Γ C (⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)))
     →  (M : Γ ⊢ ⟨ E ⟩ A)
        ---------------
     →  Frame Γ C (⟨ E ⟩ B)
 
-  _·[_] : ∀ {E A B}{V : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)}
+  _·[_] : {V : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)}
     →  (v : Value V)
     →  (ℰ : Frame Γ C (⟨ E ⟩ A))
        ----------------
@@ -66,14 +79,14 @@ only focus on the right operand once the left one is a value.
 Primitive operators follow the same logic, requiring the left operand
 to be a value before reducing the right operand.
 ```
-  [_]⦅_⦆_ : ∀ {E ι ι′ ι″}
+  [_]⦅_⦆_ : ∀ {ι ι′ ι″}
     →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι)))
     →  (_⊕_ : rep ι → rep ι′ → rep ι″)
     →  (N : Γ ⊢ ⟨ E ⟩ ($ ι′))
        ------------------
     →  Frame Γ C (⟨ E ⟩ ($ ι″))
 
-  _⦅_⦆[_] : ∀ {E ι ι′ ι″}{V : Γ ⊢ ⟨ E ⟩ $ ι}
+  _⦅_⦆[_] : ∀ {ι ι′ ι″} {V : Γ ⊢ ⟨ E ⟩ $ ι}
     →  (v : Value V)
     →  (_⊕_ : rep ι → rep ι′ → rep ι″)
     →  (ℰ : Frame Γ C (⟨ E ⟩ ($ ι′)))
@@ -109,13 +122,14 @@ with only one immediate subterm.
        -----------
     →  Frame Γ C Q
 
-pattern ′perform_[_] e ℰ = ″perform e [ ℰ ] refl
+pattern ′perform_[_] e ℰ
+  = ″perform e [ ℰ ] refl
 ```
 `\end{AgdaAlign}`{=tex}
 
 The plug function inserts an expression into the hole of a frame.
 ```
-_⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
+_⟦_⟧ : ∀{Γ P B} → Frame Γ P B → Γ ⊢ P → Γ ⊢ B
 □ ⟦ M ⟧                 =  M
 ([ ℰ ]· M) ⟦ L ⟧        =  ℰ ⟦ L ⟧ · M
 (v ·[ ℰ ]) ⟦ M ⟧        =  value v · ℰ ⟦ M ⟧
@@ -123,32 +137,38 @@ _⟦_⟧ : ∀{Γ A B} → Frame Γ A B → Γ ⊢ A → Γ ⊢ B
 (v ⦅ _⊕_ ⦆[ ℰ ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ ℰ ⟦ N ⟧
 ([ ℰ ]⇑ g) ⟦ M ⟧        =  ℰ ⟦ M ⟧ ⇑ g
 (`cast ±p [ ℰ ]) ⟦ M ⟧  =  cast ±p (ℰ ⟦ M ⟧)
-(″perform e∈E [ ℰ ] eq) ⟦ M ⟧ = perform- e∈E (ℰ ⟦ M ⟧) eq
 (′handle H [ ℰ ]) ⟦ M ⟧ = handle H (ℰ ⟦ M ⟧)
+(″perform e [ ℰ ] eq) ⟦ M ⟧
+  = perform- e (ℰ ⟦ M ⟧) eq
 ```
 
 Composition of two frames
 ```
-_∘∘_ : ∀{Γ A B C} → Frame Γ B C → Frame Γ A B → Frame Γ A C
+_∘∘_ : Frame Γ Q R → Frame Γ P Q → Frame Γ P R
 □ ∘∘ 𝐹                 =  𝐹
 ([ ℰ ]· M) ∘∘ 𝐹        =  [ ℰ ∘∘ 𝐹 ]· M
 (v ·[ ℰ ]) ∘∘ 𝐹        =  v ·[ ℰ ∘∘ 𝐹 ]
 ([ ℰ ]⦅ _⊕_ ⦆ N) ∘∘ 𝐹  =  [ ℰ ∘∘ 𝐹 ]⦅ _⊕_ ⦆ N
 (v ⦅ _⊕_ ⦆[ ℰ ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ ℰ ∘∘ 𝐹 ]
 ([ ℰ ]⇑ g) ∘∘ 𝐹        =  [ ℰ ∘∘ 𝐹 ]⇑ g
-(`cast ±p [ ℰ ]) ∘∘ 𝐹     =  `cast ±p [ ℰ ∘∘ 𝐹 ]
-(″perform e∈E [ ℰ ] eq) ∘∘ 𝐹 = ″perform e∈E [ ℰ ∘∘ 𝐹 ] eq
-(′handle H [ ℰ ]) ∘∘ 𝐹  =  ′handle H [ ℰ ∘∘ 𝐹 ]
+(`cast ±p [ ℰ ]) ∘∘ 𝐹  =  `cast ±p [ ℰ ∘∘ 𝐹 ]
+(′handle H [ ℰ ]) ∘∘ 𝐹 =  ′handle H [ ℰ ∘∘ 𝐹 ]
+(″perform e [ ℰ ] eq) ∘∘ 𝐹
+  = ″perform e [ ℰ ∘∘ 𝐹 ] eq
 ```
 
 Composition and plugging
 ```
-∘∘-lemma : ∀ {Γ A B C}
+∘∘-lemma : ∀ {Γ P B C}
   → (ℰ : Frame Γ B C)
-  → (𝐹 : Frame Γ A B)
-  → (M : Γ ⊢ A)
+  → (𝐹 : Frame Γ P B)
+  → (M : Γ ⊢ P)
     -----------------------------
   → ℰ ⟦ 𝐹 ⟦ M ⟧ ⟧ ≡ (ℰ ∘∘ 𝐹) ⟦ M ⟧
+```
+
+\iffalse
+```
 ∘∘-lemma □ 𝐹 M                                         =  refl
 ∘∘-lemma ([ ℰ ]· M₁) 𝐹 M       rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma (v ·[ ℰ ]) 𝐹 M        rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
@@ -156,13 +176,18 @@ Composition and plugging
 ∘∘-lemma (v ⦅ _⊕_ ⦆[ ℰ ]) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma ([ ℰ ]⇑ g) 𝐹 M        rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma (`cast ±p [ ℰ ]) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
-∘∘-lemma (″perform e∈E [ ℰ ] eq) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (″perform e [ ℰ ] eq) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma (′handle H [ ℰ ]) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ```
+\fi
 
 Renaming on frames.
 ```
-renᶠ : ∀ {Γ Δ P Q} → Γ →ᴿ Δ → Frame Γ P Q → Frame Δ P Q
+renᶠ : Γ →ᴿ Δ → Frame Γ P Q → Frame Δ P Q
+```
+
+\iffalse
+```
 renᶠ ρ □ = □
 renᶠ ρ ([ ℰ ]· M) = [ renᶠ ρ ℰ ]· ren ρ M
 renᶠ ρ (v ·[ ℰ ]) = ren-val ρ v ·[ renᶠ ρ ℰ ]
@@ -170,28 +195,22 @@ renᶠ ρ ([ ℰ ]⦅ f ⦆ M) = [ renᶠ ρ ℰ ]⦅ f ⦆ ren ρ M
 renᶠ ρ (v ⦅ f ⦆[ ℰ ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ ℰ ]
 renᶠ ρ ([ ℰ ]⇑ g) = [ renᶠ ρ ℰ ]⇑ g
 renᶠ ρ (`cast ±p [ ℰ ]) = `cast ±p [ renᶠ ρ ℰ ]
-renᶠ ρ (″perform e∈E [ ℰ ] eq) = ″perform e∈E [ renᶠ ρ ℰ ] eq
+renᶠ ρ (″perform e [ ℰ ] eq) = ″perform e [ renᶠ ρ ℰ ] eq
 renᶠ ρ (′handle H [ ℰ ]) = ′handle (renʰ ρ H) [ renᶠ ρ ℰ ]
+```
+\fi
 
-liftᶠ : ∀ {Γ P Q A} → Frame Γ P Q → Frame (Γ ▷ A) P Q
+```
+liftᶠ : Frame Γ P Q → Frame (Γ ▷ A) P Q
 liftᶠ = renᶠ S_
 
-liftʰ : ∀ {Γ P Q A} → Γ ⊢ P ⇒ʰ Q → Γ ▷ A ⊢ P ⇒ʰ Q
+liftʰ : Γ ⊢ P ⇒ʰ Q → Γ ▷ A ⊢ P ⇒ʰ Q
 liftʰ = renʰ S_
-```
-
-```
-private
-  variable
-    A A′ B G : Type
-    P P′ Q Q′ : CType
-    E E′ F : Effect
-    Γ : Context
 ```
 
 The effect in the codomain of the cast. 
 ```
-cast-effect : {P Q : CType} → P =>ᶜ Q → Effect
+cast-effect : P =>ᶜ Q → Effect
 cast-effect {Q = ⟨ E ⟩ B} _ = E
 ```
 
@@ -201,8 +220,10 @@ where `e` is not allowed by the codomain of the cast.
 ```
 handled : ∀ e → Frame Γ P Q → Set
 handled e □ = ⊥
-handled e (′handle H [ ℰ ]) = e ∈ H .Hooks ⊎ handled e ℰ
-handled {Q = ⟨ E ⟩ _} e (`cast ±p [ ℰ ]) = (¬ e ∈☆ E) ⊎ handled e ℰ  -- ±p : P => ⟨ E ⟩ B
+handled e (′handle H [ ℰ ])
+  = e ∈ H .Hooks ⊎ handled e ℰ
+handled {Q = ⟨ E ⟩ _} e (`cast ±p [ ℰ ])
+  = (¬ e ∈☆ E) ⊎ handled e ℰ  -- ±p : P => ⟨ E ⟩ B
 handled e ([ ℰ ]· M) = handled e ℰ
 handled e (M ·[ ℰ ]) = handled e ℰ
 handled e ([ ℰ ]⦅ f ⦆ M) = handled e ℰ
@@ -221,45 +242,56 @@ upcast-safety : ∀ {Γ P Q} (P≤Q : P ≤ᶜ Q) →
   let  ℰ₀ : Frame Γ P Q
        ℰ₀ = `cast (+ P≤Q) [ □ ] in
   ∀ (e : Op) → e ∈☆ CType.effects P → ¬ handled e ℰ₀
-upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆ ☆
-upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E e∈E
+upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆)
+  = ¬e∈☆ ☆
+upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E)
+  = ¬e∈E e∈E
 ```
 
 An operation `e` is not handled by a cast `±p` if `e` is not an element of the
 target effect of the cast.
 ```
-¬handled-cast : ∀ {e} {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)} (ℰ : Frame Γ P (⟨ E ⟩ A))
+¬handled-cast : ∀ {e}
+    {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)}
+    (ℰ : Frame Γ P (⟨ E ⟩ A))
   → e ∈☆ F
   → ¬ handled e ℰ
     -------------------------
   → ¬ handled e (`cast ±p [ ℰ ])
-¬handled-cast ℰ e∈F ¬e//ℰ (inj₁ ¬e∈F) = ¬e∈F e∈F
-¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
+¬handled-cast ℰ e∈F ¬e//ℰ (inj₁ ¬e∈F)
+  = ¬e∈F e∈F
+¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ)
+  = ¬e//ℰ e//ℰ
 ```
 
 An operation `e` is not handled by a handler if `e` is not one of its hooks.
 ```
-¬handled-handle : ∀ {e} {H : Γ ⊢ P ⇒ʰ Q} (ℰ : Frame Γ P′ P)
+¬handled-handle : ∀ {e}
+    {H : Γ ⊢ P ⇒ʰ Q} (ℰ : Frame Γ P′ P)
   → ¬ e ∈ Hooks H
   → ¬ handled e ℰ
     -----------------------------
   → ¬ handled e (′handle H [ ℰ ])
-¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₁ e∈H) = ¬e∈H e∈H
-¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
+¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₁ e∈H)
+  = ¬e∈H e∈H
+¬handled-handle ℰ ¬e∈H ¬e//ℰ (inj₂ e//ℰ)
+  = ¬e//ℰ e//ℰ
 ```
 
 Consistent membership is preserved by concatenation.
 ```
 ∈☆-++☆ʳ : ∀ {e Eh} → e ∈☆ E → e ∈☆ (Eh ++☆ E)
-∈☆-++☆ʳ {Eh = Eh} (¡ e∈E) = ¡ (Any.++⁺ʳ Eh e∈E)
+∈☆-++☆ʳ {Eh = Eh} (¡ e) = ¡ (Any.++⁺ʳ Eh e)
 ∈☆-++☆ʳ ☆ = ☆
 ```
 
 Inversion lemma for consistent membership.
 ```
-∈☆-++☆⁻ : ∀ {e Eh} → e ∈☆ (Eh ++☆ E) → e ∈ Eh ⊎ e ∈☆ E
+∈☆-++☆⁻ : ∀ {e Eh} → e ∈☆ (Eh ++☆ E)
+  → e ∈ Eh ⊎ e ∈☆ E
 ∈☆-++☆⁻ {E = ☆} _ = inj₂ ☆
-∈☆-++☆⁻ {E = ¡ _} {Eh = Eh} (¡ e∈++) with Any.++⁻ Eh e∈++
+∈☆-++☆⁻ {E = ¡ _} {Eh = Eh} (¡ e∈++)
+    with Any.++⁻ Eh e∈++
 ... | inj₁ e∈Eh = inj₁ e∈Eh
 ... | inj₂ e∈E = inj₂ (¡ e∈E)
 ```
@@ -269,7 +301,8 @@ not a hook of the handler, then `e` must be in the resulting effect
 of the handler.
 ```
 ¬∈-handler : ∀ {e} (H : Γ ⊢ ⟨ E ⟩ A ⇒ʰ ⟨ F ⟩ B) → e ∈☆ E → ¬ e ∈ H .Hooks → e ∈☆ F
-¬∈-handler H e∈E ¬e∈H rewrite Hooks-handled H with ∈☆-++☆⁻ e∈E
+¬∈-handler H e∈E ¬e∈H rewrite Hooks-handled H
+    with ∈☆-++☆⁻ e∈E
 ... | inj₁ e∈H = ⊥-elim (¬e∈H e∈H)
 ... | inj₂ e∈F = e∈F
 ```
@@ -282,16 +315,20 @@ Double negation elimination for decidable predicates.
 ```
 
 ```
-¬handled-∈ : ∀ {e} (ℰ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B)) → ¬ handled e ℰ → e ∈☆ E → e ∈☆ F
-¬handled-∈ □ _ e∈E = e∈E
-¬handled-∈ ([ ℰ ]· M) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
-¬handled-∈ (v ·[ ℰ ]) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
-¬handled-∈ ([ ℰ ]⦅ _⊕_ ⦆ N) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
-¬handled-∈ (v ⦅ _⊕_ ⦆[ ℰ ]) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
-¬handled-∈ ([ ℰ ]⇑ g) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
-¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e∈E = ¬¬-dec (_ ∈☆? _) (¬e//ℰ ∘ inj₁)
-¬handled-∈ (″perform e∈E [ ℰ ] x₁) ¬e//ℰ = ¬handled-∈ ℰ ¬e//ℰ
-¬handled-∈ (′handle H [ ℰ ]) ¬e//ℰ e∈E = ¬∈-handler H (¬handled-∈ ℰ (¬e//ℰ ∘ inj₂) e∈E) (¬e//ℰ ∘ inj₁)
+¬handled-∈ : ∀ {e}
+    (ℰ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B))
+  → ¬ handled e ℰ → e ∈☆ E → e ∈☆ F
+¬handled-∈ □ _ e = e
+¬handled-∈ ([ ℰ ]· M) = ¬handled-∈ ℰ
+¬handled-∈ (v ·[ ℰ ]) = ¬handled-∈ ℰ
+¬handled-∈ ([ ℰ ]⦅ _⊕_ ⦆ N) = ¬handled-∈ ℰ
+¬handled-∈ (v ⦅ _⊕_ ⦆[ ℰ ]) = ¬handled-∈ ℰ
+¬handled-∈ ([ ℰ ]⇑ g) = ¬handled-∈ ℰ
+¬handled-∈ (″perform e [ ℰ ] x₁) = ¬handled-∈ ℰ
+¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e
+  = ¬¬-dec (_ ∈☆? _) (¬e//ℰ ∘ inj₁)
+¬handled-∈ (′handle H [ ℰ ]) ¬e//ℰ e
+  = ¬∈-handler H (¬handled-∈ ℰ (¬e//ℰ ∘ inj₂) e) (¬e//ℰ ∘ inj₁)
 ```
 
 ## Decomposing a cast
@@ -329,7 +366,8 @@ split (* s ⇒ t)  =  (* s) ⇒ (* t)
 
 Safe casts are only `id` or `_⇒_`.
 ```
-split-*≢other : ∀ {A B} (q : A ⊑ B) → split (* q) ≢ other
+split-*≢other :
+  (q : A ⊑ B) → split (* q) ≢ other
 split-*≢other id ()
 ```
 
@@ -347,7 +385,8 @@ splitᶜ = split ∘ =>ᶜ-returns
 infix 2 _↦_ _—→_
 
 ƛ-wrap : ∀ (∓s : A′ => A) (±t : P =>ᶜ P′) 
-  → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P)) → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A′ ⇒ P′))
+  → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P))
+  → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A′ ⇒ P′))
 ƛ-wrap ∓s ±t M =
   ƛ cast ±t (lift M · (cast (pure± ∓s) (` Z)))
 ```
@@ -358,7 +397,8 @@ We first define a reduction relation `_↦_` on redexes,
 and then close it under congruence, as `_—↠_`.
 
 ```
-data _↦_ {Γ} : ∀ {P} → (_ _ : Γ ⊢ P) → Set where
+data _↦_ {Γ} :
+  ∀ {P} → (_ _ : Γ ⊢ P) → Set where
 ```
 
 Because there are effects in our type system,
@@ -380,7 +420,9 @@ substitution.
 
 The `δ` rule reduces primitive operators applied to constants.
 ```
-  δ : ∀ {ι ι′ ι″} {_⊕_ : rep ι → rep ι′ → rep ι″} {k : rep ι} {k′ : rep ι′}
+  δ : ∀ {ι ι′ ι″}
+      {_⊕_ : rep ι → rep ι′ → rep ι″}
+      {k : rep ι} {k′ : rep ι′}
       --------------------------------------------
     → _⦅_⦆_ {E = E} ($ k) _⊕_ ($ k′) ↦ $ (k ⊕ k′)
 ```
@@ -392,7 +434,8 @@ to casting effects.
 The `ident` rule removes identity casts, after the casted computation returned
 a value.
 ```
-  ident : ∀ {V : Γ ⊢ ⟨ E ⟩ A} {±p : (⟨ E ⟩ A) =>ᶜ ⟨ F ⟩ A}
+  ident : ∀ {V : Γ ⊢ ⟨ E ⟩ A}
+      {±p : (⟨ E ⟩ A) =>ᶜ ⟨ F ⟩ A}
     → splitᶜ ±p ≡ id
     → (v : Value V)
       --------------
@@ -404,16 +447,18 @@ The cast `±p` is split into two casts, `∓s` between domains and `±t` codomai
 the function being cast is wrapped using `ƛ-wrap`, composing it with those two casts.
 ```
   wrap : {N : Γ ▷ A ⊢ P}
-      {∓s : A′ => A} {±t : P =>ᶜ P′} {±p : (⟨ E ⟩ (A ⇒ P)) =>ᶜ ⟨ E′ ⟩ (A′ ⇒ P′)}
+      {∓s : A′ => A} {±t : P =>ᶜ P′}
+      {±p : ⟨ E ⟩ (A ⇒ P) =>ᶜ ⟨ E′ ⟩ (A′ ⇒ P′)}
     → splitᶜ ±p ≡ ∓s ⇒ ±t
-      ----------------------------------------------------
+      -----------------------------------------
     → cast ±p (ƛ N) ↦ ƛ-wrap ∓s ±t (ƛ N)
 ```
 
 The `expand` rule reduces an upcast to `★` to a box.
 \lyx{and does something more with `p`}
 ```
-  expand : ∀{V : Γ ⊢ ⟨ E ⟩ A} {p : A ≤ G} {E≤E′ : E ≤ᵉ E′}
+  expand : ∀{V : Γ ⊢ ⟨ E ⟩ A}
+      {p : A ≤ G} {E≤E′ : E ≤ᵉ E′}
     → Value V
     → (g : Ground G)
       -------------------------------
@@ -425,18 +470,21 @@ the value under the cast must be a box `(V ⇑ g)`, by unwrapping
 the box, provided the tag `g` in the box and in the cast match.
 \lyx{and does something more with `p`}
 ```
-  collapse : ∀ {V : Γ ⊢ ⟨ E ⟩ G} {p : A ≤ G} {E′≤E : E′ ≤ᵉ E}
+  collapse : ∀ {V : Γ ⊢ ⟨ E ⟩ G}
+      {p : A ≤ G} {E′≤E : E′ ≤ᵉ E}
     → Value V
     → (g : Ground G)
       --------------------------------
-    → cast (- ⟨ E′≤E ⟩ (p ⇑ g)) (V ⇑ g) ↦ cast (- ⟨ E′≤E ⟩ p) V
+    →   cast (- ⟨ E′≤E ⟩ (p ⇑ g)) (V ⇑ g)
+      ↦ cast (- ⟨ E′≤E ⟩ p) V
 ```
 
 The `collide` rule reduces a downcast `(p ⇑ h)` applied to
 a box `(V ⇑ g)` when the tags `g` and `h` don't match.
 This raises `blame`.
 ```
-  collide  : ∀{G H} {V : Γ ⊢ ⟨ E ⟩ G} {p : A ≤ H} {E′≤E : E′ ≤ᵉ E}
+  collide : ∀{G H} {V : Γ ⊢ ⟨ E ⟩ G}
+      {p : A ≤ H} {E′≤E : E′ ≤ᵉ E}
     → Value V
     → (g : Ground G)
     → (h : Ground H)
@@ -451,7 +499,8 @@ under the cast performs an effect which:
 is not handled by any inner handler and is not a member of the target effect `F` of the cast.
 
 ```
-  blameᵉ : ∀ {e} {e∈E′ : e ∈☆ E′} {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)} {V} {M}
+  blameᵉ : ∀ {e} {e∈E′ : e ∈☆ E′} {V} {M}
+      {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)}
       {±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B}
     → ¬ e ∈☆ F
     → ¬ handled e ℰ
@@ -470,7 +519,7 @@ return clause is invoked.
   handle-value : ∀ {H : Γ ⊢ P ⇒ʰ Q} {V}
     → (v : Value V)
       --------------
-    → handle H V ↦ (on-return H [ gvalue v ])
+    → handle H V  ↦  on-return H [ gvalue v ]
 ```
 
 When the handled computation performs an operation, the corresponding operation
@@ -489,27 +538,33 @@ clause : Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q
 ```
 
 ```
-  handle-perform : ∀ {e} {e∈E : e ∈☆ E} {H : Γ ⊢ P ⇒ʰ Q} {V ℰ e∈Hooks}
+  handle-perform : ∀ {e} {e∈E : e ∈☆ E}
+      {H : Γ ⊢ P ⇒ʰ Q} {V ℰ e∈Hooks}
     → (v : Value V)
-    → ¬ handled e ℰ                 -- ensures H is the first matching handler
-    → (e ∈? Hooks H) ≡ yes e∈Hooks  -- ensures this is the first matching clause within H
-                                    -- TODO: a more declarative reformulation?
+    → ¬ handled e ℰ
+      -- ensures H is the first matching handler
+    → (e ∈? Hooks H) ≡ yes e∈Hooks
+      -- ensures this is the first matching clause within H
+      -- TODO: a more declarative reformulation?
     → handle H (ℰ ⟦ perform e∈E V ⟧)
       ↦ All.lookup (on-perform H) e∈Hooks
           [ ƛ (handle (liftʰ (liftʰ H)) (liftᶠ (liftᶠ ℰ) ⟦ ` Z ⟧)) ]
           [ gvalue v ]
-    -- TODO: explain the order of these substitutions and why the 2 lifts.
-    -- TODO: we can avoid one lift by doing a simultaneous substitution, but there is still one left.
 ```
+
+TODO: explain the order of these substitutions and why the 2 lifts.
+TODO: we can avoid one lift by doing a simultaneous substitution, but there is still one left.
 
 The top-level reduction relation `_—↠_` allows reduction to happen under any
 frame. Again, we use fording to keep the frame substitution function out of the
 type's indices.
 ```
-data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
+data _—→_ :
+  (Γ ⊢ P) → (Γ ⊢ P) → Set where
 
-  ξξ : ∀ {Γ A B} {M N : Γ ⊢ A} {M′ N′ : Γ ⊢ B}
-    →  (ℰ : Frame Γ A B)
+  ξξ :
+       {M N : Γ ⊢ P} {M′ N′ : Γ ⊢ Q}
+    →  (ℰ : Frame Γ P Q)
     →  M′ ≡ ℰ ⟦ M ⟧
     →  N′ ≡ ℰ ⟦ N ⟧
     →  M ↦ N
@@ -524,7 +579,7 @@ pattern ξ ℰ M—→N = ξξ ℰ refl refl M—→N
 
 That makes `ξ` a constructor with the following type:
 
-    ξ  :  (ℰ : Frame Γ A B)
+    ξ  :  (ℰ : Frame Γ P Q)
        →  M ↦ N
           --------
        →  ℰ ⟦ M ⟧ —→ ℰ ⟦ N ⟧
@@ -535,54 +590,66 @@ That makes `ξ` a constructor with the following type:
 infixr 1 _++↠_
 infix  1 begin_
 infix  2 _—↠_
-infixr 2 _—→⟨_⟩_
-infixr 2 _—↠⟨_⟩_
+infixr 2 _—→⟨_⟩_ _—↠⟨_⟩_
 infix  3 _∎
 
-data _—↠_ : ∀{Γ A} → Γ ⊢ A → Γ ⊢ A → Set where
+data _—↠_ : Γ ⊢ P → Γ ⊢ P → Set where
 
-  _∎ : ∀ {Γ A} (M : Γ ⊢ A)
+  _∎ : (M : Γ ⊢ P)
       ---------
     → M —↠ M
 
-  _—→⟨_⟩_ : ∀ {Γ A} (L : Γ ⊢ A) {M N : Γ ⊢ A}
+  _—→⟨_⟩_ : (L : Γ ⊢ P) {M N : Γ ⊢ P}
     → L —→ M
     → M —↠ N
       ---------
     → L —↠ N
 
-begin_ : ∀ {Γ A} {M N : Γ ⊢ A} → (M —↠ N) → (M —↠ N)
+begin_ : {M N : Γ ⊢ P}
+  → (M —↠ N) → (M —↠ N)
 begin M—↠N = M—↠N
 ```
 
 Convenience function to build a sequence of length one.
 ```
-unit : ∀ {Γ A} {M N : Γ ⊢ A} → (M ↦ N) → (M —↠ N)
-unit {M = M} {N = N} M↦N  =  M —→⟨ ξ □ M↦N ⟩ N ∎
+unit : {M N : Γ ⊢ P} → (M ↦ N) → (M —↠ N)
+unit {M = M} {N = N} M↦N
+  = M —→⟨ ξ □ M↦N ⟩ N ∎
 ```
 
 Apply ξ to each element of a sequence
 ```
-ξ* : ∀{Γ A B} {M N : Γ ⊢ A} → (E : Frame Γ A B) → M —↠ N → E ⟦ M ⟧ —↠ E ⟦ N ⟧
+ξ* : {M N : Γ ⊢ P} → (E : Frame Γ P Q)
+  → M —↠ N
+    ------------------
+  → E ⟦ M ⟧ —↠ E ⟦ N ⟧
 ξ* E (M ∎) = E ⟦ M ⟧ ∎
-ξ* E (L —→⟨ ξξ {M = L′} {N = M′} F refl refl L′↦M′ ⟩ M—↠N)
-  =  (E ⟦ L ⟧ —→⟨ ξξ (E ∘∘ F) (∘∘-lemma E F L′)
-       (∘∘-lemma E F M′) L′↦M′ ⟩ (ξ* E M—↠N))
+ξ* E (L —→⟨ ξξ {M = L′} {N = M′}
+               F refl refl L′↦M′ ⟩ M—↠N)
+  =  E ⟦ L ⟧
+     —→⟨ ξξ (E ∘∘ F) (∘∘-lemma E F L′)
+         (∘∘-lemma E F M′) L′↦M′ ⟩
+     ξ* E M—↠N
 ```
 
 Concatenate two sequences.
 ```
-_++↠_ : ∀ {Γ A} {L M N : Γ ⊢ A} → L —↠ M → M —↠ N → L —↠ N
-(M ∎) ++↠ M—↠N                =  M—↠N
-(L —→⟨ L—→M ⟩ M—↠N) ++↠ N—↠P  =  L —→⟨ L—→M ⟩ (M—↠N ++↠ N—↠P)
+_++↠_ : {L M N : Γ ⊢ P}
+  → L —↠ M
+  → M —↠ N
+    ------
+  → L —↠ N
+(M ∎) ++↠ M—↠N =  M—↠N
+(L —→⟨ L—→M ⟩ M—↠N) ++↠ N—↠P
+  = L —→⟨ L—→M ⟩ (M—↠N ++↠ N—↠P)
 ```
 
 Alternative notation for sequence concatenation.
 ```
-_—↠⟨_⟩_ : ∀ {Γ A} (L : Γ ⊢ A) {M N : Γ ⊢ A}
+_—↠⟨_⟩_ : (L : Γ ⊢ P) {M N : Γ ⊢ P}
   → L —↠ M
   → M —↠ N
-    ---------
+    ------
   → L —↠ N
 L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++↠ M—↠N
 ```
@@ -591,13 +658,15 @@ L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++↠ M—↠N
 
 Values are irreducible.
 ```
-value-irreducible : ∀ {Γ A} {V M : Γ ⊢ A}
+value-irreducible : {V M : Γ ⊢ P}
   →  Value V
      ----------
   →  ¬ (V —→ M)
 value-irreducible () (ξ □ (β x))
-value-irreducible () (ξξ (″perform _ [ _ ] _) refl _ _)
-value-irreducible (v ⇑ g) (ξ ([ E ]⇑ g) V—→M)  =  value-irreducible v (ξ E V—→M)
+value-irreducible ()
+  (ξξ (″perform _ [ _ ] _) refl _ _)
+value-irreducible (v ⇑ g) (ξ ([ E ]⇑ g) V—→M)
+  =  value-irreducible v (ξ E V—→M)
 ```
 
 Variables are irreducible.
@@ -610,7 +679,8 @@ variable-irreducible (ξξ □ refl _ ())
 
 Boxes are irreducible (at the top level)
 ```
-box-irreducible : ∀ {Γ G} {M : Γ ⊢ ⟨ E ⟩ G} {N : Γ ⊢ ⟨ E ⟩ ★}
+box-irreducible :
+     {M : Γ ⊢ ⟨ E ⟩ G} {N : Γ ⊢ ⟨ E ⟩ ★}
   →  (g : Ground G)
      --------------
   →  ¬ (M ⇑ g ↦ N)
@@ -691,7 +761,8 @@ progress± (ƛ _) _ | _ ⇒ _                    =  _ , wrap e
 Otherwise, we have a cast to or from the dynamic type `★`.
 If it is an upcast to `★`, the `expand` rule wraps the value in a box.
 ```
-progress± v       (+ ⟨ _ ⟩ (_ ⇑ g)) | other  =  _ , expand v g
+progress± v       (+ ⟨ _ ⟩ (_ ⇑ g))
+  | other  =  _ , expand v g
 ```
 
 If it is a downcast from `★`, the cast value must be a box.
@@ -700,14 +771,17 @@ with `collapse`. If the tags don't match, we raise blame with `collide`.
 ```
 progress± (v ⇑ g) (- ⟨ _ ⟩ (_ ⇑ h)) | other
     with ground g ≡? ground h
-... | yes refl rewrite uniqueG g h           =  _ , collapse v h
-... | no  G≢H                                =  _ , collide v g h G≢H
+... | yes refl rewrite uniqueG g h
+  =  _ , collapse v h
+... | no  G≢H
+  =  _ , collide v g h G≢H
 ```
 
 Safe casts `(* q`) are either identity casts or function casts, so the `other` case is
 vacuous for those.
 ```
-progress± _ (* ⟨ _ ⟩ q) | other              =  ⊥-elim (split-*≢other q e)
+progress± _ (* ⟨ _ ⟩ q) | other
+  =  ⊥-elim (split-*≢other q e)
 ```
 
 We finally reach the progress proof.
@@ -738,11 +812,11 @@ we may take a `β` step.
 progress (L · M) with progress L
 ... | blame ℰ                            =  blame ([ ℰ ]· M)
 ... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]· M) L↦L′)
-... | pending ℰ e∈E v ¬e//ℰ              =  pending ([ ℰ ]· M) e∈E v ¬e//ℰ
+... | pending ℰ e v ¬e//ℰ                =  pending ([ ℰ ]· M) e v ¬e//ℰ
 ... | done (ƛ N) with progress M
 ...     | blame ℰ                        =  blame ((ƛ N) ·[ ℰ ])
 ...     | step (ξ ℰ M↦M′)                =  step (ξ ((ƛ N) ·[ ℰ ]) M↦M′)
-...     | pending ℰ e∈E v ¬e//ℰ          =  pending ((ƛ N) ·[ ℰ ]) e∈E v ¬e//ℰ
+...     | pending ℰ e v ¬e//ℰ            =  pending ((ƛ N) ·[ ℰ ]) e v ¬e//ℰ
 ...     | done w                         =  step (ξ □ (β w))
 ```
 
@@ -752,11 +826,11 @@ and if both are values, we may take a `δ` step.
 progress (L ⦅ _⊕_ ⦆ M) with progress L
 ... | blame ℰ                            =  blame ([ ℰ ]⦅ _⊕_ ⦆ M)
 ... | step (ξ ℰ L↦L′)                    =  step (ξ ([ ℰ ]⦅ _⊕_ ⦆ M) L↦L′)
-... | pending ℰ e∈E v ¬e//ℰ              =  pending ([ ℰ ]⦅ _⊕_ ⦆ M) e∈E v ¬e//ℰ
+... | pending ℰ e v ¬e//ℰ                =  pending ([ ℰ ]⦅ _⊕_ ⦆ M) e v ¬e//ℰ
 ... | done ($ k) with progress M
 ...     | blame ℰ                        =  blame (($ k) ⦅ _⊕_ ⦆[ ℰ ])
 ...     | step (ξ ℰ M↦M′)                =  step (ξ (($ k) ⦅ _⊕_ ⦆[ ℰ ]) M↦M′)
-...     | pending ℰ e∈E v ¬e//ℰ          =  pending (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e∈E v ¬e//ℰ
+...     | pending ℰ e v ¬e//ℰ            =  pending (($ k) ⦅ _⊕_ ⦆[ ℰ ]) e v ¬e//ℰ
 ...     | done ($ k′)                    =  step (ξ □ δ)
 ```
 
@@ -765,7 +839,7 @@ A box constructor reduces its argument, and a boxed value is a value.
 progress (M ⇑ g) with progress M
 ... | blame ℰ                            =  blame ([ ℰ ]⇑ g)
 ... | step (ξ ℰ M↦M′)                    =  step (ξ ([ ℰ ]⇑ g) M↦M′)
-... | pending ℰ e∈E v ¬e//ℰ              =  pending ([ ℰ ]⇑ g) e∈E v ¬e//ℰ
+... | pending ℰ e v ¬e//ℰ                =  pending ([ ℰ ]⇑ g) e v ¬e//ℰ
 ... | done v                             =  done (v ⇑ g)
 ```
 
@@ -802,12 +876,12 @@ progress (cast ±p M)
 Before pending an operation, we reduce its argument.
 Once it is a value, the operation is `pending`.
 ```
-progress (perform- e∈E M eq) with progress M
-... | blame ℰ                            = blame (″perform e∈E [ ℰ ] eq)
-... | step (ξ ℰ M↦M′)                    = step (ξ (″perform e∈E [ ℰ ] eq) M↦M′)
-... | pending ℰ e′∈E′ v ¬e′//ℰ           = pending (″perform e∈E [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
+progress (perform- e M eq) with progress M
+... | blame ℰ                            = blame (″perform e [ ℰ ] eq)
+... | step (ξ ℰ M↦M′)                    = step (ξ (″perform e [ ℰ ] eq) M↦M′)
+... | pending ℰ e′∈E′ v ¬e′//ℰ           = pending (″perform e [ ℰ ] eq) e′∈E′ v ¬e′//ℰ
 ... | done v with eq
-...   | refl = pending □ e∈E v (λ())
+...   | refl = pending □ e v (λ())
 ```
 
 A handler extends `done` computations with its return clause and intercepts
@@ -888,7 +962,7 @@ eval (gas (suc m)) L
     with progress L
 ... | done v               =  steps (L ∎) (done v)
 ... | blame E              =  steps (L ∎) (blame E)
-... | pending ℰ e∈E v ¬e//ℰ =  steps (L ∎) (pending e∈E v ¬e//ℰ)
+... | pending ℰ e v ¬e//ℰ  =  steps (L ∎) (pending e v ¬e//ℰ)
 ... | step {L} {M} L—→M
     with eval (gas m) M
 ... | steps M—↠N fin       =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
