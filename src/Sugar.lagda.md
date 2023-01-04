@@ -1,10 +1,46 @@
+# Syntactic sugar
+
+Some auxiliary definitions to write nice-looking examples.
+
 ```
-module Auto where
+module Sugar where
 
 open import Utils
 open import Type
 open import Core
 open import Progress
+```
+
+```
+infix 1 _∋′_
+
+_∋′_ : Context → Type → Set
+Γ ∋′ A = ∀ {Δ E} → ⦃ ∀ {A} → ⦃ Γ ∋ A ⦄ → Δ ∋ A ⦄ → Δ ⊢ ⟨ E ⟩ A
+```
+
+```
+ƛ-syntax : ∀ {Γ E F A B}
+  → (⦃ ∀ {B} → ⦃ Γ ∋ B ⦄ → Γ ▷ A ∋ B ⦄ → Γ ▷ A ∋′ A → Γ ▷ A ⊢ ⟨ E ⟩ B)
+  → Γ ⊢ ⟨ F ⟩ (A ⇒ ⟨ E ⟩ B)
+ƛ-syntax f = ƛ (f ⦃ S it ⦄ (λ ⦃ ρ ⦄ → ` ρ ⦃ Z ⦄))
+```
+
+```
+infixr 1 ƛ-syntax
+syntax ƛ-syntax (λ x → M) = fun x ⇒ M 
+```
+
+```
+let-syntax : ∀ {Γ E A B}
+  → (⦃ ∀ {B} → ⦃ Γ ∋ B ⦄ → Γ ▷ A ∋ B ⦄ → Γ ▷ A ∋′ A → Γ ▷ A ⊢ ⟨ E ⟩ B)
+  → Γ ⊢ ⟨ E ⟩ A
+  → Γ ⊢ ⟨ E ⟩ B
+let-syntax f M = (ƛ-syntax f) · M
+```
+
+```
+infixr 1 let-syntax
+syntax let-syntax (λ x → N) M = Let x := M In N
 ```
 
 Automating membership proofs

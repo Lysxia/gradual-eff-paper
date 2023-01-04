@@ -8,7 +8,7 @@ open import Data.Unit.Base using (⊤; tt) public
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Fin.Properties using (≡-isDecEquivalence)
 open import Data.Maybe.Base using (Maybe; just; nothing) public
-open import Data.Nat.Base using (ℕ; zero; suc; _+_) public
+open import Data.Nat.Base using (ℕ; zero; suc) public
 import Data.Nat.Properties as Nat
 open import Data.List.Base as List using (List; []; _∷_; _++_) public
 open import Data.List.Membership.Propositional as List using (_∈_) public

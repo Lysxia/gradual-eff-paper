@@ -1,4 +1,4 @@
 name: gradual-eff
 include: .
-depend: standard-library-2.0
+depend: standard-library
 flags: --guardedness

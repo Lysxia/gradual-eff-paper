@@ -1,13 +1,14 @@
 # Examples
 
 ```
+{-# OPTIONS --overlapping-instances #-}
 module Example where
 
 open import Utils
 open import Type
 open import Core
 open import Progress
-open import Auto
+open import Sugar
 ```
 
 ## State
@@ -68,14 +69,17 @@ Some computation that uses state:
 infixl 4 _|>_
 pattern _|>_ N M = M · N
 
+⦅⦆ : ∀ {Γ E} → Γ ⊢ ⟨ E ⟩ $𝕌
+⦅⦆ = $ tt
+
 -- Given initial state x, this computes 2*(x+1).
 some-comp : ∀ {Γ} → Γ ⊢ ⟨ state ⟩ $ℕ
 some-comp =
-  perform! "get" ($ tt)             |> ƛ (
-  perform! "put" (` Z ⦅ _+_ ⦆ $ 1)  |> ƛ (
-  perform! "get" ($ tt)             |> ƛ (
-  perform! "put" (` Z ⦅ _+_ ⦆ ` Z)  |> ƛ (
-  perform! "get" ($ tt)))))               
+  Let x := perform! "get" ⦅⦆        In
+  Let _ := perform! "put" (x + $ 1) In
+  Let y := perform! "get" ⦅⦆        In
+  Let _ := perform! "put" (y + y)   In
+  perform! "get" ($ tt)
 ```
 
 Pseudocode:
