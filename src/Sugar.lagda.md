@@ -19,8 +19,15 @@ _∋′_ : Context → Type → Set
 ```
 
 ```
+infix 1 _↝ᴿ_
+
+_↝ᴿ_ : Context → Context → Set
+Γ ↝ᴿ Δ = ∀ {A} → ⦃ Γ ∋ A ⦄ → Δ ∋ A
+```
+
+```
 ƛ-syntax : ∀ {Γ E F A B}
-  → (⦃ ∀ {B} → ⦃ Γ ∋ B ⦄ → Γ ▷ A ∋ B ⦄ → Γ ▷ A ∋′ A → Γ ▷ A ⊢ ⟨ E ⟩ B)
+  → (⦃ Γ ↝ᴿ Γ ▷ A ⦄ → Γ ▷ A ∋′ A → Γ ▷ A ⊢ ⟨ E ⟩ B)
   → Γ ⊢ ⟨ F ⟩ (A ⇒ ⟨ E ⟩ B)
 ƛ-syntax f = ƛ (f ⦃ S it ⦄ (λ ⦃ ρ ⦄ → ` ρ ⦃ Z ⦄))
 ```
@@ -32,7 +39,7 @@ syntax ƛ-syntax (λ x → M) = fun x ⇒ M
 
 ```
 let-syntax : ∀ {Γ E A B}
-  → (⦃ ∀ {B} → ⦃ Γ ∋ B ⦄ → Γ ▷ A ∋ B ⦄ → Γ ▷ A ∋′ A → Γ ▷ A ⊢ ⟨ E ⟩ B)
+  → (⦃ Γ ↝ᴿ Γ ▷ A ⦄ → Γ ▷ A ∋′ A → Γ ▷ A ⊢ ⟨ E ⟩ B)
   → Γ ⊢ ⟨ E ⟩ A
   → Γ ⊢ ⟨ E ⟩ B
 let-syntax f M = (ƛ-syntax f) · M
@@ -41,6 +48,35 @@ let-syntax f M = (ƛ-syntax f) · M
 ```
 infixr 1 let-syntax
 syntax let-syntax (λ x → N) M = Let x := M In N
+```
+
+```
+handle-syntax : ∀ {Γ E F A}
+  → (e : Op)
+  → (⦃ Γ ↝ᴿ Γ ▷ request e ▷ (response e ⇒ ⟨ E ⟩ A) ⦄
+      → Γ ▷ request e ▷ (response e ⇒ ⟨ E ⟩ A) ∋′ request e
+      → Γ ▷ request e ▷ (response e ⇒ ⟨ E ⟩ A) ∋′ (response e ⇒ ⟨ E ⟩ A)
+      → Γ ▷ request e ▷ (response e ⇒ ⟨ E ⟩ A) ⊢ ⟨ E ⟩ A)
+  → On-Perform Γ (⟨ E ⟩ A) F
+  → On-Perform Γ (⟨ E ⟩ A) (e ∷ F)
+handle-syntax e M Ms = M ⦃ S S it ⦄ (λ ⦃ ρ ⦄ → ` ρ ⦃ S Z ⦄) (λ ⦃ ρ ⦄ → ` ρ ⦃ Z ⦄) ∷ Ms
+```
+
+```
+infixr 1 handle-syntax
+syntax handle-syntax e M Ms = handle! e ⇒ M ∣ Ms
+```
+
+```
+return-syntax : ∀ {Γ A P}
+  → (⦃ Γ ↝ᴿ Γ ▷ A ⦄
+      → Γ ▷ A ∋′ A
+      → Γ ▷ A ⊢ P)
+  → Γ ▷ A ⊢ P
+return-syntax f = f ⦃ S it ⦄ (λ ⦃ ρ ⦄ → ` ρ ⦃ Z ⦄)
+
+infixr 1 return-syntax
+syntax return-syntax (λ x → M) = return! x ⇒ M
 ```
 
 Automating membership proofs

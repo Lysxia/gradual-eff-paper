@@ -11,6 +11,11 @@ open import Progress
 open import Sugar
 ```
 
+```
+⦅⦆ : ∀ {Γ E} → Γ ⊢ ⟨ E ⟩ $𝕌
+⦅⦆ = $ tt
+```
+
 ## State
 
 From "Handlers in Action".
@@ -32,22 +37,12 @@ state-handler : ∀ {Γ A}
 state-handler = record
   { Hooks = "get" ∷ "put" ∷ []
   ; Hooks-handled = refl
-  ; on-return = ƛ (` S Z)
+  ; on-return = return! x ⇒ fun _ ⇒ x
   ; on-perform
-      = (ƛ ((` S Z) · (` Z) · (` Z)))
-      ∷ (ƛ ((` S Z) · ($ tt) · (` S (S Z))) )
-      ∷ []
+      = handle! "get" ⇒ (λ _ k → fun s ⇒ k · s · s)
+      ∣ handle! "put" ⇒ (λ s k → fun _ ⇒ k · ⦅⦆ · s)
+      ∣ []
   }
-```
-
-Same definition using human-readable syntax with named variables:
-```txt
-state-handler :
-  {get,put} A ⇒ʰ {} (St → {E} A)
-state-handler = handler
-  | return x → λ _ → x
-  | !get () k → λ s → k s s
-  | !put s k → λ _ → k () s
 ```
 
 Wrapping the handler as a `run-state` function.
@@ -61,16 +56,13 @@ run-state : ∀ {Γ A}
   →  Γ ⊢ ⟨ state ⟩ A
   →  Γ ⊢ ⟨ ε ⟩ (St ⇒ ⟨ ε ⟩ A)
 run-state M =
-  ƛ (handle state-handler (lift M) · ` Z)
+  fun s ⇒ (handle state-handler (lift M) · s)
 ```
 
 Some computation that uses state:
 ```
 infixl 4 _|>_
 pattern _|>_ N M = M · N
-
-⦅⦆ : ∀ {Γ E} → Γ ⊢ ⟨ E ⟩ $𝕌
-⦅⦆ = $ tt
 
 -- Given initial state x, this computes 2*(x+1).
 some-comp : ∀ {Γ} → Γ ⊢ ⟨ state ⟩ $ℕ
@@ -79,17 +71,7 @@ some-comp =
   Let _ := perform! "put" (x + $ 1) In
   Let y := perform! "get" ⦅⦆        In
   Let _ := perform! "put" (y + y)   In
-  perform! "get" ($ tt)
-```
-
-Pseudocode:
-
-```txt
-!get ()      |> λ x →
-!put (x + 1) |> λ _ →
-!get ()      |> λ y →
-!put (y + y) |> λ _ →
-!get ()
+  perform! "get" ⦅⦆
 ```
 
 Apply `run-state` to `some-comp`
@@ -115,15 +97,19 @@ and it falls in the gutter.
 nondet : Effect
 nondet = ¡ ("choose" ∷ "fail" ∷ [])
 
+fail : ∀ {Γ} → Γ ⊢ ⟨ nondet ⟩ $𝔹
+fail =
+  Let _ := perform! "fail" ⦅⦆ In
+  ($ true) {- unreachable -}
+
 drunkToss : ∅ ⊢ ⟨ nondet ⟩ $𝔹
 drunkToss =
-  perform! "choose" ($ tt) |> ƛ (
-  if (` Z)
-     ( perform! "choose" ($ tt) |> ƛ (
-       if (` Z) ($ true) ($ false))
-     )
-     ( perform! "fail" ($ tt) |> ƛ
-       ($ true) {- unreachable -}))
+  Let catch-coin := perform! "choose" ⦅⦆ In
+  if catch-coin
+  ( Let coin-flip := perform! "choose" ⦅⦆ In
+    if coin-flip ($ true) ($ false)
+  )
+  ( fail )
 ```
 
 Handle a non-deterministic computation of type `𝔹`,
@@ -136,9 +122,10 @@ nondet-handler = record
   ; Hooks-handled = refl
   ; on-return = ` Z
   ; on-perform
-      = ((` Z · tru) ⦅ _∨_ ⦆ (` Z · fls))
-      ∷ $ false
-      ∷ [] }
+      = handle! "choose" ⇒ (λ _ k → (k · tru) ⦅ _∨_ ⦆ (k · fls))
+      ∣ handle! "fail" ⇒ (λ _ k → $ false)
+      ∣ []
+  }
 ```
 
 ```
