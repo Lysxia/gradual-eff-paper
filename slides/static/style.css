@@ -56,6 +56,14 @@ code.tiny pre {
   flex: 3;
 }
 
+.flex-4 {
+  flex: 4;
+}
+
+.flex-5 {
+  flex: 5;
+}
+
 .height-half {
   height: 50pt;
 }
@@ -87,6 +95,10 @@ code.tiny pre {
   margin-top: 20px;
 }
 
+.medium-plus {
+  font-size: 35px;
+}
+
 .medium {
   font-size: 30px;
 }
@@ -101,4 +113,14 @@ code.tiny pre {
 
 .strike {
   text-decoration: line-through;
+}
+
+img.logo {
+  height: 30px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.white {
+  color: white;
 }
