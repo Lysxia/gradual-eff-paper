@@ -38,13 +38,13 @@ LATEXMK_OPTS := -quiet -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelat
 LATEX_DEPS := $(latex_files) $(agda_sty) references.bib $(EXTRA_DIRS)
 
 # A pdf for the whole book
-$(main_pdf): main.tex $(LATEX_DEPS)
+main.pdf: main.tex $(LATEX_DEPS)
 	latexmk $(LATEXMK_OPTS) $<
-	ln -sfT $(main_pdf) main.pdf
+	cp $(main_pdf) main.pdf
 
 draft.pdf: draft.tex main.tex $(LATEX_DEPS)
 	latexmk $(LATEXMK_OPTS) $<
-	ln -sfT $(draft_pdf) draft.pdf
+	cp $(draft_pdf) draft.pdf
 
 .PHONY : html
 html: $(html_files) html/$(addsuffix .html,$(FILENAME)) 

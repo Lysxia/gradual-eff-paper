@@ -1,4 +1,44 @@
-# Examples
+# Motivation
+
+\def\dhandler{\texttt{handler}_\texttt{dynamic}}
+\def\shandler{\texttt{handler}_\texttt{static}}
+\def\dclient{\texttt{client}_\texttt{dynamic}}
+\def\sclient{\texttt{client}_\texttt{static}}
+
+A key motivation for gradual types is to enable gradual migration
+from dynamically typed code to statically typed code.
+For instance, imagine that a library provides a dynamically typed
+handler $\dhandler$, and one implements a $\dclient$ for that handler.
+The end goal is to annotate those modules into a
+$\shandler$ and a $\sclient$,
+making explicit their input and output types, as well as the
+effects that they perform. Here, the handler expects a computation
+which uses the \texttt{state} effect, and produces a pure computation---with
+the empty \texttt{ε} effect.
+
+$$
+\begin{array}{rl|rl}
+  \dhandler & \texttt{(: ★ ⇒ ⟨ ☆ ⟩ ★) ⇒ ⟨ ☆ ⟩ ★} & \dclient & \texttt{: ★ ⇒ ⟨ ☆ ⟩ ★} \\
+  \shandler & \texttt{: (ℕ ⇒ ⟨ state ⟩ ℕ) ⇒ ⟨ ε ⟩ ℕ} & \sclient & \texttt{: ℕ ⇒ ⟨ state ⟩ ℕ}
+\end{array}
+$$
+
+For large code bases, it is desirable to do this progressively,
+for example by migrating the handler first, or the client first,
+or even alternatingly migrating parts of each artifact.
+For this gradual migration to be effective, the composed program should still
+be typeable and executable during those intermediate phases of the migration.
+
+$$
+\input{figures/migration.tex}
+$$
+
+When the statically typed handler is applied to the dynamically typed client,
+the composed program is considered well-typed,
+and casts are inserted to ensure that the client indeed behaves as expected by
+the static argument type of the handler.
+
+\iffalse
 
 ```
 {-# OPTIONS --overlapping-instances #-}
@@ -11,6 +51,8 @@ open import Progress
 open import Sugar
 ```
 
+\fi
+
 ```
 ⦅⦆ : ∀ {Γ E} → Γ ⊢ ⟨ E ⟩ $𝕌
 ⦅⦆ = $ tt
@@ -20,23 +62,30 @@ open import Sugar
 
 From "Handlers in Action".
 
-The signatures of `"get"` and `"set"` are \lyx{currently} hard-coded,
-with a state type `St` specialized to `ℕ`.
+The type of state is (currently) hard-coded as the type of natural numbers.
 ```
 St : Type
 St = $ ′ℕ
 ```
 
-Definition of the state handler
+The state effect consists of `"get"` and `"put"` operations.
 ```
 state : Effect
 state = ¡ ("get" ∷ "put" ∷ [])
+```
 
+The state handler interprets a stateful computation as a function `St ⇒ ⟨ ε ⟩ A`.
+The return clause returns the result `x : A`, ignoring the state.
+The operation clause for `"get"` passes the current state to the continuation,
+whereas the operation clause for `"put"` discards the current state and continues with the
+value that the operation was called with.
+```
 state-handler : ∀ {Γ A}
   → Γ ⊢ ⟨ state ⟩ A ⇒ʰ ⟨ ε ⟩ (St ⇒ ⟨ ε ⟩ A)
 state-handler = record
-  { Hooks = "get" ∷ "put" ∷ []
-  ; Hooks-handled = refl
+  { -- Hooks = "get" ∷ "put" ∷ []
+  -- ;
+    Hooks-handled = refl
   ; on-return = return! x ⇒ fun _ ⇒ x
   ; on-perform
       = handle! "get" ⇒ (λ _ k → fun s ⇒ k · s · s)
@@ -45,9 +94,9 @@ state-handler = record
   }
 ```
 
-Wrapping the handler as a `run-state` function.
-Note: `handle state-handler (lift M)` is not a value so this cannot be
-eta-reduced.
+We wrap the handler in the following `run-state` function.
+Note that this definition cannot be eta-reduced since
+`handle state-handler (lift M)` is not a value.
 ```
 --           M : {get,put,E} A
 -- ------------------------------
@@ -86,6 +135,16 @@ eval-state-example : ∃[ M—↠N ]
      eval (gas 25) state-example
   ≡  steps {⟨ ¡ [] ⟩ $ℕ} M—↠N (done ($ 4))
 eval-state-example = _ , refl
+```
+
+TODO: Dynamic version:
+
+```
+postulate run-state-dyn : ∅ ⊢ ⟨ ☆ ⟩ ★ → ∅ ⊢ ⟨ ☆ ⟩ (★ ⇒ ⟨ ☆ ⟩ ★)
+postulate some-comp-dyn : ∅ ⊢ ⟨ ☆ ⟩ ★
+
+state-example-dyn : ∅ ⊢ ⟨ ☆ ⟩ ★
+state-example-dyn = run-state-dyn some-comp-dyn · (($ 1) ⇑ $ ′ℕ)
 ```
 
 ## Nondeterminism

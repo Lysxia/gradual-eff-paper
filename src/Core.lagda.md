@@ -90,6 +90,7 @@ and values (abstractions, constants, and boxes).
 Here, we make them effect polymorphic, which leads to simpler operational semantics.
 An alternative is to give them only the empty effect `ε`. Values would then always be
 wrapped with the subsumption rule.
+\lyx{remember to compile with newer version of agda}
 
 ```
     `_ : ∀ {Γ E A}
