@@ -57,12 +57,16 @@ deinterleaving them.
 
 ```
 interleaved mutual
+```
 
+\iffalse
+```
   infix  4 _⊢_ _⊢_⇒ʰ_
   infix  5 ƛ_
   infixl  6 _·_ _⦅_⦆_
   infix  8 `_
 ```
+\fi
 
 ```
   data _⊢_ : Context → CType → Set

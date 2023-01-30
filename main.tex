@@ -292,11 +292,23 @@ the effect systems of tomorrow. We present a formalization of a
 calculus marrying gradual types with algebraic effects.
 % (using Core Eff~\citep{bauer2015programming}).
 
-\Cref{types-and-effects}~defines types and the precision relation on types.
-\Cref{syntax}~defines the syntax of terms.
-\Cref{operational-semantics}~defines the operational semantics, and proves progress;
-through the Curry-Howard isomorphism, this proof doubles as an evaluator.
-\Cref{gradual-guarantee}~proves the gradual guarantee:
+\paragraph{Contributions}
+
+\begin{itemize}
+  \item We formalize a cast calculus with effect handlers.
+    Our work is mechanized in the Agda proof assistant.
+    (Syntax (\Cref{types-and-effects,syntax}), operational semantics (\Cref{operational-semantics}).)
+    \Cref{types-and-effects}~defines types and the precision relation on types.
+  \item We prove that this language satisfies the gradual guarantee
+    (\Cref{gradual-guarantee}).
+\end{itemize}
+
+\paragraph{TODO}
+
+\begin{itemize}
+  \item Should we formalize a surface calculus that compiles to the cast calculus?
+  \item Should we prove the second direction of the gradual guarantee? (via determinism?)
+\end{itemize}
 
 \paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
 and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which

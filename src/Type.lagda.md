@@ -31,12 +31,12 @@ rep ′𝔹  =  𝔹
 rep ′𝕌  =  ⊤
 ```
 
+\iffalse
+
 Decision procedure for equality of base types.
 ```
 _≡$?_ : (ι ι′ : Base) → Dec (ι ≡ ι′)
 ```
-
-\iffalse
 
 ```
 ′ℕ  ≡$? ′ℕ  =  yes refl
@@ -104,6 +104,8 @@ E ++☆ ☆ = ☆
 E ++☆ (¡ F) = ¡ (E ++ F)
 ```
 
+\iffalse
+
 Decision procedure for `_∈☆_`.
 ```
 _∈☆?_ : ∀ e E → Dec (e ∈☆ E)
@@ -112,6 +114,8 @@ e ∈☆? (¡ E) with e ∈? E
 ... | yes e∈E = yes (¡ e∈E)
 ... | no ¬e∈E = no λ{ (¡ e∈E) → ¬e∈E e∈E }
 ```
+
+\fi
 
 ## Types
 
@@ -162,13 +166,17 @@ private variable
 ```
 \fi
 
+\iffalse
+
 (TODO) the base type ′𝔹 doesn't have eliminators ("if") yet. In the meantime here's Church encoded booleans
 ```
 -- Church booleans
 pattern 𝟚 = ★ ⇒ ⟨ ☆ ⟩ ★ ⇒ ⟨ ☆ ⟩ ★
 ```
 
-Having defined types, we can assign signatures to effects, which are their
+\fi
+
+Having defined types, we can assign signatures to operations, which are their
 input and output types, also called requests and responses.
 ```
 Op-sig : Op → Type × Type
@@ -185,6 +193,8 @@ response : Op → Type
 response e = proj₂ (Op-sig e)
 ```
 
+\iffalse
+
 Decision procedure for equality of types.
 ```
 infix 4 _≡ᵉ?_ _≡ᶜ?_ _≡?_
@@ -193,6 +203,7 @@ _≡ᵉ?_ : (E F : Effect) → Dec (E ≡ F)
 _≡ᶜ?_ : (P Q : CType) → Dec (P ≡ Q)
 _≡?_ : (A B : Type) → Dec (A ≡ B)
 ```
+\fi
 
 \iffalse
 ```
@@ -253,6 +264,7 @@ data Ground : Type → Set where
        Ground (★ ⇒ ⟨ ☆ ⟩ ★)
 ```
 
+\iffalse
 Extract type from evidence that it is ground
 ```
 ground : ∀ {G} → (g : Ground G) → Type
@@ -271,6 +283,7 @@ Star is not ground
 G≢★ : ∀ {G} → (g : Ground G) → G ≢ ★
 G≢★ () refl
 ```
+\fi
 
 ## Precision
 
@@ -376,7 +389,7 @@ source languages, where one defines
     cod (A ⇒ B)  =  B
 ```
 
-and has a typing rules resembling
+and has a typing rule resembling
 
 ```txt
     Γ ⊢ L : A
@@ -388,6 +401,7 @@ and has a typing rules resembling
 Our `dom` and `cod` will play a similar role when we define the
 precedence rules for abstraction and application.
 
+\iffalse
 Lemma. Every ground type is more precise than `★`.
 ```
 G≤★ : ∀ {G} → Ground G → G ≤ ★
@@ -461,6 +475,7 @@ left-idᵉ : (p : E ≤ᵉ F) → id ⨟ᵉ p ≡ p
 left-idᶜ : (p : P ≤ᶜ Q) → (⟨ id ⟩ id) ⨟ᶜ p ≡ p
 left-id  : (p : A ≤ B) → id ⨟ p ≡ p
 ```
+\fi
 
 \iffalse
 ```
@@ -477,10 +492,12 @@ left-idᶜ (⟨ d ⟩ p) rewrite left-idᵉ d
 ```
 \fi
 
+\iffalse
 ```
 right-id : ∀ {A B} → (p : A ≤ B) → p ⨟ id ≡ p
 right-id p  =  refl
 ```
+\fi
 
 \iffalse
 ```
@@ -491,6 +508,7 @@ module _ where
 ```
 \fi
 
+\iffalse
 Lemma. Associativity.
 ```
   assocᵉ : ∀ (p : E ≤ᵉ F) (q : F ≤ᵉ G) (r : G ≤ᵉ H)
@@ -548,6 +566,7 @@ Lemma. Consistent membership is preserved by decreases in precision.
 ∈-≤ id e∈E = e∈E
 ∈-≤ ¡≤☆ _ = ☆
 ```
+\fi
 
 \iffalse
 ## Subtyping
@@ -625,6 +644,7 @@ infix  4 +_ -_ *_
 
 We define notions of casts for the different precision relations
 `_≤_`, `_≤ᶜ_`, `_≤ᵉ_` uniformly with the `Cast` combinator.
+\lyx{Ignore subtyping}
 
 ```
 data Cast {S : Set}
@@ -667,6 +687,7 @@ _=>ᵉ_ : Effect → Effect → Set
 _=>ᵉ_ = Cast _≤ᵉ_ _⊑ᵉ_
 ```
 
+\iffalse
 The empty list, viewed as a set, is a subset of any other list.
 ```
 []⊆ : ∀ {A : Set} {xs : List A} → [] ⊆ xs
@@ -706,3 +727,4 @@ pure± (+ A≤) = + ⟨ id ⟩ A≤
 pure± (- A≤) = - ⟨ id ⟩ A≤
 pure± (* A⊑) = * ⟨ ⊑ᵉ-refl ⟩ A⊑
 ```
+\fi

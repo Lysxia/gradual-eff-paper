@@ -30,7 +30,7 @@ main_pdf := $(build_latex)/$(addsuffix .pdf,$(FILENAME))
 draft_pdf := $(build_latex)/draft.pdf
 
 .PHONY : pdf
-pdf: all_lagda_tex all_latex $(main_pdf)
+pdf: all_lagda_tex all_latex main.pdf
 draft: all_lagda_tex all_latex draft.pdf
 
 LATEXMK_OPTS := -quiet -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelatex
