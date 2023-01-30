@@ -13,7 +13,6 @@ open import Type
 open import Core
 
 import Data.List.Relation.Unary.All as All
-import Data.List.Relation.Unary.Any.Properties as Any
 ```
 \fi
 
@@ -29,6 +28,7 @@ private variable
 
 ## Frames
 
+\iffalse
 ```
 infix  5 [_]⇑_
 infix  5 `cast_[_]
@@ -38,6 +38,7 @@ infix  6 [_]⦅_⦆_
 infix  6 _⦅_⦆[_]
 infix  7 _⟦_⟧
 ```
+\fi
 
 Frames are "terms with a hole".
 Frames are also known as evaluation contexts, but the identifier `Context` is
@@ -122,8 +123,7 @@ with only one immediate subterm.
        -----------
     →  Frame Γ C Q
 
-pattern ′perform_[_] e ℰ
-  = ″perform e [ ℰ ] refl
+pattern ′perform_[_] e ℰ = ″perform e [ ℰ ] refl
 ```
 `\end{AgdaAlign}`{=tex}
 
@@ -181,10 +181,12 @@ Composition and plugging
 ```
 \fi
 
+\iffalse
 Renaming on frames.
 ```
 renᶠ : Γ →ᴿ Δ → Frame Γ P Q → Frame Δ P Q
 ```
+\fi
 
 \iffalse
 ```
@@ -200,6 +202,7 @@ renᶠ ρ (′handle H [ ℰ ]) = ′handle (renʰ ρ H) [ renᶠ ρ ℰ ]
 ```
 \fi
 
+\iffalse
 ```
 liftᶠ : Frame Γ P Q → Frame (Γ ▷ A) P Q
 liftᶠ = renᶠ S_
@@ -213,6 +216,7 @@ The effect in the codomain of the cast.
 cast-effect : P =>ᶜ Q → Effect
 cast-effect {Q = ⟨ E ⟩ B} _ = E
 ```
+\fi
 
 `handled e ℰ` means that the operation `e` is handled by the evaluation context `ℰ`:
 either `ℰ` contains a handler where `e` is one of its hooks, or `ℰ` contains a cast
@@ -232,7 +236,9 @@ handled e ([ ℰ ]⇑ g) = handled e ℰ
 handled e (″perform e′∈E [ ℰ ] eq) = handled e ℰ
 ```
 
-Note: for casts, this definition always checks whether `e` is in the codomain.
+For casts, this definition unconditionally checks whether `e` is in the
+codomain of the cast. Those checks are actually only necessary for downcasts
+(from `☆` to a static effeect).
 
 An evaluation context `ℰ₀` containing only an upcast may never raise blame: no
 effects are handled by `ℰ₀`.
@@ -278,24 +284,6 @@ An operation `e` is not handled by a handler if `e` is not one of its hooks.
   = ¬e//ℰ e//ℰ
 ```
 
-Consistent membership is preserved by concatenation.
-```
-∈☆-++☆ʳ : ∀ {e Eh} → e ∈☆ E → e ∈☆ (Eh ++☆ E)
-∈☆-++☆ʳ {Eh = Eh} (¡ e) = ¡ (Any.++⁺ʳ Eh e)
-∈☆-++☆ʳ ☆ = ☆
-```
-
-Inversion lemma for consistent membership.
-```
-∈☆-++☆⁻ : ∀ {e Eh} → e ∈☆ (Eh ++☆ E)
-  → e ∈ Eh ⊎ e ∈☆ E
-∈☆-++☆⁻ {E = ☆} _ = inj₂ ☆
-∈☆-++☆⁻ {E = ¡ _} {Eh = Eh} (¡ e∈++)
-    with Any.++⁻ Eh e∈++
-... | inj₁ e∈Eh = inj₁ e∈Eh
-... | inj₂ e∈E = inj₂ (¡ e∈E)
-```
-
 If a computation under a handler raises an effect `e` which is
 not a hook of the handler, then `e` must be in the resulting effect
 of the handler.
@@ -305,13 +293,6 @@ of the handler.
     with ∈☆-++☆⁻ e∈E
 ... | inj₁ e∈H = ⊥-elim (¬e∈H e∈H)
 ... | inj₂ e∈F = e∈F
-```
-
-Double negation elimination for decidable predicates.
-```
-¬¬-dec : ∀ {P : Set} → Dec P → ¬ ¬ P → P
-¬¬-dec (yes p) _ = p
-¬¬-dec (no ¬p) ¬¬p = ⊥-elim (¬¬p ¬p)
 ```
 
 ```
@@ -334,9 +315,14 @@ Double negation elimination for decidable predicates.
 ## Decomposing a cast
 
 The following construction unifies the behaviors of some casts.
+
+\iffalse
 ```
 infix 6 _==>_
+```
+\fi
 
+```
 data _==>_ : Type → Type → Set where
 
   id : ∀ {A}
@@ -364,6 +350,7 @@ split (* id)     =  id
 split (* s ⇒ t)  =  (* s) ⇒ (* t)
 ```
 
+\iffalse
 Safe casts are only `id` or `_⇒_`.
 ```
 split-*≢other :
@@ -378,12 +365,17 @@ splitᶜ : ∀ {E F A B}
   →  A ==> B
 splitᶜ = split ∘ =>ᶜ-returns
 ```
+\fi
 
 ## Wrapping functions
 
+\iffalse
 ```
 infix 2 _↦_ _—→_
+```
+\fi
 
+```
 ƛ-wrap : ∀ (∓s : A′ => A) (±t : P =>ᶜ P′) 
   → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P))
   → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A′ ⇒ P′))
@@ -586,13 +578,17 @@ That makes `ξ` a constructor with the following type:
 
 ## Reflexive and transitive closure of reduction
 
+\iffalse
 ```
 infixr 1 _++↠_
 infix  1 begin_
 infix  2 _—↠_
 infixr 2 _—→⟨_⟩_ _—↠⟨_⟩_
 infix  3 _∎
+```
+\fi
 
+```
 data _—↠_ : Γ ⊢ P → Γ ⊢ P → Set where
 
   _∎ : (M : Γ ⊢ P)
@@ -654,6 +650,7 @@ _—↠⟨_⟩_ : (L : Γ ⊢ P) {M N : Γ ⊢ P}
 L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++↠ M—↠N
 ```
 
+\iffalse
 ## Irreducible terms
 
 Values are irreducible.
@@ -694,6 +691,7 @@ blame-irreducible : ∀ {M′ : Γ ⊢ P}
  →  ¬ (blame —→ M′)
 blame-irreducible (ξ □ ())
 ```
+\fi
 
 ## Progress
 
@@ -738,6 +736,7 @@ progress± : ∀ {V : ∅ ⊢ P}
   → ∃[ M ](cast ±p V ↦ M)
 ```
 
+\iffalse
 Note that the effect component of the cast is ignored because the term under
 the cast is a value. Only the value cast matters.
 The reduction rule to be applied depends on the structure of the `cast`.
@@ -917,6 +916,7 @@ progress (handle H M) with progress M
       = pending (′handle H [ ℰ ]) e∈E v
           (¬handled-handle {H = H} ℰ ¬e∈H ¬e//ℰ)
 ```
+\fi
 
 ## Evaluation
 
@@ -978,6 +978,10 @@ eval : ∀ {A}
   → (L : ∅ ⊢ A)
     -----------
   → Steps L
+```
+
+\iffalse
+```
 eval (gas zero) L     =  steps (L ∎) out-of-gas
 eval (gas (suc m)) L
     with progress L
@@ -989,7 +993,9 @@ eval (gas (suc m)) L
     with eval (gas m) M
 ... | steps M—↠N fin  =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
 ```
+\fi
 
+\iffalse
 ## Type erasure
 
 As a simple example, we consider two encodings of the
@@ -1226,6 +1232,7 @@ inc★2★—↠3★  =
     $ℕ★ 3
   ∎
 ```
+\fi
 
 \iffalse
 ```

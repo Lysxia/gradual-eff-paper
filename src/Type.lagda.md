@@ -7,6 +7,8 @@ We define types, effects, and the *precision* relation on types.
 module Type where
 
 open import Utils
+
+import Data.List.Relation.Unary.Any.Properties as Any
 ```
 \fi
 
@@ -70,9 +72,15 @@ The dynamic effect `☆` allows a computation to perform any operations.
 ```
 StaticEffect : Set
 StaticEffect = List Op
+```
 
+\iffalse
+```
 infix 7 ¡_
+```
+\fi
 
+```
 data Effect : Set where
   ¡_ : StaticEffect → Effect
   ☆ : Effect
@@ -88,9 +96,13 @@ effects) to gradual effects.
 The dynamic effect statically accepts any effect `e` as a member.
 
 \lyx{Compare with~\cite{sekiyama2019gradual,schwerter2016gradual}}
+\iffalse
 ```
 infix 4 _∈☆_
+```
+\fi
 
+```
 data _∈☆_ (e : Op) : Effect → Set where
   ¡_ : ∀ {E} → e ∈ E → e ∈☆ ¡ E
   ☆  : e ∈☆ ☆
@@ -115,15 +127,34 @@ e ∈☆? (¡ E) with e ∈? E
 ... | no ¬e∈E = no λ{ (¡ e∈E) → ¬e∈E e∈E }
 ```
 
+Consistent membership is preserved by concatenation.
+```
+∈☆-++☆ʳ : ∀ {e Eh E} → e ∈☆ E → e ∈☆ (Eh ++☆ E)
+∈☆-++☆ʳ {Eh = Eh} (¡ e) = ¡ (Any.++⁺ʳ Eh e)
+∈☆-++☆ʳ ☆ = ☆
+```
+
+Inversion lemma for consistent membership.
+```
+∈☆-++☆⁻ : ∀ {e Eh E} → e ∈☆ (Eh ++☆ E)
+  → e ∈ Eh ⊎ e ∈☆ E
+∈☆-++☆⁻ {E = ☆} _ = inj₂ ☆
+∈☆-++☆⁻ {Eh = Eh} {E = ¡ _} (¡ e∈++)
+    with Any.++⁻ Eh e∈++
+... | inj₁ e∈Eh = inj₁ e∈Eh
+... | inj₂ e∈E = inj₂ (¡ e∈E)
+```
 \fi
 
 ## Types
 
+\iffalse
 ```
 infixr 7 _⇒_
 infix  8 $_
 infix 7 ⟨_⟩_
 ```
+\fi
 
 We distinguish computations from the values they return, assigning them different notions
 of types. Computation types `CType` \lyx{or CType?} are pairs of effects `Effect` and value types `Type`.
@@ -242,7 +273,9 @@ Intuitively, more precise types provide more static information,
 while less precise types give more flexibility in exchange for more
 run-time checks. We define precision in the rest of this section.
 
-## Ground types
+## Precision
+
+### Ground types
 
 One early dimension to consider in designing a gradual type system is whether
 to compare types at run time *deeply* or *shallowly*. Deep type comparisons
@@ -285,12 +318,14 @@ G≢★ () refl
 ```
 \fi
 
-## Precision
+### The precision relation
 
+\iffalse
 ```
 infix 4 _≤_ _≤ᵉ_ _≤ᶜ_
 infixl 5 _⇑_
 ```
+\fi
 
 Precision orders types by how much static information they
 tell us about their values.
@@ -665,12 +700,14 @@ Downcasts increase precision.
       → Cast _<_ _⊏_ A B
 ```
 
+\iffalse
 Safe casts are upcasts along the subtyping relation.
 ```
   *_  : A ⊏ B
         ----------------
       → Cast _<_ _⊏_ A B
 ```
+\fi
 `\end{AgdaAlign}`{=tex}
 
 The types of casts for value types, computation types, and effects

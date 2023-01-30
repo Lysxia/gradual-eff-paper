@@ -14,18 +14,21 @@ renaming, substitution, and prove some related lemmas.
 
 ## Contexts and Variables
 
+\iffalse
+```
+infixl 5 _▷_
+infix  4 _∋_
+infix  9 S_
+```
+\fi
+
 The context is represented as a snoc list of types,
 and variables are de Bruijn indices, indexing into that list.
 
 ```
-infixl 5 _▷_
-
 data Context : Set where
   ∅   : Context
   _▷_ : Context → Type → Context
-
-infix  4 _∋_
-infix  9 S_
 
 data _∋_ : Context → Type → Set where
 
@@ -247,6 +250,7 @@ The type of operation clauses is given by the auxiliary definition `On-Perform`.
   open _⊢_⇒ʰ_ public
 ```
 
+\iffalse
 ## Substitutions
 
 Substitutions in terms using de Bruijn indices are defined in two steps:
@@ -430,6 +434,7 @@ _[_] : ∀ {Γ P A}
 _[_] {Γ} {P} {A} N M
   = sub {Γ ▷ A} {Γ} (σ₀ M) N
 ```
+\fi
 
 \iffalse
 ### Composition and identity
@@ -743,6 +748,7 @@ gvalue ($ k)  =  $ k
 gvalue (V ⇑ g) = gvalue V ⇑ g
 ```
 
+\iffalse
 Renaming preserves values
 ```
 ren-val : ∀ {Γ Δ E A} {V : Γ ⊢ ⟨ E ⟩ A}
@@ -766,3 +772,4 @@ sub-val σ (ƛ N)    =  ƛ (sub (sub▷ σ) N)
 sub-val σ ($ k)    =  $ k
 sub-val σ (V ⇑ g)  =  (sub-val σ V) ⇑ g
 ```
+\fi

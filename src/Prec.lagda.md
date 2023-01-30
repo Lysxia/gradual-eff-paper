@@ -39,10 +39,15 @@ private variable
 
 Viewing contexts as lists of types, context precision is the
 pointwise lifting of type precision.
+
+\iffalse
 ```
 infix 4 _≤ᴳ_
 infixl 5 _▷_
+```
+\fi
 
+```
 data _≤ᴳ_ : Context → Context → Set where
 
   ∅ :
@@ -103,9 +108,14 @@ Viewed in a proof-relevant manner, context precision is a type of heterogeneous
 lists of type precision proofs, and variable precision is the corresponding type
 of indices.
 \lyx{Notation proposal: use `A≤` instead of `p`, `q`, `r` for precision proofs `A ≤ A′`}
+
+\iffalse
 ```
 infix 3 _⊢_≤ˣ_⦂_
+```
+\fi
 
+```
 data _⊢_≤ˣ_⦂_ : Γ ≤ᴳ Γ′
               → Γ ∋ A
               → Γ′ ∋ A′
@@ -168,6 +178,7 @@ commute≤ (* _) _ _  =  ⊥
 ≤commute _ (* _) _  =  ⊥
 ```
 
+\iffalse
 We could also define it on effect types, but instead we make it a trivial
 relation.
 ```
@@ -322,13 +333,19 @@ cod≤ {±p = - s ⇒ t} {r = r} refl refl
 ≤cod {±q = - s ⇒ t} {r = r} refl refl
   = cod-⨟ r (s ⇒ t)
 ```
+\fi
 
 ## Precision on terms
 
 Term precision `_⊢_≤ᴹ_⦂_` and handler precision `_⊢_≤_⦂_⇒ʰ_` are defined mutually recursively.
+
+\iffalse
 ```
 infix 3 _⊢_≤ᴹ_⦂_ _⊢_≤_⦂_⇒ʰ_
+```
+\fi
 
+```
 data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
   : ∀ {A A′} → Γ ⊢ A → Γ′ ⊢ A′ → A ≤ᶜ A′ → Set
 record _⊢_≤_⦂_⇒ʰ_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
@@ -665,6 +682,7 @@ fact that the rules for abstraction `ƛ≤ƛ`, application `·≤·`, and handle
 `handle≤handle` are parameterized by proofs for type precision on functions,
 instead of constructing them using `_⇒_` which is distinct from `id`.
 
+\iffalse
 ```
 reflˣ : ∀ {Γ A}
     → (x : Γ ∋ A)
@@ -678,11 +696,18 @@ reflˣ (S x)  =  S≤S (reflˣ x)
 reflʰ : ∀ {Γ P Q}
   → (H : Γ ⊢ P ⇒ʰ Q)
   → idᴳ ⊢ H ≤ H ⦂ ⟨ id ⟩ id ⇒ʰ ⟨ id ⟩ id
+```
+\fi
 
+```
 reflᴹ : ∀ {Γ P}
     → (M : Γ ⊢ P)
       -------------------
     → idᴳ ⊢ M ≤ᴹ M ⦂ ⟨ id ⟩ id
+```
+
+\iffalse
+```
 reflᴹ (` x)           =  `≤` (reflˣ x)
 reflᴹ (ƛ M)           =  ƛ≤ƛ (reflᴹ M)
 reflᴹ (L · M)         =  ·≤· (reflᴹ L) (reflᴹ M)
@@ -711,7 +736,9 @@ reflʰ H = record
       = (refl , id , refl , refl , reflᴹ M)
         ∷ refl-on-perform Ms
 ```
+\fi
 
+\iffalse
 ## Precision is preserved by substitution
 
 Precision on renamings and substitutions.
@@ -745,6 +772,7 @@ _→ᵀ_∋_≤_ : (Γ≤ : Γ ≤ᴳ Γ′) (Δ≤ : Δ ≤ᴳ Δ′)
     -----------------------
   → Δ≤ ⊢ s M ≤ᴹ s′ M′ ⦂ ⟨ E≤ ⟩ A≤
 ```
+\fi
 
 \iffalse
 
@@ -855,6 +883,7 @@ sub▷≤ σ≤ (S≤S x≤)  =  ren≤ S≤S (σ≤ x≤)
 
 \fi
 
+\iffalse
 Preservation of precision under substitution
 ```
 sub≤ : {σ : Γ →ˢ Δ} {σ′ : Γ′ →ˢ Δ′}
@@ -862,6 +891,7 @@ sub≤ : {σ : Γ →ˢ Δ} {σ′ : Γ′ →ˢ Δ′}
        -------------------------
      → Γ≤ →ᵀ Δ≤ ∋ sub σ ≤ sub σ′
 ```
+\fi
 
 \iffalse
 ```
@@ -900,6 +930,7 @@ sub≤ σ≤ (handle≤handle H≤ M≤) = handle≤handle sub≤ʰ (sub≤ σ�
 ```
 \fi
 
+\iffalse
 Preservation of precision under substitution, special case for beta
 
 ```
@@ -997,6 +1028,7 @@ inc2≤inc★′2★ :
     ≤ᴹ inc★′ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
 inc2≤inc★′2★ = ·≤·★ inc≤inc★′ ($≤$★ 2)
 ```
+\fi
 
 ## Precision on frames
 
@@ -1190,6 +1222,7 @@ gvalue≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN
 ```
 \fi
 
+\iffalse
 ```
 gValue : {V : Γ ⊢ ⟨ E ⟩ A}
        → (v : Value V) → ∀ {F}
@@ -1209,6 +1242,7 @@ gValue (v ⇑ g) = gValue v ⇑ g
   → ∀ {F′} {F≤ : E ≤ᵉ F′}
   → Γ≤ ⊢ V ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
 ```
+\fi
 
 \iffalse
 ```
@@ -1221,6 +1255,7 @@ gValue (v ⇑ g) = gValue v ⇑ g
 ```
 \fi
 
+\iffalse
 ```
 gvalue≤ :
     {V : Γ ⊢ ⟨ E ⟩ A}
@@ -1231,6 +1266,7 @@ gvalue≤ :
   → ∀ {F} {F≤ : F ≤ᵉ E′}
   → Γ≤ ⊢ gvalue v ≤ᴹ V′ ⦂ ⟨ F≤ ⟩ A≤
 ```
+\fi
 
 \iffalse
 ```
