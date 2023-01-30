@@ -130,6 +130,10 @@ pattern ′perform_[_] e ℰ = ″perform e [ ℰ ] refl
 The plug function inserts an expression into the hole of a frame.
 ```
 _⟦_⟧ : ∀{Γ P B} → Frame Γ P B → Γ ⊢ P → Γ ⊢ B
+```
+
+\iffalse
+```
 □ ⟦ M ⟧                 =  M
 ([ ℰ ]· M) ⟦ L ⟧        =  ℰ ⟦ L ⟧ · M
 (v ·[ ℰ ]) ⟦ M ⟧        =  value v · ℰ ⟦ M ⟧
@@ -141,10 +145,15 @@ _⟦_⟧ : ∀{Γ P B} → Frame Γ P B → Γ ⊢ P → Γ ⊢ B
 (″perform e [ ℰ ] eq) ⟦ M ⟧
   = perform- e (ℰ ⟦ M ⟧) eq
 ```
+\fi
 
 Composition of two frames
 ```
 _∘∘_ : Frame Γ Q R → Frame Γ P Q → Frame Γ P R
+```
+
+\iffalse
+```
 □ ∘∘ 𝐹                 =  𝐹
 ([ ℰ ]· M) ∘∘ 𝐹        =  [ ℰ ∘∘ 𝐹 ]· M
 (v ·[ ℰ ]) ∘∘ 𝐹        =  v ·[ ℰ ∘∘ 𝐹 ]
@@ -156,6 +165,7 @@ _∘∘_ : Frame Γ Q R → Frame Γ P Q → Frame Γ P R
 (″perform e [ ℰ ] eq) ∘∘ 𝐹
   = ″perform e [ ℰ ∘∘ 𝐹 ] eq
 ```
+\fi
 
 Composition and plugging
 ```
@@ -588,6 +598,7 @@ infix  3 _∎
 ```
 \fi
 
+\iffalse
 ```
 data _—↠_ : Γ ⊢ P → Γ ⊢ P → Set where
 
@@ -649,6 +660,7 @@ _—↠⟨_⟩_ : (L : Γ ⊢ P) {M N : Γ ⊢ P}
   → L —↠ N
 L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++↠ M—↠N
 ```
+\fi
 
 \iffalse
 ## Irreducible terms
@@ -784,6 +796,8 @@ progress± _ (* ⟨ _ ⟩ q) | other
 ```
 
 We finally reach the proof of progress.
+\fi
+
 ```
 progress :
     (M : ∅ ⊢ P)
@@ -791,6 +805,7 @@ progress :
   → Progress M
 ```
 
+\iffalse
 Abstractions and constants are values.
 ```
 progress (ƛ N)                           =  done (ƛ N)
@@ -918,6 +933,7 @@ progress (handle H M) with progress M
 ```
 \fi
 
+\iffalse
 ## Evaluation
 
 The `progress` function computes a single reduction step.
@@ -979,6 +995,7 @@ eval : ∀ {A}
     -----------
   → Steps L
 ```
+\fi
 
 \iffalse
 ```

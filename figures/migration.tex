@@ -1,7 +1,7 @@
 \begin{tikzcd}
-  & \texttt{handler}_\texttt{dynamic}\;\texttt{client}_\texttt{dynamic} & \\
-  \texttt{handler}_\texttt{static}\;\texttt{client}_\texttt{dynamic} & & \texttt{handler}_\texttt{dynamic}\;\texttt{client}_\texttt{static} \\
-  & \texttt{handler}_\texttt{static} \;\texttt{client}_\texttt{static} &
+  & \dhandler\;\dclient & \\
+  \shandler\;\dclient & & \dhandler\;\sclient \\
+  & \shandler \;\sclient &
   \arrow["\text{migrate handler}"', from=1-2, to=2-1]
   \arrow["\text{migrate client}", from=1-2, to=2-3]
   \arrow["\text{migrate handler}", from=2-3, to=3-2]
