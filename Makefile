@@ -29,14 +29,14 @@ all_latex: $(latex_files)
 main_pdf := $(build_latex)/$(addsuffix .pdf,$(FILENAME))
 draft_pdf := $(build_latex)/draft.pdf
 
-pdf:
 # main.pdf: # main.tex $(LATEX_DEPS) all_lagda_tex all_latex
-	latexmk $(LATEXMK_OPTS) $<
+pdf:
+	latexmk $(LATEXMK_OPTS) main.tex
 	cp $(main_pdf) main.pdf
 
-draft:
 # draft.pdf: # draft.tex main.tex # $(LATEX_DEPS) all_lagda_tex all_latex 
-	latexmk $(LATEXMK_OPTS) $<
+draft:
+	latexmk $(LATEXMK_OPTS) draft.tex
 	cp $(draft_pdf) draft.pdf
 
 LATEXMK_OPTS := -quiet -outdir=$(build_latex)  -pdf -xelatex

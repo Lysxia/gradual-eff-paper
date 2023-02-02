@@ -15,15 +15,18 @@
 \newcommand\cast[2]{#1 \,\MVAt\, #2}
 \newcommand\tbox[2]{#1 \Uparrow #2}
 \newcommand\blame{\mathrm{blame}}
-\newcommand\perform[2]{#1\left[#2\right]}
+\newcommand\perform[2]{#1\left(#2\right)}
 \newcommand\handle[2]{\mathbf{with}\,#1\,\mathbf{handle}\,#2}
+\newcommand\fori[3]{(#3)_{#1=1\dots #2}}
+\newcommand\treturn[1]{\mathbf{return}\,#1}
 
 \begin{figure}
 $$
 \begin{array}{rrcll}
- \text{Value types} & A, B, C & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{A}{P} \rulealt \tyany & \\
+ \text{Base types} & \kappa  & \ruledef & \tynat \rulealt \tybool \\
+ \text{Value types} & A, B, C & \ruledef & \kappa \rulealt \tyunit \rulealt \tyarr{A}{P} \rulealt \tyany & \\
  \text{Computation types} & P, Q, R & \ruledef & \cty{E}{A} &  \\
- \text{Effects} & E, F & \ruledef & \effop_1 \dots \effop_n \rulealt \effany & \\
+ \text{Effects} & E, F & \ruledef & \fori{i}{n}{\effop_i} \rulealt \effany & \\
  \text{Ground types} & G, H & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{\tyany}{\tyany}
 \end{array}
 $$
@@ -39,46 +42,105 @@ $$
          & \rulealt & \app{L}{M} & \text{Application} \\
          & \rulealt & k & \text{Constant} \\
          & \rulealt & M \oplus N & \text{Operator} \\
-         & \rulealt & \cast{M}{p} & \text{Cast} \\
+         & \rulealt & () & \text{Unit} \\
+         & \rulealt & \cast{M}{{\pm p}} & \text{Cast} \\
          & \rulealt & \tbox{M}{G} & \text{Box} \\
          & \rulealt & \blame & \text{Blame} \\
          & \rulealt & \perform{\effop}{M} & \text{Operation} \\
-         & \rulealt & \handle{\overline{\perform{\effop_i}{x_i} k_i \mapsto N_i}, x \mapsto L}{M} & \text{Handler}
+         & \rulealt & \handle{x \mapsto L, \fori{i}{n}{\perform{\effop_i}{x} k \mapsto N_i}}{M} & \text{Handler}
 \end{array}
 $$
 \caption{Term syntax}
 \label{fig:term-syntax}
 \end{figure}
 
+\newcommand\Term[3]{#1 \vdash #2 : #3}
+
 \begin{figure}
+\begin{prooftree}
+    \AxiomC{$\Term{\Gamma}{M}{P}$}
+    \AxiomC{$\pm p : P \Rightarrow Q$}
+    \RightLabel{\textsc{Cast}}
+  \BinaryInfC{$\Term{\Gamma}{\cast{M}{p}}{Q}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\Term{\Gamma}{M}{\cty{E}{G}}$}
+    \RightLabel{\textsc{Box}}
+  \UnaryInfC{$\Term{\Gamma}{\tbox{M}{G}}{\cty{E}{\tyany}}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\Sigma(\effop) = A \to B \quad\quad \effop \in E$}
+    \AxiomC{$\Term{\Gamma}{M}{\cty{E}{A}}$}
+    \RightLabel{\textsc{Op}}
+  \BinaryInfC{$\Term{\Gamma}{\perform{\effop}{M}}{\cty{E}{B}}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\begin{array}{c}E = \fori{i}{n}{\effop_i},F \\ \Term{\Gamma,x:A}{L}{\cty{F}{B}}\end{array}$}
+    \AxiomC{$\begin{array}{c}\fori{i}{n}{\Sigma(\effop_i) = A_i \to B_i} \\ \fori{i}{n}{\Term{\Gamma,x:A_i,k:\tyarr{B_i}{\cty{F}{B}}}{N_i}{\cty{F}{B}}}\end{array}$}
+    \AxiomC{$\Term{\Gamma}{M}{\cty{E}{A}}$}
+    \RightLabel{\textsc{Handle}}
+  \TrinaryInfC{$\Term{\Gamma}{\handle{\treturn{x} \mapsto L, \fori{i}{n}{\perform{\effop_i}{x} k \mapsto N_i}}{M}}{\cty{F}{B}}$}
+\end{prooftree}
 \caption{Term typing}
 \label{fig:term-typing}
 \end{figure}
 
 \begin{figure}
 $$
-\begin{array}{rcll}
- p, q, r & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{p}{q} \rulealt p \Uparrow G &
+\begin{array}{rrcll}
+ \text{Casts} & a, b, c & \ruledef & \kappa \rulealt \tyunit \rulealt \tyarr{a}{p} \rulealt a \Uparrow G & \\
+ \text{Computation casts} & p, q, r & \ruledef & \cty{e}{a} & \\
+ \text{Effect casts} & e & \ruledef & E \rulealt \Uparrow \fori{i}{n}{\effop_i} & \\
+ \text{Polarized casts} & {\pm p} & \ruledef & + p \rulealt - p &
 \end{array}
 $$
-\caption{Cast syntax}
+\caption{Cast syntax\lyx{This is the wrong minus sign}}
 \label{fig:cast-syntax}
 \end{figure}
 
 \begin{figure}
 \begin{prooftree}
-    \AxiomC{$\kappa \in \{ \tynat, \tybool, \tyunit \}$}
+    \AxiomC{}
   \UnaryInfC{$\kappa : \kappa \le \kappa$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$p : A \le A^\prime$}
-    \AxiomC{$q : B \le B^\prime$}
-  \BinaryInfC{$\tyarr{p}{q} : \tyarr{A}{P} \le \tyarr{A^\prime}{P^\prime}$}
+    \AxiomC{}
+  \UnaryInfC{$\tyunit : \tyunit \le \tyunit$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$p : A \le G$}
-  \UnaryInfC{$p\Uparrow G : A \le \tyany$}
+    \AxiomC{$a : A \le A^\prime$}
+    \AxiomC{$p : P \le P^\prime$}
+  \BinaryInfC{$\tyarr{a}{p} : \tyarr{A}{P} \le \tyarr{A^\prime}{P^\prime}$}
 \end{prooftree}
-\caption{Cast typing $p : A \le B$}
+\begin{prooftree}
+    \AxiomC{$a : A \le G$}
+  \UnaryInfC{$a\Uparrow G : A \le \tyany$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$e : E \le E^\prime$}
+    \AxiomC{$a : A \le A^\prime$}
+  \BinaryInfC{$\cty{e}{a} : \cty{E}{A} \le \cty{E^\prime}{A^\prime}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{}
+  \UnaryInfC{$E : E \le E$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{}
+  \UnaryInfC{$\Uparrow (\effop_i)_{i=1\dots n} : (\effop_i)_{i=1\dots n} \le \effany$}
+\end{prooftree}
+\caption{Cast typing $a : A \le A^\prime$, $p : P \le P^\prime$, $e : E \le E^\prime$}
 \label{fig:cast-typing}
+\end{figure}
+
+\begin{figure}
+\begin{prooftree}
+    \AxiomC{$p : A \le B$}
+  \UnaryInfC{$+p : A \Rightarrow B$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$p : B \le A$}
+  \UnaryInfC{$-p : A \Rightarrow B$}
+\end{prooftree}
+\caption{Polarised cast typing $\pm p : A \Rightarrow B$}
 \end{figure}
