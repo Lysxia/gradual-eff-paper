@@ -1,7 +1,7 @@
 # To use the makefile, specify the path to source files under SRC
 # and the path to pandoc-filters under FILTERS
 
-.PHONY: all pdf html clean clean_latex clean_html
+.PHONY: all pdf draft html clean clean_latex clean_html
 
 # path for lagda markdown source file
 SRC := src
@@ -29,22 +29,19 @@ all_latex: $(latex_files)
 main_pdf := $(build_latex)/$(addsuffix .pdf,$(FILENAME))
 draft_pdf := $(build_latex)/draft.pdf
 
-.PHONY : pdf
-pdf: all_lagda_tex all_latex main.pdf
-draft: all_lagda_tex all_latex draft.pdf
-
-LATEXMK_OPTS := -quiet -outdir=$(build_latex) -auxdir=$(build_latex) -pdf -xelatex
-
-LATEX_DEPS := $(latex_files) $(agda_sty) references.bib $(EXTRA_DIRS)
-
-# A pdf for the whole book
-main.pdf: main.tex $(LATEX_DEPS)
+pdf:
+# main.pdf: # main.tex $(LATEX_DEPS) all_lagda_tex all_latex
 	latexmk $(LATEXMK_OPTS) $<
 	cp $(main_pdf) main.pdf
 
-draft.pdf: draft.tex main.tex $(LATEX_DEPS)
+draft:
+# draft.pdf: # draft.tex main.tex # $(LATEX_DEPS) all_lagda_tex all_latex 
 	latexmk $(LATEXMK_OPTS) $<
 	cp $(draft_pdf) draft.pdf
+
+LATEXMK_OPTS := -quiet -outdir=$(build_latex)  -pdf -xelatex
+
+LATEX_DEPS := $(latex_files) $(agda_sty) references.bib $(EXTRA_DIRS)
 
 .PHONY : html
 html: $(html_files) html/$(addsuffix .html,$(FILENAME)) 

@@ -1,0 +1,84 @@
+\section{Gradual Eff}
+
+\newcommand\ruledef{::=}
+\newcommand\rulealt{\;|\;}
+\newcommand\tyarr[2]{#1 \to #2}
+\newcommand\tyany{\star}
+\newcommand\cty[2]{\langle\,#1\,\rangle\,#2}
+\newcommand\tynat{\mathrm{nat}}
+\newcommand\tybool{\mathrm{bool}}
+\newcommand\tyunit{\mathrm{unit}}
+\newcommand\effany{\ding{73}}
+\newcommand\effop{\mathit{op}}
+\newcommand\app[2]{#1\,#2}
+\newcommand\lam[2]{\lambda\, #1 .\, #2}
+\newcommand\cast[2]{#1 \,\MVAt\, #2}
+\newcommand\tbox[2]{#1 \Uparrow #2}
+\newcommand\blame{\mathrm{blame}}
+\newcommand\perform[2]{#1\left[#2\right]}
+\newcommand\handle[2]{\mathbf{with}\,#1\,\mathbf{handle}\,#2}
+
+\begin{figure}
+$$
+\begin{array}{rrcll}
+ \text{Value types} & A, B, C & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{A}{P} \rulealt \tyany & \\
+ \text{Computation types} & P, Q, R & \ruledef & \cty{E}{A} &  \\
+ \text{Effects} & E, F & \ruledef & \effop_1 \dots \effop_n \rulealt \effany & \\
+ \text{Ground types} & G, H & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{\tyany}{\tyany}
+\end{array}
+$$
+\caption{Types}
+\label{fig:types}
+\end{figure}
+
+\begin{figure}
+$$
+\begin{array}{rcll}
+ L, M, N & \ruledef & x & \text{Variable} \\
+         & \rulealt & \lam{x}{M} & \text{Abstraction} \\
+         & \rulealt & \app{L}{M} & \text{Application} \\
+         & \rulealt & k & \text{Constant} \\
+         & \rulealt & M \oplus N & \text{Operator} \\
+         & \rulealt & \cast{M}{p} & \text{Cast} \\
+         & \rulealt & \tbox{M}{G} & \text{Box} \\
+         & \rulealt & \blame & \text{Blame} \\
+         & \rulealt & \perform{\effop}{M} & \text{Operation} \\
+         & \rulealt & \handle{\overline{\perform{\effop_i}{x_i} k_i \mapsto N_i}, x \mapsto L}{M} & \text{Handler}
+\end{array}
+$$
+\caption{Term syntax}
+\label{fig:term-syntax}
+\end{figure}
+
+\begin{figure}
+\caption{Term typing}
+\label{fig:term-typing}
+\end{figure}
+
+\begin{figure}
+$$
+\begin{array}{rcll}
+ p, q, r & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{p}{q} \rulealt p \Uparrow G &
+\end{array}
+$$
+\caption{Cast syntax}
+\label{fig:cast-syntax}
+\end{figure}
+
+\begin{figure}
+\begin{prooftree}
+    \AxiomC{$\kappa \in \{ \tynat, \tybool, \tyunit \}$}
+  \UnaryInfC{$\kappa : \kappa \le \kappa$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$p : A \le A^\prime$}
+    \AxiomC{$q : B \le B^\prime$}
+  \BinaryInfC{$\tyarr{p}{q} : \tyarr{A}{P} \le \tyarr{A^\prime}{P^\prime}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$p : A \le G$}
+  \UnaryInfC{$p\Uparrow G : A \le \tyany$}
+\end{prooftree}
+\caption{Cast typing $p : A \le B$}
+\label{fig:cast-typing}
+\end{figure}

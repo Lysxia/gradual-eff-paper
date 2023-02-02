@@ -48,6 +48,12 @@
 \usepackage{marginnote}
 \usepackage{etoolbox}
 \usepackage{subcaption}
+\usepackage{bbding}
+\usepackage{pifont}
+\let\Cross\undefined % conflict because marvosym also defines it
+\usepackage{marvosym}
+\usepackage{bussproofs}
+\usepackage{bussproofs}
 % \usepackage{algorithmicx}
 
 \makeatletter
@@ -381,19 +387,20 @@ the static argument type of the handler.
 and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
 is less precise than $V$ ($M' \to V' \wedge V \le V'$).
 
-\input{src_tex/Example}
-\input{src_tex/Type}
-\input{src_tex/Core}
-\input{src_tex/Progress}
-\input{src_tex/Prec}
-\input{src_tex/SimAux}
-\input{src_tex/Sim}
+\input{paper/core.tex}
+% \input{src_tex/Example}
+% \input{src_tex/Type}
+% \input{src_tex/Core}
+% \input{src_tex/Progress}
+% \input{src_tex/Prec}
+% \input{src_tex/SimAux}
+% \input{src_tex/Sim}
 
 \appendix
 \section{Appendix}
 \label{sec:appendix}
 
-\input{src_tex/Utils}
+%\input{src_tex/Utils}
 
 \bibliography{references}
 
