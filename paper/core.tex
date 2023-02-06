@@ -26,7 +26,8 @@
 \newcommand\xE{\mathcal{E}}
 \newcommand\xP{\mathcal{P}}
 \newcommand\stepperform{\hookrightarrow}
-\newcommand\allows[2]{\mathrm{allows}(#1,#2)}
+\newcommand\codom[1]{\mathrm{codom}(#1)}
+\newcommand\effid{\mathrm{id}}
 
 \begin{figure}
 $$
@@ -99,13 +100,12 @@ $$
 \begin{figure}
 $$
 \begin{array}{rrcll}
- \text{Casts} & a, b, c & \ruledef & \kappa \rulealt \tyunit \rulealt \rulealt \tyany \tyarr{a}{p} \rulealt a \Uparrow G & \\
+ \text{Casts} & a, b, c & \ruledef & \kappa \rulealt \tyunit \rulealt \tyany \rulealt \tyarr{a}{p} \rulealt a \Uparrow G & \\
  \text{Computation casts} & p, q, r & \ruledef & \cty{e}{a} & \\
- \text{Effect casts} & e & \ruledef & E \rulealt \Uparrow \fori{i}{n}{\effop_i} & \\
- \text{Polarized casts} & {\pm p} & \ruledef & + p \rulealt - p &
+ \text{Effect casts} & e & \ruledef & \effid_E \rulealt \Uparrow \fori{i}{n}{\effop_i} & \\
+ \text{Polarized casts} & {\pm p} & \ruledef & {}+ p \rulealt {}- p &
 \end{array}
 $$
-TODO: This is the wrong minus sign
 \caption{Cast syntax}
 \label{fig:cast-syntax}
 \end{figure}
@@ -139,7 +139,7 @@ TODO: This is the wrong minus sign
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
-  \UnaryInfC{$E : E \le E$}
+  \UnaryInfC{$\effid_E : E \le E$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
@@ -175,9 +175,8 @@ TODO: This is the wrong minus sign
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastWrap-Red}}
-  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\mathrm{id}}{a}})})}{\pm p}})$}
+  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\effid_E}{a}})})}{\pm p}})$}
 \end{prooftree}
-TODO: {Need to construct id cast for every effect}
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastExpand-Red}}
@@ -241,7 +240,7 @@ TODO: {Need to construct id cast for every effect}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$M \stepperform \perform{\effop}{V, \xC}$}
-    \AxiomC{$\allows{\pm e}{\effop}$}
+    \AxiomC{$\effop \in \codom{\pm e}$}
   \BinaryInfC{$\cast{M}{\pm \cty{e}{a}} \stepperform \perform{\effop}{V, \cast{\xC}{\pm \cty{e}{a}}}$}
 \end{prooftree}
 \begin{prooftree}
@@ -252,21 +251,12 @@ TODO: {Need to construct id cast for every effect}
 \end{figure}
 
 \begin{figure}
-\begin{prooftree}
-    \AxiomC{}
-  \UnaryInfC{$\allows{+ \effany}{\effop}$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{}
-  \UnaryInfC{$\allows{+ \Uparrow \fori{i}{n}{\effop_i}}{\effop}$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{1 \le j \le n}
-  \UnaryInfC{$\allows{\pm \fori{i}{n}{\effop_i}}{\effop_j}$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{1 \le j \le n}
-  \UnaryInfC{$\allows{- \Uparrow \fori{i}{n}{\effop_i}}{\effop_j}$}
-\end{prooftree}
-\caption{Operations $\effop$ allowed by a cast $\pm e$}
+\[
+\begin{array}{rcl}
+  \codom{\pm \effid_E} & = & E \\
+  \codom{+ \Uparrow \fori{i}{n}{\effop_i}} & = & \effany \\
+  \codom{- \Uparrow \fori{i}{n}{\effop_i}} & = & \fori{i}{n}{\effop_i}
+\end{array}
+\]
+\caption{Codomain of a cast $\pm e$, used in the definition of $\stepperform$}
 \end{figure}
