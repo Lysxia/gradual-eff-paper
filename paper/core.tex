@@ -16,10 +16,12 @@
 \newcommand\tbox[2]{#1 \Uparrow #2}
 \newcommand\blame{\mathrm{blame}}
 \newcommand\perform[2]{#1\left(#2\right)}
-\newcommand\handle[2]{\mathbf{with}\,#1\,\mathbf{handle}\,#2}
+\newcommand\handle[2]{\mathbf{handle}\,#2\,\{#1\}}
 \newcommand\fori[3]{(#3)_{#1=1\dots #2}}
 \newcommand\treturn[1]{\mathbf{return}\,#1}
-\newcommand\stepto{\to_\mathbf{red}}
+\newcommand\bstepto{\to_\mathbf{base}}
+\newcommand\stepto{\to}
+\newcommand\stepsto{\to^\ast}
 \newcommand\subst[3]{#1[#2/#3]}
 \newcommand\context[2]{#1[#2]}
 \newcommand\xC{\mathcal{C}}
@@ -28,6 +30,11 @@
 \newcommand\stepperform{\hookrightarrow}
 \newcommand\codom[1]{\mathrm{codom}(#1)}
 \newcommand\effid{\mathrm{id}}
+\newcommand\commutel[3]{\mathrm{commute}^l(#1,#2,#3)}
+\newcommand\commuter[3]{\mathrm{commute}^r(#1,#2,#3)}
+
+\newcommand\Term[3]{#1 \vdash #2 : #3}
+\newcommand\TermP[6]{#1 \vdash #2 \le #4 : #3 \le #5 \;|\; #6}
 
 \begin{figure}
 $$
@@ -46,27 +53,25 @@ $$
 \begin{figure}
 $$
 \begin{array}{rrcll}
- Terms &
+ \text{Terms} &
  L, M, N & \ruledef & x & \text{Variable} \\
-         & \rulealt & \lam{x}{M} & \text{Abstraction} \\
-         & \rulealt & \app{L}{M} & \text{Application} \\
-         & \rulealt & k & \text{Constant} \\
-         & \rulealt & M \oplus N & \text{Operator} \\
-         & \rulealt & () & \text{Unit} \\
-         & \rulealt & \cast{M}{{\pm p}} & \text{Cast} \\
-         & \rulealt & \tbox{M}{G} & \text{Box} \\
-         & \rulealt & \blame & \text{Blame} \\
-         & \rulealt & \perform{\effop}{M} & \text{Operation} \\
-         & \rulealt & \handle{H}{M} & \text{Handler} \\
- Handlers &
- H & \ruledef & x \mapsto L, \fori{i}{n}{\perform{\effop_i}{x} k \mapsto N_i} &
+        && \rulealt & \lam{x}{M} & \text{Abstraction} \\
+        && \rulealt & \app{L}{M} & \text{Application} \\
+        && \rulealt & k & \text{Constant} \\
+        && \rulealt & M \oplus N & \text{Operator} \\
+        && \rulealt & () & \text{Unit} \\
+        && \rulealt & \cast{M}{{\pm p}} & \text{Cast} \\
+        && \rulealt & \tbox{M}{G} & \text{Box} \\
+        && \rulealt & \blame & \text{Blame} \\
+        && \rulealt & \perform{\effop}{M} & \text{Operation} \\
+        && \rulealt & \handle{H}{M} & \text{Handler} \\
+ \text{Handlers} &
+ H & \ruledef & \treturn{x} \mapsto L, \fori{i}{n}{\perform{\effop_i}{x} k \mapsto N_i} &
 \end{array}
 $$
 \caption{Term syntax}
 \label{fig:term-syntax}
 \end{figure}
-
-\newcommand\Term[3]{#1 \vdash #2 : #3}
 
 \begin{figure}
 \begin{prooftree}
@@ -163,36 +168,45 @@ $$
 
 \begin{figure}
 \begin{prooftree}
+    \AxiomC{$M \bstepto N$}
+  \UnaryInfC{$\context{\xC}{M} \stepto \context{\xC}{N}$}
+\end{prooftree}
+\caption{Small-step operational semantics}
+\end{figure}
+
+\begin{figure}
+\begin{prooftree}
     \AxiomC{}
     \RightLabel{$\beta$-\textsc{Red}}
-  \UnaryInfC{$\app{(\lam{x}{N})}{V} \stepto \subst{N}{V}{x}$}
+  \UnaryInfC{$\app{(\lam{x}{N})}{V} \bstepto \subst{N}{V}{x}$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$a \in \{\kappa,\tyunit,\tyany\}$}
     \RightLabel{\textsc{CastId-Red}}
-  \UnaryInfC{$\cast{V}{\pm \cty{e}{a}} \stepto V$}
+  \UnaryInfC{$\cast{V}{\pm \cty{e}{a}} \bstepto V$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastWrap-Red}}
-  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\effid_E}{a}})})}{\pm p}})$}
+  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \bstepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\effid_E}{a}})})}{\pm p}})$}
 \end{prooftree}
+TODO: need to know the type of $V$ to find $E$
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastExpand-Red}}
-  \UnaryInfC{$(\cast{V}{+\cty{e}{(a \Uparrow G)}}) \stepto (\cast{V}{+\cty{e}{a}}) \Uparrow G$}
+  \UnaryInfC{$(\cast{V}{+\cty{e}{(a \Uparrow G)}}) \bstepto (\cast{V}{+\cty{e}{a}}) \Uparrow G$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastCollapse-Red}}
-  \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow G)}}) \stepto (\cast{V}{-\cty{e}{a}})$}
+  \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow G)}}) \bstepto (\cast{V}{-\cty{e}{a}})$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$G \neq H$}
     \RightLabel{\textsc{CastCollide-Red}}
-  \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow H)}}) \stepto \blame$}
+  \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow H)}}) \bstepto \blame$}
 \end{prooftree}
-\caption{Operational semantics}
+\caption{Operational semantics: base reduction}
 \end{figure}
 
 \begin{figure}
@@ -200,20 +214,20 @@ $$
     \AxiomC{$M \stepperform \perform{\effop}{V , \xC}$}
     \AxiomC{$\effop \not\in \pm e$}
     \RightLabel{\textsc{EffCast-Red}}
-  \BinaryInfC{$(\cast{M}{\pm\cty{e}{a}}) \stepto \blame$}
+  \BinaryInfC{$(\cast{M}{\pm\cty{e}{a}}) \bstepto \blame$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$M \stepperform \perform{\effop_j}{V , \xC}$}
     \AxiomC{$H = x \mapsto N, \fori{i}{n}{\perform{\effop_i}{x, k} \mapsto N_i}$}
     \RightLabel{\textsc{HandleOp-Red}}
-  \BinaryInfC{$\handle{H}{M} \stepto \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
+  \BinaryInfC{$\handle{H}{M} \bstepto \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$H = \fori{i}{n}{x \mapsto N, \perform{\effop_i}{x, k} \mapsto N_i}$}
     \RightLabel{\textsc{HandleReturn-Red}}
-  \UnaryInfC{$\handle{H}{V} \stepto \subst{N}{V}{x}$}
+  \UnaryInfC{$\handle{H}{V} \bstepto \subst{N}{V}{x}$}
 \end{prooftree}
-\caption{Operational semantics, rules pertaining to effects}
+\caption{Operational semantics: base reduction rules pertaining to effects}
 \end{figure}
 
 \begin{figure}
@@ -259,4 +273,88 @@ $$
 \end{array}
 \]
 \caption{Codomain of a cast $\pm e$, used in the definition of $\stepperform$}
+\end{figure}
+
+\begin{figure}
+\begin{prooftree}
+    \AxiomC{$\TermP{\Gamma}{M}{P}{M^\prime}{Q^\prime}{r}$}
+    \AxiomC{$\commutel{\pm p}{q}{r}$}
+  \BinaryInfC{$\TermP{\Gamma}{\cast{M}{\pm p}}{Q}{M^\prime}{Q^\prime}{q}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\TermP{\Gamma}{M}{P}{M^\prime}{Q^\prime}{r}$}
+    \AxiomC{$\commuter{p}{\pm q}{r}$}
+  \BinaryInfC{$\TermP{\Gamma}{M}{P}{\cast{M^\prime}{\pm q}}{P^\prime}{p}$}
+\end{prooftree}
+\caption{Term precision $\TermP{\Gamma}{M}{P}{M^\prime}{P^\prime}{p}$}
+\end{figure}
+
+\begin{figure}
+\begin{prooftree}
+    \AxiomC{$p \cdot q = r$}
+  \UnaryInfC{$\commutel{+p}{q}{r}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$q = p \cdot r$}
+  \UnaryInfC{$\commutel{-p}{q}{r}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$p \cdot q = r$}
+  \UnaryInfC{$\commuter{p}{+q}{r}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$p = r \cdot q$}
+  \UnaryInfC{$\commuter{p}{-q}{r}$}
+\end{prooftree}
+\caption{Commutativity conditions}
+\end{figure}
+
+\clearpage
+
+\section{Gradual guarantee}
+
+If a term $M^\prime$ is less precise than $M$ and $M$ evaluates to $V$,
+then $M^\prime$ evaluates to some $V^\prime$ less precise than $V$.
+
+\newcommand\wwedge{\quad\wedge\quad}
+
+\[
+\begin{array}{rrcl}
+  & \TermP{}{M}{P}{M^\prime}{P^\prime}{p} & \wedge & M \stepsto V
+\\ \implies \exists V^\prime , & \TermP{}{V}{P}{V^\prime}{P^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
+\end{array}
+\]
+
+Simulation lemma (\Cref{fig:sim}): If $M^\prime$ is less precise than $M$, and $M$ takes one step to $N$,
+then $M^\prime$ steps (in possibly many steps) to some $N^\prime$ less precise than $N$.
+
+\[
+\begin{array}{rrcl}
+  & \TermP{}{M}{P}{M^\prime}{P^\prime}{p} & \wedge & M \stepto N
+\\ \implies \exists N^\prime , & \TermP{}{N}{P}{N^\prime}{P^\prime}{p} & \wedge & M^\prime \stepsto N^\prime
+\end{array}
+\]
+
+Catchup lemma (\Cref{fig:catchup}): if $M^\prime$ is less precise than a value $V$, then $M^\prime$ steps
+to a value $V^\prime$ less precise than $V$.
+
+\[
+\begin{array}{rrcl}
+  & \TermP{}{V}{P}{M^\prime}{P^\prime}{p} & &
+\\ \implies \exists V^\prime , & \TermP{}{V}{P}{V^\prime}{P^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
+\end{array}
+\]
+
+\begin{figure}
+$$
+\input{figures/sim}
+$$
+\caption{Diagram illustrating the simulation lemma}
+\label{fig:sim}
+\end{figure}
+
+\begin{figure}
+$$ \input{figures/catchup} $$
+\caption{Diagram illustrating the catchup lemma}
+\label{fig:catchup}
 \end{figure}
