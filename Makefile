@@ -1,7 +1,9 @@
 # To use the makefile, specify the path to source files under SRC
 # and the path to pandoc-filters under FILTERS
 
-.PHONY: all pdf draft html clean clean_latex clean_html
+.PHONY: default all pdf draft html clean clean_latex clean_html
+
+default: pdf
 
 # path for lagda markdown source file
 SRC := src

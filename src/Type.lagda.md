@@ -406,11 +406,11 @@ Domain and codomain of function precision.
 ```
 dom : ∀ {A B A′ B′} → A ⇒ B ≤ A′ ⇒ B′ → A ≤ A′
 dom id       =  id
-dom (p ⇒ q)  =  p
+dom (a ⇒ p)  =  a
 
 cod : ∀ {A B A′ B′} → A ⇒ B ≤ A′ ⇒ B′ → B ≤ᶜ B′
 cod id       =  ⟨ id ⟩ id
-cod (p ⇒ q)  =  q
+cod (a ⇒ p)  =  p
 ```
 
 The use of these two functions is reminiscent of some gradually-typed

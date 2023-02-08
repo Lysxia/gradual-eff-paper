@@ -18,6 +18,7 @@
 \newcommand\perform[2]{#1\left(#2\right)}
 \newcommand\handle[2]{\mathbf{handle}\,#2\,\{#1\}}
 \newcommand\fori[3]{(#3)_{#1=1\dots #2}}
+\newcommand\foriset[3]{\{#3\}_{#1=1\dots #2}}
 \newcommand\treturn[1]{\mathbf{return}\,#1}
 \newcommand\stepto{\to}
 \newcommand\stepsto{\to^\ast}
@@ -26,14 +27,17 @@
 \newcommand\xC{\mathcal{C}}
 \newcommand\xE{\mathcal{E}}
 \newcommand\xP{\mathcal{P}}
-\newcommand\stepperform{\hookrightarrow}
-\newcommand\codom[1]{\mathrm{codom}(#1)}
+\newcommand\bound[1]{\mathrm{bound}(#1)}
 \newcommand\effid{\mathrm{id}}
 \newcommand\commutel[3]{\mathrm{commute}^l(#1,#2,#3)}
 \newcommand\commuter[3]{\mathrm{commute}^r(#1,#2,#3)}
+\newcommand\cod[1]{\mathrm{cod}(#1)}
+\newcommand\codeff[1]{\mathrm{eff}(#1)}
+\newcommand\dom[1]{\mathrm{dom}(#1)}
+\newcommand\hooks[1]{\mathrm{hooks}(#1)}
 
 \newcommand\Term[3]{#1 \vdash #2 : #3}
-\newcommand\TermP[6]{#1 \vdash #2 \le #4 : #3 \le #5 \;|\; #6}
+\newcommand\TermP[4]{#1 \vdash #2 \le #3 : #4}
 
 \begin{figure}
 $$
@@ -106,7 +110,7 @@ $$
 \begin{array}{rrcll}
  \text{Casts} & a, b, c & \ruledef & \kappa \rulealt \tyunit \rulealt \tyany \rulealt \tyarr{a}{p} \rulealt a \Uparrow G & \\
  \text{Computation casts} & p, q, r & \ruledef & \cty{e}{a} & \\
- \text{Effect casts} & e & \ruledef & \effid_E \rulealt \Uparrow \fori{i}{n}{\effop_i} & \\
+ \text{Effect casts} & e & \ruledef & \effid \rulealt \Uparrow \fori{i}{n}{\effop_i} & \\
  \text{Polarized casts} & {\pm p} & \ruledef & {}+ p \rulealt {}- p &
 \end{array}
 $$
@@ -143,7 +147,7 @@ $$
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
-  \UnaryInfC{$\effid_E : E \le E$}
+  \UnaryInfC{$\effid : E \le E$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
@@ -187,9 +191,8 @@ $$
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastWrap-Red}}
-  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\effid_E}{a}})})}{\pm p}})$}
+  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\effid}{a}})})}{\pm p}})$}
 \end{prooftree}
-TODO: need to know the type of $V$ to find $E$
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastExpand-Red}}
@@ -210,16 +213,18 @@ TODO: need to know the type of $V$ to find $E$
 
 \begin{figure}
 \begin{prooftree}
-    \AxiomC{$M \stepperform \perform{\effop}{V , \xC}$}
-    \AxiomC{$\effop \not\in \pm e$}
+    \AxiomC{$\context{\xC}{\perform{\effop}{V}}$}
+    \AxiomC{$\effop \not\in \bound{\xC}$}
+    \AxiomC{$\effop \in \bound{\pm e}$}
     \RightLabel{\textsc{EffCast-Red}}
-  \BinaryInfC{$(\cast{M}{\pm\cty{e}{a}}) \stepto \blame$}
+  \TrinaryInfC{$(\cast{M}{\pm\cty{e}{a}}) \stepto \blame$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$M \stepperform \perform{\effop_j}{V , \xC}$}
-    \AxiomC{$H = x \mapsto N, \fori{i}{n}{\perform{\effop_i}{x, k} \mapsto N_i}$}
+    \AxiomC{$M = \context{\xC}{\perform{\effop}{V}}$}
+    \AxiomC{$\effop \not\in \bound{\xC}$}
+    \AxiomC{$H = \treturn{x} \mapsto N, \fori{i}{n}{\perform{\effop_i}{x, k} \mapsto N_i}$}
     \RightLabel{\textsc{HandleOp-Red}}
-  \BinaryInfC{$\handle{H}{M} \stepto \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
+  \TrinaryInfC{$\handle{H}{M} \stepto \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$H = \fori{i}{n}{x \mapsto N, \perform{\effop_i}{x, k} \mapsto N_i}$}
@@ -241,51 +246,53 @@ TODO: need to know the type of $V$ to find $E$
 \end{figure}
 
 \begin{figure}
-\begin{prooftree}
-    \AxiomC{}
-  \UnaryInfC{$\perform{\effop}{V} \stepperform \perform{\effop}{V, \square}$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{$M \stepperform \perform{\effop}{V, \xC}$}
-    \AxiomC{$H = x \mapsto N, \fori{i}{n}{\perform{\effop_i}{x, k} \mapsto N_i}$}
-    \AxiomC{$\forall i, \effop \neq \effop_i$}
-  \TrinaryInfC{$\handle{H}{M} \stepperform \perform{\effop}{V, \handle{H}{\xC}}$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{$M \stepperform \perform{\effop}{V, \xC}$}
-    \AxiomC{$\effop \in \codom{\pm e}$}
-  \BinaryInfC{$\cast{M}{\pm \cty{e}{a}} \stepperform \perform{\effop}{V, \cast{\xC}{\pm \cty{e}{a}}}$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{$M \stepperform \perform{\effop}{V, \xC}$}
-  \UnaryInfC{$\xP[M] \stepperform \perform{\effop}{V, \xP[\xC]}$}
-\end{prooftree}
-\caption{Relation $M \stepperform \perform{\effop}{V, \xC}$: $M$ performs $\effop(V)$ in context $\xC$}
-\end{figure}
-
-\begin{figure}
 \[
 \begin{array}{rcl}
-  \codom{\pm\, \effid_E} & = & E \\
-  \codom{+ \Uparrow \fori{i}{n}{\effop_i}} & = & \effany \\
-  \codom{- \Uparrow \fori{i}{n}{\effop_i}} & = & \fori{i}{n}{\effop_i}
+  \bound{\square} & = & \emptyset \\
+  \bound{\context{\xP}{\xC}} & = & \bound{\xC} \\
+  \bound{\handle{H}{\xC}} & = & \hooks{H} \cup \bound{\xC} \\
+  \bound{\cast{\xC}{\pm \cty{e}{a}}} & = & \bound{e} \cup \bound{\xC}
 \end{array}
 \]
-\caption{Codomain of a cast $\pm e$, used in the definition of $\stepperform$}
+A
+\[
+\begin{array}{rcl}
+  \bound{\pm\, \effid} & = & \emptyset \\
+  \bound{+ \Uparrow E} & = & \emptyset \\
+  \bound{- \Uparrow E} & = & \mathbf{Op} - E \\
+  && \quad \makebox[0pt]{\text{where $\mathbf{Op}$ is the set of all operation symbols} }
+\end{array}
+\]
+\[
+\begin{array}{rcl}
+  \hooks{\treturn{x}\mapsto N, \fori{i}{n}{\perform{\effop_i}{x,k} \mapsto N_i}}
+    &=& \foriset{i}{n}{\effop_i}
+\end{array}
+\]
+\caption{Operations bound by evaluation contexts and by effect casts}
 \end{figure}
 
 \begin{figure}
 \begin{prooftree}
-    \AxiomC{$\TermP{\Gamma}{M}{P}{M^\prime}{Q^\prime}{r}$}
+    \AxiomC{$\TermP{\Gamma}{M}{M^\prime}{r}$}
     \AxiomC{$\commutel{\pm p}{q}{r}$}
-  \BinaryInfC{$\TermP{\Gamma}{\cast{M}{\pm p}}{Q}{M^\prime}{Q^\prime}{q}$}
+  \BinaryInfC{$\TermP{\Gamma}{(\cast{M}{\pm p})}{M^\prime}{q}$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$\TermP{\Gamma}{M}{P}{M^\prime}{Q^\prime}{r}$}
+    \AxiomC{$\TermP{\Gamma}{M}{M^\prime}{r}$}
     \AxiomC{$\commuter{p}{\pm q}{r}$}
-  \BinaryInfC{$\TermP{\Gamma}{M}{P}{\cast{M^\prime}{\pm q}}{P^\prime}{p}$}
+  \BinaryInfC{$\TermP{\Gamma}{M}{(\cast{M^\prime}{\pm q})}{p}$}
 \end{prooftree}
-\caption{Term precision $\TermP{\Gamma}{M}{P}{M^\prime}{P^\prime}{p}$}
+\begin{prooftree}
+    \AxiomC{$\TermP{\Gamma, x : \dom{a}}{M}{M^\prime}{\cty{\codeff{a}}{\cod{a}}}$}
+  \UnaryInfC{$\TermP{\Gamma}{\lam{x}{M}}{\lam{x}{M^\prime}}{\cty{e}{a}}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\TermP{\Gamma}{L}{L^\prime}{\cty{\codeff{a}}{a}}$}
+    \AxiomC{$\TermP{\Gamma}{M}{M^\prime}{\cty{\codeff{a}}{\dom{a}}}$}
+  \BinaryInfC{$\TermP{\Gamma}{\app{L}{M}}{\app{L^\prime}{M^\prime}}{\cty{\cod{a}}{\codeff{a}}}$}
+\end{prooftree}
+\caption{Term precision $\TermP{\Gamma}{M}{M^\prime}{p}$}
 \end{figure}
 
 \begin{figure}
@@ -319,8 +326,8 @@ then $M^\prime$ evaluates to some $V^\prime$ less precise than $V$.
 
 \[
 \begin{array}{rrcl}
-  & \TermP{}{M}{P}{M^\prime}{P^\prime}{p} & \wedge & M \stepsto V
-\\ \implies \exists V^\prime , & \TermP{}{V}{P}{V^\prime}{P^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
+  & \TermP{}{M}{M^\prime}{p} & \wedge & M \stepsto V
+\\ \implies \exists V^\prime , & \TermP{}{V}{V^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
 \end{array}
 \]
 
@@ -329,8 +336,8 @@ then $M^\prime$ steps (in possibly many steps) to some $N^\prime$ less precise t
 
 \[
 \begin{array}{rrcl}
-  & \TermP{}{M}{P}{M^\prime}{P^\prime}{p} & \wedge & M \stepto N
-\\ \implies \exists N^\prime , & \TermP{}{N}{P}{N^\prime}{P^\prime}{p} & \wedge & M^\prime \stepsto N^\prime
+  & \TermP{}{M}{M^\prime}{p} & \wedge & M \stepto N
+\\ \implies \exists N^\prime , & \TermP{}{N}{N^\prime}{p} & \wedge & M^\prime \stepsto N^\prime
 \end{array}
 \]
 
@@ -339,8 +346,8 @@ to a value $V^\prime$ less precise than $V$.
 
 \[
 \begin{array}{rrcl}
-  & \TermP{}{V}{P}{M^\prime}{P^\prime}{p} & &
-\\ \implies \exists V^\prime , & \TermP{}{V}{P}{V^\prime}{P^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
+  & \TermP{}{V}{M^\prime}{p} & &
+\\ \implies \exists V^\prime , & \TermP{}{V}{V^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
 \end{array}
 \]
 
