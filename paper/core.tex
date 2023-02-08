@@ -152,8 +152,8 @@ $$
 \begin{minipage}[t]{0.35\textwidth}
 \raggedright \fbox{$p : P \le P^\prime$}
 \begin{prooftree}
-    \AxiomC{$e : E \le E^\prime$}
     \AxiomC{$a : A \le A^\prime$}
+    \AxiomC{$e : E \le E^\prime$}
   \BinaryInfC{$\cty{e}{a} : \cty{E}{A} \le \cty{E^\prime}{A^\prime}$}
 \end{prooftree}
 \end{minipage}
@@ -252,7 +252,7 @@ $$
   \BinaryInfC{$\handle{H}{\context{\xC}{\perform{\effop}{V}}} \quad\stepto\quad \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$H = \fori{i}{n}{x \mapsto N, \perform{\effop_i}{x, k} \mapsto N_i}$}
+    \AxiomC{$H = \fori{i}{n}{\treturn{x} \mapsto N, \perform{\effop_i}{x, k} \mapsto N_i}$}
     \RightLabel{\textsc{Return-Red}}
   \UnaryInfC{$\handle{H}{V} \quad\stepto\quad \subst{N}{V}{x}$}
 \end{prooftree}
