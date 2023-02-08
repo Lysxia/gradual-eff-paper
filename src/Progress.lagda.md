@@ -12,6 +12,7 @@ open import Utils
 open import Type
 open import Core
 
+open import Relation.Unary using (_∪_)
 import Data.List.Relation.Unary.All as All
 ```
 \fi
@@ -228,22 +229,35 @@ cast-effect {Q = ⟨ E ⟩ B} _ = E
 ```
 \fi
 
+```
+forbidden : P =>ᶜ Q → Op → Set
+forbidden (+ x) = λ _ → ⊥
+forbidden (- ⟨ id ⟩ returns) = λ _ → ⊥
+forbidden (- ⟨ ¡≤☆ {E = E} ⟩ returns) = λ e → ¬ e ∈ E
+forbidden (* x) = λ _ → ⊥
+```
+
+```
+-- Set of operations bound by a frame -- cf. Shallow Effect Handlers
+bound : Frame Γ P Q → Op → Set
+bound □ = λ _ → ⊥  -- Empty set
+bound ([ ℰ ]· M) = bound ℰ
+bound (v ·[ ℰ ]) = bound ℰ
+bound ([ ℰ ]⦅ _⊕_ ⦆ N) = bound ℰ
+bound (v ⦅ _⊕_ ⦆[ ℰ ]) = bound ℰ
+bound ([ ℰ ]⇑ g) = bound ℰ
+bound (″perform x [ ℰ ] x₁) = bound ℰ
+bound (′handle H [ ℰ ]) = (_∈ H .Hooks) ∪ bound ℰ
+bound (`cast ±p [ ℰ ]) = forbidden ±p ∪ bound ℰ
+```
+
 `handled e ℰ` means that the operation `e` is handled by the evaluation context `ℰ`:
 either `ℰ` contains a handler where `e` is one of its hooks, or `ℰ` contains a cast
 where `e` is not allowed by the codomain of the cast.
+
 ```
 handled : ∀ e → Frame Γ P Q → Set
-handled e □ = ⊥
-handled e (′handle H [ ℰ ])
-  = e ∈ H .Hooks ⊎ handled e ℰ
-handled {Q = ⟨ E ⟩ _} e (`cast ±p [ ℰ ])
-  = (¬ e ∈☆ E) ⊎ handled e ℰ  -- ±p : P => ⟨ E ⟩ B
-handled e ([ ℰ ]· M) = handled e ℰ
-handled e (M ·[ ℰ ]) = handled e ℰ
-handled e ([ ℰ ]⦅ f ⦆ M) = handled e ℰ
-handled e (M ⦅ f ⦆[ ℰ ]) = handled e ℰ
-handled e ([ ℰ ]⇑ g) = handled e ℰ
-handled e (″perform e′∈E [ ℰ ] eq) = handled e ℰ
+handled e ℰ = bound ℰ e
 ```
 
 For casts, this definition unconditionally checks whether `e` is in the
@@ -258,10 +272,8 @@ upcast-safety : ∀ {Γ P Q} (P≤Q : P ≤ᶜ Q) →
   let  ℰ₀ : Frame Γ P Q
        ℰ₀ = `cast (+ P≤Q) [ □ ] in
   ∀ (e : Op) → e ∈☆ CType.effects P → ¬ handled e ℰ₀
-upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆)
-  = ¬e∈☆ ☆
-upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E)
-  = ¬e∈E e∈E
+upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆
+upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E
 ```
 
 An operation `e` is not handled by a cast `±p` if `e` is not an element of the
@@ -274,10 +286,8 @@ target effect of the cast.
   → ¬ handled e ℰ
     -------------------------
   → ¬ handled e (`cast ±p [ ℰ ])
-¬handled-cast ℰ e∈F ¬e//ℰ (inj₁ ¬e∈F)
-  = ¬e∈F e∈F
-¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ)
-  = ¬e//ℰ e//ℰ
+¬handled-cast {±p = - ⟨ ¡≤☆ ⟩ returns} ℰ (¡ e∈F) ¬e//ℰ (inj₁ ¬e∈F) = ¬e∈F e∈F
+¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
 ```
 
 An operation `e` is not handled by a handler if `e` is not one of its hooks.
@@ -306,6 +316,10 @@ of the handler.
 ```
 
 ```
+postulate TODO : ∀ {a} {A : Set a} → A
+```
+
+```
 ¬handled-∈ : ∀ {e}
     (ℰ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B))
   → ¬ handled e ℰ → e ∈☆ E → e ∈☆ F
@@ -316,8 +330,11 @@ of the handler.
 ¬handled-∈ (v ⦅ _⊕_ ⦆[ ℰ ]) = ¬handled-∈ ℰ
 ¬handled-∈ ([ ℰ ]⇑ g) = ¬handled-∈ ℰ
 ¬handled-∈ (″perform e [ ℰ ] x₁) = ¬handled-∈ ℰ
-¬handled-∈ (`cast ±p [ ℰ ]) ¬e//ℰ e
-  = ¬¬-dec (_ ∈☆? _) (¬e//ℰ ∘ inj₁)
+¬handled-∈ `cast + ⟨ id ⟩ returns [ ℰ ] ¬e//ℰ = ¬handled-∈ ℰ (¬e//ℰ ∘ inj₂)
+¬handled-∈ `cast + ⟨ ¡≤☆ ⟩ returns [ ℰ ] ¬e//ℰ e = ☆
+¬handled-∈ `cast - ⟨ id ⟩ returns [ ℰ ] ¬e//ℰ = ¬handled-∈ ℰ (¬e//ℰ ∘ inj₂)
+¬handled-∈ `cast - ⟨ ¡≤☆ ⟩ returns [ ℰ ] ¬e//ℰ e = ¡ (¬¬-dec (_ ∈? _) (¬e//ℰ ∘ inj₁))
+¬handled-∈ `cast * x [ ℰ ] ¬e//ℰ e = TODO
 ¬handled-∈ (′handle H [ ℰ ]) ¬e//ℰ e
   = ¬∈-handler H (¬handled-∈ ℰ (¬e//ℰ ∘ inj₂) e) (¬e//ℰ ∘ inj₁)
 ```
