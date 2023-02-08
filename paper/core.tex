@@ -28,7 +28,7 @@
 \newcommand\xE{\mathcal{E}}
 \newcommand\xP{\mathcal{P}}
 \newcommand\bound[1]{\mathrm{bound}(#1)}
-\newcommand\effid{\mathrm{id}}
+\newcommand\cid{\mathrm{id}}
 \newcommand\commutel[3]{\mathrm{commute}^l(#1,#2,#3)}
 \newcommand\commuter[3]{\mathrm{commute}^r(#1,#2,#3)}
 \newcommand\cod[1]{\mathrm{cod}(#1)}
@@ -46,7 +46,7 @@ $$
  \text{Value types} & A, B, C & \ruledef & \kappa \rulealt \tyunit \rulealt \tyarr{A}{P} \rulealt \tyany & \\
  \text{Computation types} & P, Q, R & \ruledef & \cty{E}{A} &  \\
  \text{Effects} & E, F & \ruledef & \fori{i}{n}{\effop_i} \rulealt \effany & \\
- \text{Ground types} & G, H & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{\tyany}{\tyany}
+ \text{Ground types} & G & \ruledef & \tynat \rulealt \tybool \rulealt \tyunit \rulealt \tyarr{\tyany}{\tyany}
 \end{array}
 $$
 \caption{Types}
@@ -77,6 +77,7 @@ $$
 \end{figure}
 
 \begin{figure}
+\raggedright\fbox{$\Term{\Gamma}{M}{P}$}
 \begin{prooftree}
     \AxiomC{$\Term{\Gamma}{M}{P}$}
     \AxiomC{$\pm p : P \Rightarrow Q$}
@@ -108,10 +109,13 @@ $$
 \begin{figure}
 $$
 \begin{array}{rrcll}
- \text{Casts} & a, b, c & \ruledef & \kappa \rulealt \tyunit \rulealt \tyany \rulealt \tyarr{a}{p} \rulealt a \Uparrow G & \\
+ \text{Casts} & a, b, c & \ruledef & \cid \rulealt \tyarr{a}{p} \rulealt a \Uparrow G & \\
  \text{Computation casts} & p, q, r & \ruledef & \cty{e}{a} & \\
- \text{Effect casts} & e & \ruledef & \effid \rulealt \Uparrow \fori{i}{n}{\effop_i} & \\
- \text{Polarized casts} & {\pm p} & \ruledef & {}+ p \rulealt {}- p &
+ \text{Effect casts} & e & \ruledef & \cid & \\
+    & & \rulealt & \Uparrow E & \text{with } E = \fori{i}{n}{\effop_i} \text{ (\ie{} $E \not= \effany$)} \\
+ \text{Polarized casts} & {\pm a} & \ruledef & {}+ a \rulealt {}- a & \\
+                        & {\pm p} & \ruledef & {}+ p \rulealt {}- p & \\
+                        & {\pm e} & \ruledef & {}+ e \rulealt {}- e &
 \end{array}
 $$
 \caption{Cast syntax}
@@ -119,17 +123,10 @@ $$
 \end{figure}
 
 \begin{figure}
+\raggedright Value cast typing \fbox{$a : A \le A^\prime$}
 \begin{prooftree}
     \AxiomC{}
-  \UnaryInfC{$\kappa : \kappa \le \kappa$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{}
-  \UnaryInfC{$\tyunit : \tyunit \le \tyunit$}
-\end{prooftree}
-\begin{prooftree}
-    \AxiomC{}
-  \UnaryInfC{$\tyany : \tyany \le \tyany$}
+  \UnaryInfC{$\cid : A \le A$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$a : A \le A^\prime$}
@@ -140,58 +137,82 @@ $$
     \AxiomC{$a : A \le G$}
   \UnaryInfC{$a\Uparrow G : A \le \tyany$}
 \end{prooftree}
+\raggedright Computation cast typing \fbox{$p : P \le P^\prime$}
 \begin{prooftree}
     \AxiomC{$e : E \le E^\prime$}
     \AxiomC{$a : A \le A^\prime$}
   \BinaryInfC{$\cty{e}{a} : \cty{E}{A} \le \cty{E^\prime}{A^\prime}$}
 \end{prooftree}
+\raggedright Effect cast typing \fbox{$e : E \le E^\prime$}
 \begin{prooftree}
     \AxiomC{}
-  \UnaryInfC{$\effid : E \le E$}
+  \UnaryInfC{$\cid : E \le E$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
   \UnaryInfC{$\Uparrow (\effop_i)_{i=1\dots n} : (\effop_i)_{i=1\dots n} \le \effany$}
 \end{prooftree}
-\caption{Cast typing $a : A \le A^\prime$, $p : P \le P^\prime$, $e : E \le E^\prime$}
+\caption{Cast typing}
 \label{fig:cast-typing}
 \end{figure}
 
 \begin{figure}
+\begin{minipage}[t]{0.3\textwidth}
+\raggedright\fbox{$a : A \Rightarrow B$}
 \begin{prooftree}
-    \AxiomC{$p : A \le B$}
-  \UnaryInfC{$+p : A \Rightarrow B$}
+    \AxiomC{$a : A \le A^\prime$}
+  \UnaryInfC{$+a : A \Rightarrow A^\prime$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$p : B \le A$}
-  \UnaryInfC{$-p : A \Rightarrow B$}
+    \AxiomC{$a : A \le A^\prime$}
+  \UnaryInfC{$-a : A^\prime \Rightarrow A$}
 \end{prooftree}
-\caption{Polarised cast typing $\pm p : A \Rightarrow B$}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+\raggedright\fbox{$\pm p : P \Rightarrow Q$}
+\begin{prooftree}
+    \AxiomC{$p : P \le P^\prime$}
+  \UnaryInfC{$+p : P \Rightarrow P^\prime$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$p : P \le P^\prime$}
+  \UnaryInfC{$-p : P^\prime \Rightarrow P$}
+\end{prooftree}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+\raggedright\fbox{$\pm e : E \Rightarrow F$}
+\begin{prooftree}
+    \AxiomC{$e : E \le E^\prime$}
+  \UnaryInfC{$+e : E \Rightarrow E^\prime$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$e : E \le E^\prime$}
+  \UnaryInfC{$-e : E^\prime \Rightarrow E$}
+\end{prooftree}
+\end{minipage}
+\caption{Polarised cast typing}
 \end{figure}
 
 \begin{figure}
+\raggedright Reduction \fbox{$M \to N$}
 \begin{prooftree}
     \AxiomC{$M \stepto N$}
   \UnaryInfC{$\context{\xC}{M} \stepto \context{\xC}{N}$}
 \end{prooftree}
-\caption{Small-step operational semantics}
-\end{figure}
-
-\begin{figure}
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{$\beta$-\textsc{Red}}
   \UnaryInfC{$\app{(\lam{x}{N})}{V} \stepto \subst{N}{V}{x}$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$a \in \{\kappa,\tyunit,\tyany\}$}
+    \AxiomC{}
     \RightLabel{\textsc{CastId-Red}}
-  \UnaryInfC{$\cast{V}{\pm \cty{e}{a}} \stepto V$}
+  \UnaryInfC{$\cast{V}{\pm \cty{e}{\cid}} \stepto V$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{CastWrap-Red}}
-  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\effid}{a}})})}{\pm p}})$}
+  \UnaryInfC{$\cast{V}{\pm\cty{e}{(\tyarr{a}{p})}} \stepto (\lam{x}{\cast{(\app{V}{(\cast{x}{\mp \cty{\cid}{a}})})}{\pm p}})$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{}
@@ -204,14 +225,15 @@ $$
   \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow G)}}) \stepto (\cast{V}{-\cty{e}{a}})$}
 \end{prooftree}
 \begin{prooftree}
-    \AxiomC{$G \neq H$}
+    \AxiomC{$G \neq G^\prime$}
     \RightLabel{\textsc{CastCollide-Red}}
-  \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow H)}}) \stepto \blame$}
+  \UnaryInfC{$(\cast{(V \Uparrow G)}{-\cty{e}{(a \Uparrow G^\prime)}}) \stepto \blame$}
 \end{prooftree}
-\caption{Operational semantics: base reduction}
+\caption{Operational semantics}
 \end{figure}
 
 \begin{figure}
+\raggedright Reduction \fbox{$M \to N$} (continued)
 \begin{prooftree}
     \AxiomC{$\context{\xC}{\perform{\effop}{V}}$}
     \AxiomC{$\effop \not\in \bound{\xC}$}
@@ -224,14 +246,14 @@ $$
     \AxiomC{$\effop \not\in \bound{\xC}$}
     \AxiomC{$H = \treturn{x} \mapsto N, \fori{i}{n}{\perform{\effop_i}{x, k} \mapsto N_i}$}
     \RightLabel{\textsc{HandleOp-Red}}
-  \TrinaryInfC{$\handle{H}{M} \stepto \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
+  \TrinaryInfC{$\handle{H}{M} \quad\stepto\quad \subst{\subst{N_j}{V}{x}}{(\lam{y}{\handle{H}{\context{\xC}{y}}})}{k}]$}
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$H = \fori{i}{n}{x \mapsto N, \perform{\effop_i}{x, k} \mapsto N_i}$}
     \RightLabel{\textsc{HandleReturn-Red}}
-  \UnaryInfC{$\handle{H}{V} \stepto \subst{N}{V}{x}$}
+  \UnaryInfC{$\handle{H}{V} \quad\stepto\quad \subst{N}{V}{x}$}
 \end{prooftree}
-\caption{Operational semantics: base reduction rules pertaining to effects}
+\caption{Operational semantics: rules pertaining to effects}
 \end{figure}
 
 \begin{figure}
@@ -248,16 +270,13 @@ $$
 \begin{figure}
 \[
 \begin{array}{rcl}
+\multicolumn{3}{l}{\fbox{$\bound{\xC}$}} \\
   \bound{\square} & = & \emptyset \\
   \bound{\context{\xP}{\xC}} & = & \bound{\xC} \\
   \bound{\handle{H}{\xC}} & = & \hooks{H} \cup \bound{\xC} \\
-  \bound{\cast{\xC}{\pm \cty{e}{a}}} & = & \bound{e} \cup \bound{\xC}
-\end{array}
-\]
-A
-\[
-\begin{array}{rcl}
-  \bound{\pm\, \effid} & = & \emptyset \\
+  \bound{\cast{\xC}{\pm \cty{e}{a}}} & = & \bound{e} \cup \bound{\xC} \\
+\multicolumn{3}{l}{\fbox{$\bound{e}$}} \\
+  \bound{\pm\, \cid} & = & \emptyset \\
   \bound{+ \Uparrow E} & = & \emptyset \\
   \bound{- \Uparrow E} & = & \mathbf{Op} - E \\
   && \quad \makebox[0pt]{\text{where $\mathbf{Op}$ is the set of all operation symbols} }
@@ -265,6 +284,7 @@ A
 \]
 \[
 \begin{array}{rcl}
+\multicolumn{3}{l}{\fbox{$\hooks{H}$}} \\
   \hooks{\treturn{x}\mapsto N, \fori{i}{n}{\perform{\effop_i}{x,k} \mapsto N_i}}
     &=& \foriset{i}{n}{\effop_i}
 \end{array}
@@ -273,6 +293,7 @@ A
 \end{figure}
 
 \begin{figure}
+\raggedright \fbox{$\TermP{\Gamma}{M}{M^\prime}{p}$}
 \begin{prooftree}
     \AxiomC{$\TermP{\Gamma}{M}{M^\prime}{r}$}
     \AxiomC{$\commutel{\pm p}{q}{r}$}
@@ -290,12 +311,13 @@ A
 \begin{prooftree}
     \AxiomC{$\TermP{\Gamma}{L}{L^\prime}{\cty{\codeff{a}}{a}}$}
     \AxiomC{$\TermP{\Gamma}{M}{M^\prime}{\cty{\codeff{a}}{\dom{a}}}$}
-  \BinaryInfC{$\TermP{\Gamma}{\app{L}{M}}{\app{L^\prime}{M^\prime}}{\cty{\cod{a}}{\codeff{a}}}$}
+  \BinaryInfC{$\TermP{\Gamma}{\app{L}{M}}{\app{L^\prime}{M^\prime}}{\cty{\codeff{a}}{\cod{a}}}$}
 \end{prooftree}
-\caption{Term precision $\TermP{\Gamma}{M}{M^\prime}{p}$}
+\caption{Term precision}
 \end{figure}
 
 \begin{figure}
+\raggedright \fbox{$\commutel{\pm p}{q}{r}$}
 \begin{prooftree}
     \AxiomC{$p \cdot q = r$}
   \UnaryInfC{$\commutel{+p}{q}{r}$}
@@ -304,6 +326,7 @@ A
     \AxiomC{$q = p \cdot r$}
   \UnaryInfC{$\commutel{-p}{q}{r}$}
 \end{prooftree}
+\raggedright \fbox{$\commuter{p}{\pm q}{r}$}
 \begin{prooftree}
     \AxiomC{$p \cdot q = r$}
   \UnaryInfC{$\commuter{p}{+q}{r}$}
