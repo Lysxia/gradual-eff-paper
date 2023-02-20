@@ -1,4 +1,0 @@
-name: gradual-eff
-include: . ../../src
-depend: standard-library-2.0
-flags: --guardedness
