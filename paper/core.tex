@@ -20,8 +20,8 @@
 \newcommand\fori[3]{(#3)_{#1=1\dots #2}}
 \newcommand\foriset[3]{\{#3\}_{#1=1\dots #2}}
 \newcommand\treturn[1]{\mathbf{return}\,#1}
-\newcommand\stepto{\to}
-\newcommand\stepsto{\to^\ast}
+\newcommand\stepto{\rightsquigarrow}
+\newcommand\stepsto{\stepto^\ast}
 \newcommand\subst[3]{#1[#2/#3]}
 \newcommand\context[2]{#1[#2]}
 \newcommand\xC{\mathcal{C}}
@@ -34,6 +34,8 @@
 \newcommand\cod[1]{\mathrm{cod}(#1)}
 \newcommand\codeff[1]{\mathrm{eff}(#1)}
 \newcommand\dom[1]{\mathrm{dom}(#1)}
+\newcommand\typeof[1]{\mathrm{typeof}(#1)}
+\newcommand\dprime{{\prime\prime}}
 
 \newcommand\Term[3]{#1 \vdash #2 : #3}
 \newcommand\TermP[4]{#1 \vdash #2 \le #3 : #4}
@@ -60,7 +62,7 @@ $$
         && \rulealt & \lam{x}{M} & \text{Abstraction} \\
         && \rulealt & \app{L}{M} & \text{Application} \\
         && \rulealt & k & \text{Constant} \\
-        && \rulealt & M \oplus N & \text{Operator} \\
+        && \rulealt & M \oplus N & \text{Operator ($\oplus \in \{+.\times,\wedge,\vee\}$)} \\
         && \rulealt & () & \text{Unit} \\
         && \rulealt & \cast{M}{{\pm p}} & \text{Cast} \\
         && \rulealt & \tbox{M}{G} & \text{Box} \\
@@ -78,9 +80,32 @@ $$
 \begin{figure}
 \raggedright\fbox{$\Term{\Gamma}{M}{P}$}
 \begin{prooftree}
+    \AxiomC{$\Gamma(x) = A$}
+  \UnaryInfC{$\Term{\Gamma}{x}{\cty{E}{A}}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\Term{\Gamma,x : A}{M}{P}$}
+  \UnaryInfC{$\Term{\Gamma}{\lam{x}{M}}{\cty{E}{(A \to P)}}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\Term{\Gamma}{N}{\cty{E}{(A \to \cty{E}{B})}}$}
+    \AxiomC{$\Term{\Gamma}{M}{\cty{E}{A}}$}
+  \BinaryInfC{$\Term{\Gamma}{\app{N}{M}}{\cty{E}{B}}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\typeof{k} = \kappa$}
+  \UnaryInfC{$\Term{\Gamma}{k}{\kappa}$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{$\typeof{\oplus} = \kappa \to \kappa^\prime \to \kappa^\dprime$}
+    \AxiomC{$\Term{\Gamma}{M}{\kappa}$}
+    \AxiomC{$\Term{\Gamma}{N}{\kappa^\prime}$}
+  \TrinaryInfC{$\Term{\Gamma}{M \oplus N}{\kappa^\dprime}$}
+\end{prooftree}
+\begin{prooftree}
     \AxiomC{$\Term{\Gamma}{M}{P}$}
     \AxiomC{$\pm p : P \Rightarrow Q$}
-    \RightLabel{\textsc{}}
+    \RightLabel{\textsc{Cast}}
   \BinaryInfC{$\Term{\Gamma}{\cast{M}{\pm p}}{Q}$}
 \end{prooftree}
 \begin{prooftree}
@@ -96,7 +121,7 @@ $$
 \end{prooftree}
 \begin{prooftree}
     \AxiomC{$\begin{array}{c}E = \fori{i}{n}{\effop_i},F \\ \Term{\Gamma,x:A}{L}{\cty{F}{B}}\end{array}$}
-    \AxiomC{$\begin{array}{c}\fori{i}{n}{\Sigma(\effop_i) = A_i \to B_i} \\ \fori{i}{n}{\Term{\Gamma,x:A_i,k:\tyarr{B_i}{\cty{F}{B}}}{N_i}{\cty{F}{B}}}\end{array}$}
+    \AxiomC{$\begin{array}{c}\fori{i}{n}{\Sigma(\effop_i) = A_i \to B_i} \\ \fori{i}{n}{\Term{\Gamma,x:A_i,k:(\tyarr{B_i}{\cty{F}{B}})}{N_i}{\cty{F}{B}}}\end{array}$}
     \AxiomC{$\Term{\Gamma}{M}{\cty{E}{A}}$}
     \RightLabel{\textsc{Handle}}
   \TrinaryInfC{$\Term{\Gamma}{\handle{\treturn{x} \mapsto L, \fori{i}{n}{\perform{\effop_i}{x,k} \mapsto N_i}}{M}}{\cty{F}{B}}$}
@@ -210,6 +235,11 @@ $$
   \UnaryInfC{$\app{(\lam{x}{N})}{V} \stepto \subst{N}{V}{x}$}
 \end{prooftree}
 \begin{prooftree}
+    \AxiomC{$\llbracket k \oplus k^\prime \rrbracket = k^\dprime$}
+    \RightLabel{$\delta$-\textsc{Red}}
+  \UnaryInfC{$k \oplus k^\prime \stepto k^\dprime$}
+\end{prooftree}
+\begin{prooftree}
     \AxiomC{}
     \RightLabel{\textsc{Id-Red}}
   \UnaryInfC{$\cast{V}{\pm \cty{e}{\cid}} \stepto V$}
@@ -293,6 +323,20 @@ $$
 \end{array}
 \]
 \caption{Operations bound by evaluation contexts and by effect casts}
+\end{figure}
+
+\begin{figure}
+$$
+\begin{array}{rcl|rcl}
+  \dom{\cid} & = & \cid &
+  \dom{a \to \cty{e}{b}} & = & a \\
+  \cod{\cid} & = & \cid &
+  \cod{a \to \cty{e}{b}} & = & b \\
+  \codeff{\cid} & = & \cid &
+  \codeff{a \to \cty{e}{b}} & = & e
+\end{array}
+$$
+\caption{$\dom{a}$, $\cod{a}$, and $\codeff{a}$}
 \end{figure}
 
 \begin{figure}
