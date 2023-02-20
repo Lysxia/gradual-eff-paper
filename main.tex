@@ -272,128 +272,13 @@
 
 \maketitle
 
-TODO: Too many pages. Current page breakdown:
-
-\begin{itemize}
-  \item Intro 1 page
-  \item Motivation 3 pages
-  \item Types and precision 5 pages
-  \item Syntax 4 ages:
-    \begin{itemize}
-    \item Contexts and terms 3 pages
-    \item Values 1 page
-    \end{itemize}
-  \item Operational semantics 11 pages:
-    \begin{itemize}
-    \item Frames 4 pages
-    \item Reduction 5 pages
-    \item Progress and evaluation 2 pages
-    \end{itemize}
-  \item Precision on terms 10 pages
-  \item Simulation proof 20 pages
-\end{itemize}
-
 \section{Introduction}
 
-Algebraic effects~\citep{plotkin2001semantics} and their handlers are an
-approach to computational effects that has seen rapid development in recent
-years, inspiring numerous libraries, experimental programming languages,
-and even features in industrial programming languages such as WebAssembly, OCaml,
-and Haskell.
-
-The problem of typing algebraic effects has been well studied, and solutions
-have been implemented in specialized languages with algebraic effects such as
-Links, Eff, Koka, and Frank. However, for bigger languages, it remains a
-challenge to integrate such \emph{effect systems} with a pre-existing type
-system.
-
-Gradual types~\citep{siek2015} provide a lens through which we may study how
-the programs using the untyped algebraic effects of today are to interact with
-the effect systems of tomorrow. We present a formalization of a
-calculus marrying gradual types with algebraic effects.
-% (using Core Eff~\citep{bauer2015programming}).
-
-\subsection{Migrating to more statically checked code}
-
-\def\dhandler{\texttt{loghandler}_\texttt{untyped}}
-\def\shandler{\texttt{loghandler}_\texttt{typed}}
-\def\dclient{\texttt{client}_\texttt{untyped}}
-\def\sclient{\texttt{client}_\texttt{typed}}
-
-A key motivation for gradual types is to enable gradual migration
-towards more statically typed code.
-
-While Multicore OCaml features effect handlers, but lacks \emph{effect typing}:
-its type system does not keep track of effects yet.
-For instance, imagine a library providing a logging
-handler, and some client for that handler.
-The following table shows the types one could give to such functions without
-effect typing---like in OCaml, and with effect typing---like in Koka.
-The handler expects a computation which uses the \texttt{log} effect, and
-produces a pure computation---with the empty \texttt{ε} effect.
-
-If a future version of OCaml is to feature effect typing,
-it may well become a challenge to migrate existing code that could
-not rely on effect typing. If the friction is too great, this may lead
-to a schism, splitting OCaml into OCaml-without-effect-typing and
-OCaml-with-effect-typing.
-
-$$
-\begin{array}{rl|rl}
-  \dhandler & \texttt{: (unit ⇒ unit) ⇒ unit} & \dclient & \texttt{: unit ⇒ unit} \\
-  \shandler & \texttt{: (unit ⇒ <log> unit) ⇒ <ε> unit} & \sclient & \texttt{: unit ⇒ <log> unit}
-\end{array}
-$$
-
-It would thus be desirable to migrate the existing ecosystem progressively.
-In our example we might want to migrate the handler first, while keeping the
-whole program---with the effect-untyped client---functional. Or vice versa.
-
-$$
-\input{figures/migration.tex}
-$$
-
-When the typed handler is applied to the untyped client,
-the composed program is considered well-typed,
-and casts are inserted to ensure that the client indeed behaves as expected by
-the static argument type of the handler.
-
-\paragraph{Contributions}
-
-\begin{itemize}
-  \item We formalize a cast calculus with effect handlers.
-    Our work is mechanized in the Agda proof assistant.
-    (Syntax (\Cref{types-and-effects,syntax}), operational semantics (\Cref{operational-semantics}).)
-    \Cref{types-and-effects}~defines types and the precision relation on types.
-  \item We prove that this language satisfies the gradual guarantee
-    (\Cref{gradual-guarantee}).
-\end{itemize}
-
-\paragraph{TODO}
-
-\begin{itemize}
-  \item Is there an interesting claim to make about "proof-relevant" precision?
-  \item Should we formalize a surface calculus that compiles to the cast calculus?
-  \item Should we prove the second direction of the gradual guarantee? (via determinism?)
-\end{itemize}
-
-\paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
-and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
-is less precise than $V$ ($M' \to V' \wedge V \le V'$).
-
-\input{src_tex/Example}
-\input{src_tex/Type}
 \input{src_tex/Core}
-\input{src_tex/Progress}
-\input{src_tex/Prec}
-\input{src_tex/SimAux}
-\input{src_tex/Sim}
 
 \appendix
 \section{Appendix}
 \label{sec:appendix}
-
-\input{src_tex/Utils}
 
 \bibliography{references}
 
