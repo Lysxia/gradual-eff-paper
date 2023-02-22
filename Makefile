@@ -31,8 +31,13 @@ all_latex: $(latex_files)
 main_pdf := $(build_latex)/$(addsuffix .pdf,$(FILENAME))
 draft_pdf := $(build_latex)/draft.pdf
 
+OTT_OPTS=-tex_suppress_category S -tex_wrap false -tex_show_meta false
+
+paper/geff.tex paper/geff_override.tex: paper/geff.ott paper/override.tex
+	ott $(OTT_OPTS) -tex_name_prefix GE -tex_filter paper/override.tex paper/geff_override.tex -i $< -o $@
+
 # main.pdf: # main.tex $(LATEX_DEPS) all_lagda_tex all_latex
-pdf:
+pdf: paper/geff.tex paper/geff_override.tex
 	latexmk $(LATEXMK_OPTS) main.tex
 	cp $(main_pdf) main.pdf
 

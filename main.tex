@@ -53,8 +53,15 @@
 \let\Cross\undefined % conflict because marvosym also defines it
 \usepackage{marvosym}
 \usepackage{bussproofs}
-\usepackage{xtab}
+\usepackage{supertabular}
+%\usepackage{xtab}
+\usepackage{ottlayout}
 % \usepackage{algorithmicx}
+
+\include{paper/geff}
+% \include{paper/geff_override}
+\renewcommand{\GEpremise}[1]{ #1 \hspace{2em}}
+\renewcommand{\GEusedrule}[1]{\[#1\]\vspace{0.5em}}
 
 \makeatletter
 \font\uwavefont=lasyb10 scaled 652

@@ -1,0 +1,117 @@
+metavar x, y, k ::= {{ com Variables }}
+metavar op ::= {{ com Operations }}
+metavar kappa {{ tex \kappa }} ::= {{ com Base types }}
+
+grammar
+M, N, L :: 'M_' ::= {{ com Terms }}
+| x :: :: Var {{ com Variable }}
+| N M :: :: App {{ com Application }}
+| fun x . M :: :: Lam {{ com Abstraction }}
+| k :: :: Kon {{ com Constant }}
+| M + N :: :: Prim {{ com Primitive function }}
+| () :: :: Unit {{ com Unit }}
+| cast pp M :: :: Cast {{ com Cast }} {{ tex [[M]] \,\MVAt\, [[pp]] }}
+| M Up G :: :: Box {{ com Box }}
+| blame :: :: Blame {{ com Blame }}
+| op ( M ) :: :: Operation {{ com Operation }}
+| handle H M :: :: Handle {{ com Handler }}
+| ( M ) :: M :: Parens
+
+H :: 'H_' ::= {{ com Handlers }}
+| return x . M ; opclauses :: :: Handler
+
+P :: 'P_' ::= {{ com Computation type }}
+| A ! E :: :: Dirt
+
+A, B, C :: 'A_' ::= {{ com Value type }}
+| star :: :: Any {{ com Dynamic type }}
+| A -> P :: :: Arr {{ com Function type }}
+| kappa :: :: Kon {{ com Base type }}
+| unit :: :: Unit {{ com Unit type }}
+| ( A ) :: :: Parens
+
+G :: 'G_' ::= {{ com Ground type }}
+| star -> star :: :: Arr
+| kappa :: :: Kappa
+| unit :: :: Unit
+
+E, F :: 'E_' ::= {{ com Effect }}
+| wstar :: :: Any {{ com Dynamic effect }}
+| ops :: :: Ops {{ com Static effect }} {{ tex \fori{i}{n}{op_i} }}
+
+pp {{ tex {\pm p} }} :: 'pp_' ::= {{ com Polarized computation cast }}
+| + p :: :: Plus
+| - p :: :: Minus
+
+pa {{ tex {\pm a} }} :: 'pa_' ::= {{ com Polarized value cast }}
+| + a :: :: Plus
+| - a :: :: Minus
+
+pe {{ tex {\pm e} }} :: 'pe_' ::= {{ com Polarized effect cast }}
+| + e :: :: Plus
+| - e :: :: Minus
+
+p :: 'p_' ::= {{ com Computation cast }}
+| a ! e :: :: Dirt
+
+a :: 'a_' ::= {{ com Value cast }}
+| id :: :: Id
+| a -> p :: :: Arr
+
+e :: 'e_' ::= {{ com Effect cast }}
+| id :: :: Id
+| Up E :: :: Up {{ com Downcast ($[[E]] = \fori{i}{n}{op_i}$) }}
+
+Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}
+| empty :: :: Empty
+| Gamma , x : A :: :: Cons
+
+terminals :: 'terminals_' ::=
+| fun :: :: lambda {{ tex \lambda }}
+| nil :: :: nil {{ tex \cdot }}
+| -> :: :: Arrow {{ tex \rightarrow }}
+| --> :: :: LongArrow {{ tex \longrightarrow }}
+| => :: :: Bigarrow {{ tex \Rightarrow }}
+| ~> :: :: Sqgarrow {{ tex \leadsto }}
+| |- :: :: Turnstile {{ tex \vdash }}
+| |-? :: :: Turnstileq {{ tex \vdash_{?} }}
+| |-! :: :: Turnstilee {{ tex \vdash_{!} }}
+| |-?! :: :: Turnstilex {{ tex \vdash_{?!} }}
+| in :: :: In {{ tex \in }}
+| in? :: :: Inq {{ tex \in_{?} }}
+| subset :: :: Subset {{ tex \subseteq }}
+| subset? :: :: Subsetq {{ tex \subseteq_{?} }}
+| Up :: :: Up {{ tex \Uparrow }}
+| wstar :: :: WStar {{ tex \mbox{\tiny\FiveStarOpen} }}
+| star :: :: Star {{ tex \star }}
+
+formula :: formula_ ::=
+| judgement :: :: judgement
+| ( formula ) :: M :: brackets
+| formula AND formula' :: M :: space {{ tex [[formula]] \quad\quad [[formula']] }}
+| x /= y :: :: VarNEq {{ tex [[x]] \neq [[y]] }}
+
+defns
+Jtype :: '' ::=
+
+defn
+Gamma |- x : A :: ::varhastype:: '' by
+
+  ----- :: var_here
+  Gamma , x : A |- x : A
+
+  x /= y
+  ----- :: var_there
+  Gamma , y : B |- x : A
+  
+defn
+Gamma |- M : P :: ::hastype:: '' by
+
+  Gamma |- x : A
+  ----- :: type_var
+  Gamma |- x : A ! E
+
+  Gamma |- N : (A -> B ! E) ! E
+  Gamma |- M : A ! E
+  ----- :: type_app
+  Gamma |- N M : B ! E
