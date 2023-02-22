@@ -1,7 +1,7 @@
 metavar x, y, k ::= {{ com Variables }}
 metavar op ::= {{ com Operations }}
 metavar kappa {{ tex \kappa }} ::= {{ com Base types }}
-indexvar i ::=
+indexvar i, j ::=
 
 grammar
 M, N, L :: 'M_' ::= {{ com Terms }}
@@ -17,6 +17,15 @@ M, N, L :: 'M_' ::= {{ com Terms }}
 | op ( M ) :: :: Operation {{ com Operation }}
 | handle H M :: :: Handle {{ com Handler }}
 | ( M ) :: M :: Parens
+| N [ M / x ] :: M :: Subst
+| Ex [ M ] :: M :: ESubst
+| H ** op :: M :: HOpClause {{ tex [[H]]_{[[op]]} }}
+| H return :: M :: HReturnClause {{ tex [[H]]^{\mathrm{ret} } }}
+
+V :: V_ ::= {{ com Values }}
+| fun x . M :: :: Lam {{ com Abstraction }}
+| k :: :: Kon {{ com Constant }}
+| V Up G :: :: Box {{ com Box }}
 
 H :: 'H_' ::= {{ com Handlers }}
 | return x . M ; opclauses :: :: Handler
@@ -29,7 +38,7 @@ A, B, C :: 'A_' ::= {{ com Value type }}
 | A -> P :: :: Arr {{ com Function type }}
 | kappa :: :: Kon {{ com Base type }}
 | unit :: :: Unit {{ com Unit type }}
-| ( A ) :: :: Parens
+| ( A ) :: S:: Parens
 | G :: M :: Ground
 
 G :: 'G_' ::= {{ com Ground type }}
@@ -44,21 +53,30 @@ E, F :: 'E_' ::= {{ com Effect }}
 pp {{ tex {\pm p} }} :: 'pp_' ::= {{ com Polarized computation cast }}
 | + p :: :: Plus
 | - p :: :: Minus
+| +- p :: X:: PM
+| -+ p :: X:: MP
 
 pa {{ tex {\pm a} }} :: 'pa_' ::= {{ com Polarized value cast }}
 | + a :: :: Plus
 | - a :: :: Minus
+| +- a :: X:: PM
+| -+ a :: X:: MP
 
 pe {{ tex {\pm e} }} :: 'pe_' ::= {{ com Polarized effect cast }}
 | + e :: :: Plus
 | - e :: :: Minus
+| +- e :: X:: PM
+| -+ e :: X:: MP
 
 p :: 'p_' ::= {{ com Computation cast }}
 | a ! e :: :: Dirt
+| ( p ) :: X:: Parens
 
 a :: 'a_' ::= {{ com Value cast }}
 | id :: :: Id
 | a -> p :: :: Arr
+| a Up G :: :: Box
+| ( a ) :: X:: Parens
 
 e :: 'e_' ::= {{ com Effect cast }}
 | id :: :: Id
@@ -67,6 +85,9 @@ e :: 'e_' ::= {{ com Effect cast }}
 Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}
 | empty :: :: Empty
 | Gamma , x : A :: :: Cons
+
+Ex {{ tex \mathcal{E} }} :: E_ ::= {{ com Evaluation contexts }}
+
 
 terminals :: 'terminals_' ::=
 | fun :: :: lambda {{ tex \lambda }}
@@ -86,18 +107,28 @@ terminals :: 'terminals_' ::=
 | Up :: :: Up {{ tex \Uparrow }}
 | wstar :: :: WStar {{ tex \mbox{\tiny\FiveStarOpen} }}
 | star :: :: Star {{ tex \star }}
+| \le :: :: LessThan {{ tex \le }}
+| +- :: :: PlusMinus {{ tex \pm }}
+| -+ :: :: MinusPlus {{ tex \mp }}
 
 formula :: formula_ ::=
 | judgement :: :: judgement
 | ( formula ) :: M :: brackets
 | formula AND formula' :: M :: space {{ tex [[formula]] \quad\quad [[formula']] }}
 | x /= y :: :: VarNEq {{ tex [[x]] \neq [[y]] }}
+| G /= G' :: :: GNEq {{ tex [[G]] \neq [[G']] }}
 | k \in denote kappa :: :: kon_typing {{ tex [[k]] \in \llbracket [[kappa]] \rrbracket }}
 | primtype kappa kappa' kappa'' :: :: primitive_typing {{ tex \mathrm{typeof}(+) = ([[kappa]] \to [[kappa']] \to [[kappa'']]) }}
 | sig op A B :: :: SigOp {{ tex \mathrm{sig}([[op]]) = [[A]] \to [[B]] }}
+| k'' is denote k + k' :: :: DenOp {{ tex [[k'']] = \llbracket [[k]] + [[k']] \rrbracket }}
+| op is not bound Ex :: :: Unbound_Ex {{ tex [[op]] \not\in \mathrm{bound}([[Ex]]) }}
+| op is bound pe :: :: Bound_pe {{ tex [[op]] \in \mathrm{bound}([[pe]]) }}
+| op is bound H :: :: Bound_H {{ tex [[op]] \in \mathrm{bound}([[H]]) }}
 
+
+subrules
+  V <:: M
 % Nope
-% subrules
 %   G <:: A
 
 defns
@@ -168,6 +199,44 @@ defn
 Gamma |- H : P => Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ has handler type $[[P]] \Rightarrow [[Q]]$ }} by
 
 defn
+pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] \Rightarrow [[Q]]$ }} by
+
+  p : P \le Q
+  ----- :: ptype_plus
+  + p : P => Q
+
+  p : Q \le P
+  ----- :: ptype_minus
+  - p : P => Q
+
+defn
+p : P \le P' :: ::phastype:: '' {{ com $[[p]]$ is evidence that $[[P]]$ is more precise than $[[P']]$ }} by
+
+  a : A \le A'
+  e : E \le E'
+  ----- :: ptype_dirt
+  a ! e : A ! E \le A' ! E'
+
+defn
+a : A \le A' :: ::ahastype:: '' {{ com $[[a]]$ is evidence that $[[A]]$ is more precise than $[[A']]$ }} by
+
+  ----- :: atype_id
+  id : A \le A
+
+  a : A \le A'
+  p : P \le P'
+  ----- :: atype_arr
+  a -> p : A -> P \le A' -> P'
+
+  a : A \le G
+  ----- :: atype_box
+  a Up G : A \le star
+
+defn
+e : E \le E' :: ::ehastype:: '' {{ com $[[e]]$ is evidence that $[[E]]$ is more precise than $[[E']]$ }} by
+
+
+defn
 op in E :: ::opin:: '' {{ com operation $[[op]]$ is a member of effect $[[E]]$ }} by
 
   ----- :: op_in_star
@@ -175,3 +244,55 @@ op in E :: ::opin:: '' {{ com operation $[[op]]$ is a member of effect $[[E]]$ }
 
   ----- :: op_in_ops
   opi in ops
+
+defns
+Jred :: '' ::=
+
+defn
+M --> N :: ::red:: '' by
+
+  ----- :: beta
+  (fun x . N) V --> N [ V / x ]
+
+  k'' is denote k + k'
+  ----- :: delta
+  k + k' --> k''
+
+  ----- :: cast_id
+  cast +- id ! e V --> V
+
+  ----- :: cast_wrap
+  cast +- ( a -> p ) ! e (fun x . M) --> fun x . cast +- p ( M ( cast -+ a ! id x ) )
+
+  ----- :: cast_expand
+  cast + (a Up G) ! e V --> ( cast + a ! e V ) Up G
+
+  ----- :: cast_collapse
+  cast - (a Up G) ! e (V Up G) --> cast - a ! e V
+
+  G /= G'
+  ----- :: cast_collide
+  cast - (a Up G) ! e (V Up G') --> blame
+
+  op is not bound Ex
+  op is bound +- e
+  ----- :: cast_op_blame
+  cast +- a ! e Ex [ op ( V ) ] --> blame
+
+  op is not bound Ex
+  op is bound H
+  ----- :: handle_op
+  handle H Ex [ op ( V ) ] --> H ** op [ V / x ] [ (fun y . handle H Ex [ y ]) / k ]
+
+  ----- :: handle_return
+  handle H V --> H return [ V / x ]
+
+defn
+gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$ with type-precision $[[p]]$ }} by
+
+  gamma |- x : a
+  ----- :: prec_var
+  gamma |- x <= x : a ! e
+
+defn
+gamma |- x : a :: ::varprec:: '' by
