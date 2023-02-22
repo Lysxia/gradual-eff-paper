@@ -1,6 +1,7 @@
 metavar x, y, k ::= {{ com Variables }}
 metavar op ::= {{ com Operations }}
 metavar kappa {{ tex \kappa }} ::= {{ com Base types }}
+indexvar i ::=
 
 grammar
 M, N, L :: 'M_' ::= {{ com Terms }}
@@ -21,7 +22,7 @@ H :: 'H_' ::= {{ com Handlers }}
 | return x . M ; opclauses :: :: Handler
 
 P, Q :: 'P_' ::= {{ com Computation type }}
-| A ! E :: :: Dirt
+| A ! E :: :: Dirt % {{ tex [[A]]\;!\;[[E]] }}
 
 A, B, C :: 'A_' ::= {{ com Value type }}
 | star :: :: Any {{ com Dynamic type }}
@@ -29,6 +30,7 @@ A, B, C :: 'A_' ::= {{ com Value type }}
 | kappa :: :: Kon {{ com Base type }}
 | unit :: :: Unit {{ com Unit type }}
 | ( A ) :: :: Parens
+| G :: M :: Ground
 
 G :: 'G_' ::= {{ com Ground type }}
 | star -> star :: :: Arr
@@ -92,6 +94,11 @@ formula :: formula_ ::=
 | x /= y :: :: VarNEq {{ tex [[x]] \neq [[y]] }}
 | k \in denote kappa :: :: kon_typing {{ tex [[k]] \in \llbracket [[kappa]] \rrbracket }}
 | primtype kappa kappa' kappa'' :: :: primitive_typing {{ tex \mathrm{typeof}(+) = ([[kappa]] \to [[kappa']] \to [[kappa'']]) }}
+| sig op A B :: :: SigOp {{ tex \mathrm{sig}([[op]]) = [[A]] \to [[B]] }}
+
+% Nope
+% subrules
+%   G <:: A
 
 defns
 Jtype :: '' ::=
@@ -138,3 +145,33 @@ Gamma |- M : P :: ::hastype:: '' {{ com in context $[[Gamma]]$, $[[M]]$ has type
   Gamma |- M : P
   ----- :: type_cast
   Gamma |- cast pp M : Q
+
+  Gamma |- M : G ! E
+  ----- :: type_box
+  Gamma |- M Up G : star ! E
+
+  ----- :: type_blame
+  Gamma |- blame : P
+
+  sig op A B
+  op in E
+  Gamma |- M : A ! E
+  ----- :: type_op
+  Gamma |- op ( M ) : B ! E
+
+  Gamma |- H : P => Q
+  Gamma |- M : P
+  ----- :: type_handle
+  Gamma |- handle H M : Q
+
+defn
+Gamma |- H : P => Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ has handler type $[[P]] \Rightarrow [[Q]]$ }} by
+
+defn
+op in E :: ::opin:: '' {{ com operation $[[op]]$ is a member of effect $[[E]]$ }} by
+
+  ----- :: op_in_star
+  op in wstar
+
+  ----- :: op_in_ops
+  opi in ops
