@@ -206,46 +206,46 @@
 %\usepackage[dvipsnames]{xcolor}
 \usepackage{tikz-cd}
 \usepackage{fancyvrb}
-\usepackage{src_tex/agda}
-
-\setlength{\mathindent}{0.4cm} % Left margin of code blocks - also used by some math environments but I hope we don't care
-\fvset{xleftmargin=\mathindent}  % insert the left margin in verbatim
-\newenvironment{myDisplay}
- {\VerbatimEnvironment
- \begin{verbatim}
- }
- {\end{verbatim}
- }
-
-\newenvironment{ignore}{}{}
-
-\def\tightlist{}  % pandoc output uses this command
-
-% Setup Agda fonts
-% https://lists.chalmers.se/pipermail/agda/2016/008662.html
-\renewcommand{\AgdaCodeStyle}{\small}
-% Use special font families without TeX ligatures for Agda code. (This
-% code is inspired by a comment by Enrico Gregorio/egreg:
-% https://tex.stackexchange.com/a/103078.) 
-\newfontfamily{\AgdaSerifFont}{DejaVu Serif}
-\newfontfamily{\AgdaSansSerifFont}{DejaVu Sans}
-\newfontfamily{\AgdaMonoFont}{DejaVu Sans Mono}
-\newfontfamily{\AgdaTypewriterFont}{DejaVu mononoki Symbola Droid}
-\newfontfamily{\DejaVuSerif}{DejaVu Serif}
-\newfontfamily{\Cardo}{Cardo}
-
-% Fallbacks for unsupported planes
-% https://blog.michael.franzl.name/2014/12/10/xelatex-unicode-font-fallback-unsupported-characters/
-% \usepackage{ucharclasses}
-% \setTransitionTo{MathematicalAlphanumericSymbols}{\DejaVuSerif}
-% \setTransitionTo{MiscellaneousMathematicalSymbolsB}{\Cardo}
-
-\renewcommand{\AgdaSpace}{\texttt{\AgdaMonoFont{} }}
-\renewcommand{\AgdaFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
-\renewcommand{\AgdaKeywordFontStyle}[1]{{\AgdaMonoFont{}#1}}
-\renewcommand{\AgdaStringFontStyle}[1]{{\AgdaMonoFont{}#1}}
-\renewcommand{\AgdaCommentFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
-\renewcommand{\AgdaBoundFontStyle}[1]{\AgdaTypewriterFont{}#1}
+% \usepackage{src_tex/agda}
+%
+% \setlength{\mathindent}{0.4cm} % Left margin of code blocks - also used by some math environments but I hope we don't care
+% \fvset{xleftmargin=\mathindent}  % insert the left margin in verbatim
+% \newenvironment{myDisplay}
+%  {\VerbatimEnvironment
+%  \begin{verbatim}
+%  }
+%  {\end{verbatim}
+%  }
+%
+% \newenvironment{ignore}{}{}
+%
+% \def\tightlist{}  % pandoc output uses this command
+%
+% % Setup Agda fonts
+% % https://lists.chalmers.se/pipermail/agda/2016/008662.html
+% \renewcommand{\AgdaCodeStyle}{\small}
+% % Use special font families without TeX ligatures for Agda code. (This
+% % code is inspired by a comment by Enrico Gregorio/egreg:
+% % https://tex.stackexchange.com/a/103078.)
+% \newfontfamily{\AgdaSerifFont}{DejaVu Serif}
+% \newfontfamily{\AgdaSansSerifFont}{DejaVu Sans}
+% \newfontfamily{\AgdaMonoFont}{DejaVu Sans Mono}
+% \newfontfamily{\AgdaTypewriterFont}{DejaVu mononoki Symbola Droid}
+% \newfontfamily{\DejaVuSerif}{DejaVu Serif}
+% \newfontfamily{\Cardo}{Cardo}
+%
+% % Fallbacks for unsupported planes
+% % https://blog.michael.franzl.name/2014/12/10/xelatex-unicode-font-fallback-unsupported-characters/
+% % \usepackage{ucharclasses}
+% % \setTransitionTo{MathematicalAlphanumericSymbols}{\DejaVuSerif}
+% % \setTransitionTo{MiscellaneousMathematicalSymbolsB}{\Cardo}
+%
+% \renewcommand{\AgdaSpace}{\texttt{\AgdaMonoFont{} }}
+% \renewcommand{\AgdaFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+% \renewcommand{\AgdaKeywordFontStyle}[1]{{\AgdaMonoFont{}#1}}
+% \renewcommand{\AgdaStringFontStyle}[1]{{\AgdaMonoFont{}#1}}
+% \renewcommand{\AgdaCommentFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+% \renewcommand{\AgdaBoundFontStyle}[1]{\AgdaTypewriterFont{}#1}
 
 % hyperref should be loaded last
 \usepackage{hyperref}
