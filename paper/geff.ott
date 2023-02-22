@@ -20,7 +20,7 @@ M, N, L :: 'M_' ::= {{ com Terms }}
 | N [ M / x ] :: M :: Subst
 | Ex [ M ] :: M :: ESubst
 | H ** op :: M :: HOpClause {{ tex [[H]]_{[[op]]} }}
-| H return :: M :: HReturnClause {{ tex [[H]]^{\mathrm{ret} } }}
+| H return :: M :: HReturnClause {{ tex [[H]]^{\mathbf{ret} } }}
 
 V :: V_ ::= {{ com Values }}
 | fun x . M :: :: Lam {{ com Abstraction }}
@@ -68,7 +68,7 @@ pe {{ tex {\pm e} }} :: 'pe_' ::= {{ com Polarized effect cast }}
 | +- e :: X:: PM
 | -+ e :: X:: MP
 
-p :: 'p_' ::= {{ com Computation cast }}
+p, q, r :: 'p_' ::= {{ com Computation cast }}
 | a ! e :: :: Dirt
 | ( p ) :: X:: Parens
 
@@ -77,10 +77,13 @@ a :: 'a_' ::= {{ com Value cast }}
 | a -> p :: :: Arr
 | a Up G :: :: Box
 | ( a ) :: X:: Parens
+| dom ( a ) :: X:: Dom {{ tex \mathbf{dom}([[a]]) }}
+| cod ( a ) :: X:: Cod {{ tex \mathbf{cod}([[a]]) }}
 
 e :: 'e_' ::= {{ com Effect cast }}
 | id :: :: Id
 | Up E :: :: Up {{ com Downcast ($[[E]] = \fori{i}{n}{op_i}$) }}
+| eff ( a ) :: X:: Eff {{ tex \mathbf{eff}([[a]]) }}
 
 Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}
 | empty :: :: Empty
@@ -88,6 +91,10 @@ Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}
 
 Ex {{ tex \mathcal{E} }} :: E_ ::= {{ com Evaluation contexts }}
 
+
+gamma {{ tex \gamma }} :: g_ ::= {{ com Precision contexts }}
+| empty :: :: Empty
+| gamma , x : a :: :: Cons
 
 terminals :: 'terminals_' ::=
 | fun :: :: lambda {{ tex \lambda }}
@@ -107,7 +114,7 @@ terminals :: 'terminals_' ::=
 | Up :: :: Up {{ tex \Uparrow }}
 | wstar :: :: WStar {{ tex \mbox{\tiny\FiveStarOpen} }}
 | star :: :: Star {{ tex \star }}
-| \le :: :: LessThan {{ tex \le }}
+| <= :: :: LessThan {{ tex \le }}
 | +- :: :: PlusMinus {{ tex \pm }}
 | -+ :: :: MinusPlus {{ tex \mp }}
 
@@ -118,13 +125,14 @@ formula :: formula_ ::=
 | x /= y :: :: VarNEq {{ tex [[x]] \neq [[y]] }}
 | G /= G' :: :: GNEq {{ tex [[G]] \neq [[G']] }}
 | k \in denote kappa :: :: kon_typing {{ tex [[k]] \in \llbracket [[kappa]] \rrbracket }}
-| primtype kappa kappa' kappa'' :: :: primitive_typing {{ tex \mathrm{typeof}(+) = ([[kappa]] \to [[kappa']] \to [[kappa'']]) }}
-| sig op A B :: :: SigOp {{ tex \mathrm{sig}([[op]]) = [[A]] \to [[B]] }}
+| primtype kappa kappa' kappa'' :: :: primitive_typing {{ tex \mathbf{typeof}(+) = ([[kappa]] \to [[kappa']] \to [[kappa'']]) }}
+| sig op A B :: :: SigOp {{ tex \mathbf{sig}([[op]]) = [[A]] \to [[B]] }}
 | k'' is denote k + k' :: :: DenOp {{ tex [[k'']] = \llbracket [[k]] + [[k']] \rrbracket }}
-| op is not bound Ex :: :: Unbound_Ex {{ tex [[op]] \not\in \mathrm{bound}([[Ex]]) }}
-| op is bound pe :: :: Bound_pe {{ tex [[op]] \in \mathrm{bound}([[pe]]) }}
-| op is bound H :: :: Bound_H {{ tex [[op]] \in \mathrm{bound}([[H]]) }}
-
+| op is not bound Ex :: :: Unbound_Ex {{ tex [[op]] \not\in \mathbf{bound}([[Ex]]) }}
+| op is bound pe :: :: Bound_pe {{ tex [[op]] \in \mathbf{bound}([[pe]]) }}
+| op is bound H :: :: Bound_H {{ tex [[op]] \in \mathbf{bound}([[H]]) }}
+| commutel pp q r :: :: CommuteL {{ tex \mathbf{commute}^L([[pp]], [[q]], [[r]]) }}
+| commuter p pp r :: :: CommuteR {{ tex \mathbf{commute}^R([[p]], [[pp]], [[r]]) }}
 
 subrules
   V <:: M
@@ -201,39 +209,39 @@ Gamma |- H : P => Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ ha
 defn
 pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] \Rightarrow [[Q]]$ }} by
 
-  p : P \le Q
+  p : P <= Q
   ----- :: ptype_plus
   + p : P => Q
 
-  p : Q \le P
+  p : Q <= P
   ----- :: ptype_minus
   - p : P => Q
 
 defn
-p : P \le P' :: ::phastype:: '' {{ com $[[p]]$ is evidence that $[[P]]$ is more precise than $[[P']]$ }} by
+p : P <= P' :: ::phastype:: '' {{ com $[[p]]$ is evidence that $[[P]]$ is more precise than $[[P']]$ }} by
 
-  a : A \le A'
-  e : E \le E'
+  a : A <= A'
+  e : E <= E'
   ----- :: ptype_dirt
-  a ! e : A ! E \le A' ! E'
+  a ! e : A ! E <= A' ! E'
 
 defn
-a : A \le A' :: ::ahastype:: '' {{ com $[[a]]$ is evidence that $[[A]]$ is more precise than $[[A']]$ }} by
+a : A <= A' :: ::ahastype:: '' {{ com $[[a]]$ is evidence that $[[A]]$ is more precise than $[[A']]$ }} by
 
   ----- :: atype_id
-  id : A \le A
+  id : A <= A
 
-  a : A \le A'
-  p : P \le P'
+  a : A <= A'
+  p : P <= P'
   ----- :: atype_arr
-  a -> p : A -> P \le A' -> P'
+  a -> p : A -> P <= A' -> P'
 
-  a : A \le G
+  a : A <= G
   ----- :: atype_box
-  a Up G : A \le star
+  a Up G : A <= star
 
 defn
-e : E \le E' :: ::ehastype:: '' {{ com $[[e]]$ is evidence that $[[E]]$ is more precise than $[[E']]$ }} by
+e : E <= E' :: ::ehastype:: '' {{ com $[[e]]$ is evidence that $[[E]]$ is more precise than $[[E']]$ }} by
 
 
 defn
@@ -293,6 +301,28 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   gamma |- x : a
   ----- :: prec_var
   gamma |- x <= x : a ! e
+
+  gamma |- N <= N' : a ! eff ( a )
+  gamma |- M <= M' : dom ( a ) ! eff ( a )
+  ----- :: prec_app
+  gamma |- N M <= N M' : cod ( a ) ! eff ( a )
+
+  gamma , x : dom ( a ) |- M <= M' : cod ( a ) ! eff ( a )
+  ----- :: prec_abs
+  gamma |- fun x . M <= fun x . M' : a ! e
+
+  ----- :: prec_kon
+  gamma |- k <= k : id ! e
+
+  gamma |- M <= M' : r
+  commutel pp q r
+  ----- :: prec_cast_left
+  gamma |- cast pp M <= M' : q
+
+  gamma |- M <= M' : r
+  commuter p +- q r
+  ----- :: prec_cast_right
+  gamma |- M <= cast +- q M' : p
 
 defn
 gamma |- x : a :: ::varprec:: '' by
