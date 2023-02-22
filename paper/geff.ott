@@ -42,13 +42,13 @@ A, B, C :: 'A_' ::= {{ com Value type }}
 | G :: M :: Ground
 
 G :: 'G_' ::= {{ com Ground type }}
-| star -> star :: :: Arr
+| star -> star ! wstar :: :: Arr
 | kappa :: :: Kappa
 | unit :: :: Unit
 
 E, F :: 'E_' ::= {{ com Effect }}
 | wstar :: :: Any {{ com Dynamic effect }}
-| ops :: :: Ops {{ com Static effect }} {{ tex \fori{i}{n}{op_i} }}
+| ops :: :: Ops {{ com Static effect }} {{ tex \foriset{i}{n}{op_i} }}
 
 pp {{ tex {\pm p} }} :: 'pp_' ::= {{ com Polarized computation cast }}
 | + p :: :: Plus
@@ -72,7 +72,7 @@ p, q, r :: 'p_' ::= {{ com Computation cast }}
 | a ! e :: :: Dirt
 | ( p ) :: X:: Parens
 
-a :: 'a_' ::= {{ com Value cast }}
+a, b, c :: 'a_' ::= {{ com Value cast }}
 | id :: :: Id
 | a -> p :: :: Arr
 | a Up G :: :: Box
@@ -82,7 +82,7 @@ a :: 'a_' ::= {{ com Value cast }}
 
 e :: 'e_' ::= {{ com Effect cast }}
 | id :: :: Id
-| Up E :: :: Up {{ com Downcast ($[[E]] = \fori{i}{n}{op_i}$) }}
+| Up E :: :: Up {{ com Downcast ($[[E]] = \foriset{i}{n}{op_i}$) }}
 | eff ( a ) :: X:: Eff {{ tex \mathbf{eff}([[a]]) }}
 
 Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}
@@ -101,7 +101,8 @@ terminals :: 'terminals_' ::=
 | nil :: :: nil {{ tex \cdot }}
 | -> :: :: Arrow {{ tex \rightarrow }}
 | --> :: :: LongArrow {{ tex \longrightarrow }}
-| => :: :: Bigarrow {{ tex \Rightarrow }}
+| => :: :: Bigarrow {{ tex \lessgtr }}
+| ==> :: :: Biglongarrow {{ tex \Longrightarrow }}
 | ~> :: :: Sqgarrow {{ tex \leadsto }}
 | |- :: :: Turnstile {{ tex \vdash }}
 | |-? :: :: Turnstileq {{ tex \vdash_{?} }}
@@ -131,8 +132,10 @@ formula :: formula_ ::=
 | op is not bound Ex :: :: Unbound_Ex {{ tex [[op]] \not\in \mathbf{bound}([[Ex]]) }}
 | op is bound pe :: :: Bound_pe {{ tex [[op]] \in \mathbf{bound}([[pe]]) }}
 | op is bound H :: :: Bound_H {{ tex [[op]] \in \mathbf{bound}([[H]]) }}
-| commutel pp q r :: :: CommuteL {{ tex \mathbf{commute}^L([[pp]], [[q]], [[r]]) }}
-| commuter p pp r :: :: CommuteR {{ tex \mathbf{commute}^R([[p]], [[pp]], [[r]]) }}
+| commutesl pp q r :: :: CommuteL {{ tex \mathbf{commutes}^L([[pp]], [[q]], [[r]]) }}
+| commutesr p pp r :: :: CommuteR {{ tex \mathbf{commutes}^R([[p]], [[pp]], [[r]]) }}
+| commutesl pa b c :: :: CommuteLa {{ tex \mathbf{commutes}^L([[pa]], [[b]], [[c]]) }}
+| commutesr a pa c :: :: CommuteRa {{ tex \mathbf{commutes}^R([[a]], [[pa]], [[c]]) }}
 
 subrules
   V <:: M
@@ -198,13 +201,13 @@ Gamma |- M : P :: ::hastype:: '' {{ com in context $[[Gamma]]$, $[[M]]$ has type
   ----- :: type_op
   Gamma |- op ( M ) : B ! E
 
-  Gamma |- H : P => Q
+  Gamma |- H : P ==> Q
   Gamma |- M : P
   ----- :: type_handle
   Gamma |- handle H M : Q
 
 defn
-Gamma |- H : P => Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ has handler type $[[P]] \Rightarrow [[Q]]$ }} by
+Gamma |- H : P ==> Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ has handler type $[[P]] \Longrightarrow [[Q]]$ }} by
 
 defn
 pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] \Rightarrow [[Q]]$ }} by
@@ -216,6 +219,17 @@ pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] \Rightarrow [[Q]
   p : Q <= P
   ----- :: ptype_minus
   - p : P => Q
+
+defn
+pa : A => B :: ::pahastype:: '' {{ com $[[pa]]$ has type $[[A]] \Rightarrow [[B]]$ }} by
+
+  a : A <= B
+  ----- :: atype_plus
+  + a : A => B
+
+  a : B <= A
+  ----- :: atype_minus
+  - a : A => B
 
 defn
 p : P <= P' :: ::phastype:: '' {{ com $[[p]]$ is evidence that $[[P]]$ is more precise than $[[P']]$ }} by
@@ -243,6 +257,11 @@ a : A <= A' :: ::ahastype:: '' {{ com $[[a]]$ is evidence that $[[A]]$ is more p
 defn
 e : E <= E' :: ::ehastype:: '' {{ com $[[e]]$ is evidence that $[[E]]$ is more precise than $[[E']]$ }} by
 
+  ----- :: etype_id
+  id : E <= E
+
+  ----- :: etype_up
+  Up E : E <= wstar
 
 defn
 op in E :: ::opin:: '' {{ com operation $[[op]]$ is a member of effect $[[E]]$ }} by
@@ -314,15 +333,54 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   ----- :: prec_kon
   gamma |- k <= k : id ! e
 
-  gamma |- M <= M' : r
-  commutel pp q r
-  ----- :: prec_cast_left
-  gamma |- cast pp M <= M' : q
+  gamma |- M <= M' : id ! e
+  gamma |- N <= N' : id ! e
+  ----- :: prec_prim
+  gamma |- M + N <= M' + N' : id ! e
 
   gamma |- M <= M' : r
-  commuter p +- q r
+  commutesl pp q r
+  ----- :: prec_cast_left
+  gamma |- (cast pp M) <= M' : q
+
+  gamma |- M <= M' : r
+  commutesr p +- q r
   ----- :: prec_cast_right
-  gamma |- M <= cast +- q M' : p
+  gamma |- M <= (cast +- q M') : p
+
+  gamma |- M <= M' : id ! e
+  ----- :: prec_box
+  gamma |- (M Up G) <= (M' Up G) : id ! e
+
+  gamma |- M <= M' : a ! e
+  ----- :: prec_box_right
+  gamma |- M <= (M' Up G) : (a Up G) ! e
+
+  ----- :: prec_blame
+  gamma |- blame <= M : p
+
+  % TODO: There's a generalization here in the Agda code
+  gamma |- fun x . M <= fun x . M' : c ! e
+  commutesl +- a -> p b c
+  ----- :: prec_wrap_left
+  gamma |- (fun x . cast +- p ( M ( cast -+ a ! id x ) )) <= fun x . M' : b ! e
+
+  gamma |- fun x . M <= fun x . M' : c ! e
+  commutesr a +- b -> p c
+  ----- :: prec_wrap_right
+  gamma |- fun x . M <= (fun x . cast +- p ( M' ( cast -+ a ! id x ) )) : b ! e
+
+  gamma |- M <= M' : id ! e
+  ----- :: prec_op
+  gamma |- op ( M ) <= op ( M' ) : id ! e
+
+  gamma |- M <= M' : p
+  gamma |- H <= H' : p ==> q
+  ----- :: prec_handle
+  gamma |- handle H M <= handle H' M' : q
+
+defn
+gamma |- H <= H' : p ==> q :: ::hprec:: '' by
 
 defn
 gamma |- x : a :: ::varprec:: '' by
