@@ -20,7 +20,7 @@ M, N, L :: 'M_' ::= {{ com Terms }}
 H :: 'H_' ::= {{ com Handlers }}
 | return x . M ; opclauses :: :: Handler
 
-P :: 'P_' ::= {{ com Computation type }}
+P, Q :: 'P_' ::= {{ com Computation type }}
 | A ! E :: :: Dirt
 
 A, B, C :: 'A_' ::= {{ com Value type }}
@@ -90,12 +90,14 @@ formula :: formula_ ::=
 | ( formula ) :: M :: brackets
 | formula AND formula' :: M :: space {{ tex [[formula]] \quad\quad [[formula']] }}
 | x /= y :: :: VarNEq {{ tex [[x]] \neq [[y]] }}
+| k \in denote kappa :: :: kon_typing {{ tex [[k]] \in \llbracket [[kappa]] \rrbracket }}
+| primtype kappa kappa' kappa'' :: :: primitive_typing {{ tex \mathrm{typeof}(+) = ([[kappa]] \to [[kappa']] \to [[kappa'']]) }}
 
 defns
 Jtype :: '' ::=
 
 defn
-Gamma |- x : A :: ::varhastype:: '' by
+Gamma |- x : A :: ::varhastype:: '' {{ com in context $[[Gamma]]$, $[[x]]$ has type $[[A]]$ }} by
 
   ----- :: var_here
   Gamma , x : A |- x : A
@@ -105,7 +107,7 @@ Gamma |- x : A :: ::varhastype:: '' by
   Gamma , y : B |- x : A
   
 defn
-Gamma |- M : P :: ::hastype:: '' by
+Gamma |- M : P :: ::hastype:: '' {{ com in context $[[Gamma]]$, $[[M]]$ has type $[[P]]$ }} by
 
   Gamma |- x : A
   ----- :: type_var
@@ -115,3 +117,24 @@ Gamma |- M : P :: ::hastype:: '' by
   Gamma |- M : A ! E
   ----- :: type_app
   Gamma |- N M : B ! E
+
+  Gamma , x : A |- M : B ! E
+  ----- :: type_abs
+  Gamma |- fun x . M : (A -> B ! E) ! F
+
+  k \in denote kappa
+  ----- :: type_kon
+  Gamma |- k : kappa ! E
+
+  primtype kappa kappa' kappa''
+  Gamma |- M : kappa ! E
+  Gamma |- N : kappa' ! E
+  ----- :: type_prim
+  Gamma |- M + N : kappa'' ! E
+
+  ----- :: type_unit
+  Gamma |- () : unit ! E
+
+  Gamma |- M : P
+  ----- :: type_cast
+  Gamma |- cast pp M : Q
