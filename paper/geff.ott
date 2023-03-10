@@ -1,7 +1,7 @@
 metavar x, y, k ::= {{ com Variables }}
 metavar op ::= {{ com Operations }}
 metavar kappa {{ tex \kappa }} ::= {{ com Base types }}
-indexvar i, j ::=
+indexvar i, j, n ::=
 
 grammar
 M, N, L :: 'M_' ::= {{ com Terms }}
@@ -11,7 +11,8 @@ M, N, L :: 'M_' ::= {{ com Terms }}
 | k :: :: Kon {{ com Constant }}
 | M + N :: :: Prim {{ com Primitive function }}
 | () :: :: Unit {{ com Unit }}
-| cast pp M :: :: Cast {{ com Cast }} {{ tex [[M]] \,\MVAt\, [[pp]] }}
+| cast pa M :: :: Cast {{ com Value cast }} {{ tex [[M]] \,\MVAt\, [[pa]] }}
+| ecast pe M :: :: ECast {{ com Effect cast }} {{ tex [[M]] \,!\, [[pe]] }}
 | M Up G :: :: Box {{ com Box }}
 | blame :: :: Blame {{ com Blame }}
 | op ( M ) :: :: Operation {{ com Operation }}
@@ -28,7 +29,10 @@ V :: V_ ::= {{ com Values }}
 | V Up G :: :: Box {{ com Box }}
 
 H :: 'H_' ::= {{ com Handlers }}
-| return x . M ; opclauses :: :: Handler
+| return x . M ; opclause1 .. opclausen :: :: Handler
+
+opclause :: 'opclause_' ::=
+| op x k . M :: :: OpClause
 
 P, Q :: 'P_' ::= {{ com Computation type }}
 | A ! E :: :: Dirt % {{ tex [[A]]\;!\;[[E]] }}
@@ -49,6 +53,7 @@ G :: 'G_' ::= {{ com Ground type }}
 E, F :: 'E_' ::= {{ com Effect }}
 | wstar :: :: Any {{ com Dynamic effect }}
 | ops :: :: Ops {{ com Static effect }} {{ tex \foriset{i}{n}{op_i} }}
+| opi .. opj :: S:: Ops2
 
 pp {{ tex {\pm p} }} :: 'pp_' ::= {{ com Polarized computation cast }}
 | + p :: :: Plus
@@ -59,8 +64,8 @@ pp {{ tex {\pm p} }} :: 'pp_' ::= {{ com Polarized computation cast }}
 pa {{ tex {\pm a} }} :: 'pa_' ::= {{ com Polarized value cast }}
 | + a :: :: Plus
 | - a :: :: Minus
-| +- a :: X:: PM
-| -+ a :: X:: MP
+| +- a :: X:: PM {{ tex {\pm [[a]]} }}
+| -+ a :: X:: MP {{ tex {\mp [[a]]} }}
 
 pe {{ tex {\pm e} }} :: 'pe_' ::= {{ com Polarized effect cast }}
 | + e :: :: Plus
@@ -80,7 +85,7 @@ a, b, c :: 'a_' ::= {{ com Value cast }}
 | dom ( a ) :: X:: Dom {{ tex \mathbf{dom}([[a]]) }}
 | cod ( a ) :: X:: Cod {{ tex \mathbf{cod}([[a]]) }}
 
-e :: 'e_' ::= {{ com Effect cast }}
+e, f :: 'e_' ::= {{ com Effect cast }}
 | id :: :: Id
 | Up E :: :: Up {{ com Downcast ($[[E]] = \foriset{i}{n}{op_i}$) }}
 | eff ( a ) :: X:: Eff {{ tex \mathbf{eff}([[a]]) }}
@@ -90,7 +95,17 @@ Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}
 | Gamma , x : A :: :: Cons
 
 Ex {{ tex \mathcal{E} }} :: E_ ::= {{ com Evaluation contexts }}
-
+| square :: :: ExEmpty
+| Ex M :: :: ExAppL
+| V Ex :: :: ExAppR
+| Ex + M :: :: ExPrimL
+| V + Ex :: :: ExPrimR
+| cast pa Ex :: :: ExCast
+| ecast pe Ex :: :: ExECast
+| Ex Up G :: :: ExBox
+| op ( Ex ) :: :: ExOperation
+| handle H Ex :: :: ExHandle
+| ( Ex ) :: M:: ExParens
 
 gamma {{ tex \gamma }} :: g_ ::= {{ com Precision contexts }}
 | empty :: :: Empty
@@ -101,12 +116,12 @@ terminals :: 'terminals_' ::=
 | nil :: :: nil {{ tex \cdot }}
 | -> :: :: Arrow {{ tex \rightarrow }}
 | --> :: :: LongArrow {{ tex \longrightarrow }}
-| => :: :: Bigarrow {{ tex \lessgtr }}
+| => :: :: Bigarrow {{ tex \Rightarrow }}
 | ==> :: :: Biglongarrow {{ tex \Longrightarrow }}
 | ~> :: :: Sqgarrow {{ tex \leadsto }}
 | |- :: :: Turnstile {{ tex \vdash }}
 | |-? :: :: Turnstileq {{ tex \vdash_{?} }}
-| |-! :: :: Turnstilee {{ tex \vdash_{!} }}
+| |-! :: :: Turnstilpe {{ tex \vdash_{!} }}
 | |-?! :: :: Turnstilex {{ tex \vdash_{?!} }}
 | in :: :: In {{ tex \in }}
 | in? :: :: Inq {{ tex \in_{?} }}
@@ -118,6 +133,7 @@ terminals :: 'terminals_' ::=
 | <= :: :: LessThan {{ tex \le }}
 | +- :: :: PlusMinus {{ tex \pm }}
 | -+ :: :: MinusPlus {{ tex \mp }}
+| square :: :: Square {{ tex \square }}
 
 formula :: formula_ ::=
 | judgement :: :: judgement
@@ -136,6 +152,8 @@ formula :: formula_ ::=
 | commutesr p pp r :: :: CommuteR {{ tex \mathbf{commutes}^R([[p]], [[pp]], [[r]]) }}
 | commutesl pa b c :: :: CommuteLa {{ tex \mathbf{commutes}^L([[pa]], [[b]], [[c]]) }}
 | commutesr a pa c :: :: CommuteRa {{ tex \mathbf{commutes}^R([[a]], [[pa]], [[c]]) }}
+| formula implies formula' :: :: Implies {{ tex [[formula]] \implies [[formula']] }}
+| formula vee formula' :: :: Vee {{ tex [[formula]] \vee [[formula']] }}
 
 subrules
   V <:: M
@@ -184,9 +202,15 @@ Gamma |- M : P :: ::hastype:: '' {{ com in context $[[Gamma]]$, $[[M]]$ has type
   ----- :: type_unit
   Gamma |- () : unit ! E
 
-  Gamma |- M : P
+  Gamma |- M : A ! E
+  pa : A => B
   ----- :: type_cast
-  Gamma |- cast pp M : Q
+  Gamma |- cast pa M : B ! E
+
+  Gamma |- M : A ! E
+  pe : E => F
+  ----- :: type_ecast
+  Gamma |- ecast pe M : A ! F
 
   Gamma |- M : G ! E
   ----- :: type_box
@@ -207,10 +231,27 @@ Gamma |- M : P :: ::hastype:: '' {{ com in context $[[Gamma]]$, $[[M]]$ has type
   Gamma |- handle H M : Q
 
 defn
-Gamma |- H : P ==> Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ has handler type $[[P]] \Longrightarrow [[Q]]$ }} by
+Gamma |- H : P ==> Q :: ::hashtype:: '' {{ com in context $[[Gamma]]$, $[[H]]$ has type $[[P]] \Longrightarrow [[Q]]$ }} by
+
+  Gamma , x : A |- M : B ! F
+  sig opi Ai Bi
+  Gamma , x : Ai , k : Bi -> B ! F |- Mi : B ! F
+  F = ops + E
+  ----- :: type_handler
+  Gamma |- return x . M ; op1 x k . M1 .. opn x k . Mn : A ! E ==> B ! F
 
 defn
-pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] \Rightarrow [[Q]]$ }} by
+  F = ops + E :: ::effadd:: '' {{ com effect addition }} by
+
+  ----- :: effadd_any
+  wstar = ops + wstar
+
+  {{ TODO }}
+  ----- :: effadd_concat
+  F = ops + E
+
+defn
+pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] [[=>]] [[Q]]$ }} by
 
   p : P <= Q
   ----- :: ptype_plus
@@ -221,7 +262,7 @@ pp : P => Q :: ::pphastype:: '' {{ com $[[pp]]$ has type $[[P]] \Rightarrow [[Q]
   - p : P => Q
 
 defn
-pa : A => B :: ::pahastype:: '' {{ com $[[pa]]$ has type $[[A]] \Rightarrow [[B]]$ }} by
+pa : A => B :: ::pahastype:: '' {{ com $[[pa]]$ has type $[[A]] [[=>]] [[B]]$ }} by
 
   a : A <= B
   ----- :: atype_plus
@@ -230,6 +271,17 @@ pa : A => B :: ::pahastype:: '' {{ com $[[pa]]$ has type $[[A]] \Rightarrow [[B]
   a : B <= A
   ----- :: atype_minus
   - a : A => B
+
+defn
+pe : E => F :: ::pehastype:: '' {{ com $[[pe]]$ has type $[[E]] [[=>]] [[F]]$ }} by
+
+  e : E <= F
+  ----- :: etype_plus
+  + e : E => F
+
+  e : F <= E
+  ----- :: etype_minus
+  - e : E => F
 
 defn
 p : P <= P' :: ::phastype:: '' {{ com $[[p]]$ is evidence that $[[P]]$ is more precise than $[[P']]$ }} by
@@ -286,25 +338,25 @@ M --> N :: ::red:: '' by
   k + k' --> k''
 
   ----- :: cast_id
-  cast +- id ! e V --> V
+  cast +- id V --> V
 
   ----- :: cast_wrap
-  cast +- ( a -> p ) ! e (fun x . M) --> fun x . cast +- p ( M ( cast -+ a ! id x ) )
+  cast +- ( a -> b ! e ) (fun x . M) --> fun x . ecast +- e (cast +- b ( M ( cast -+ a x ) ))
 
   ----- :: cast_expand
-  cast + (a Up G) ! e V --> ( cast + a ! e V ) Up G
+  cast + (a Up G) V --> ( cast + a V ) Up G
 
   ----- :: cast_collapse
-  cast - (a Up G) ! e (V Up G) --> cast - a ! e V
+  cast - (a Up G) (V Up G) --> cast - a V
 
   G /= G'
   ----- :: cast_collide
-  cast - (a Up G) ! e (V Up G') --> blame
+  cast - (a Up G) (V Up G') --> blame
 
   op is not bound Ex
   op is bound +- e
   ----- :: cast_op_blame
-  cast +- a ! e Ex [ op ( V ) ] --> blame
+  cast +- a (Ex [ op ( V ) ]) --> blame
 
   op is not bound Ex
   op is bound H
@@ -338,15 +390,15 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   ----- :: prec_prim
   gamma |- M + N <= M' + N' : id ! e
 
-  gamma |- M <= M' : r
-  commutesl pp q r
+  gamma |- M <= M' : a ! e
+  commutesl +- b a b'
   ----- :: prec_cast_left
-  gamma |- (cast pp M) <= M' : q
+  gamma |- (cast +- b M) <= M' : b' ! e
 
-  gamma |- M <= M' : r
-  commutesr p +- q r
+  gamma |- M <= M' : a ! e
+  commutesr a +- b' b
   ----- :: prec_cast_right
-  gamma |- M <= (cast +- q M') : p
+  gamma |- M <= (cast +- b' M') : b ! e
 
   gamma |- M <= M' : id ! e
   ----- :: prec_box
@@ -363,7 +415,7 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   gamma |- fun x . M <= fun x . M' : c ! e
   commutesl +- a -> p b c
   ----- :: prec_wrap_left
-  gamma |- (fun x . cast +- p ( M ( cast -+ a ! id x ) )) <= fun x . M' : b ! e
+  gamma |- (fun x . cast +- a ( M ( cast -+ a x ) )) <= fun x . M' : b ! e
 
   gamma |- fun x . M <= fun x . M' : c ! e
   commutesr a +- b -> p c
@@ -381,6 +433,11 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
 
 defn
 gamma |- H <= H' : p ==> q :: ::hprec:: '' by
+
+  gamma , x : a |- M <= M' : b ! f
+  gamma , x : id , k : id -> b ! f |- Mi <= Mi' : b ! f
+  ----- :: prec_handler
+  gamma |- return x . M ; op1 x k . M1 .. opn x k . Mn <= return x . M' ; op1 x k . M1' .. opn x k . Mn' : a ! e ==> b ! f
 
 defn
 gamma |- x : a :: ::varprec:: '' by
