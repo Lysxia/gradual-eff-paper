@@ -415,12 +415,12 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   gamma |- fun x . M <= fun x . M' : c ! e
   commutesl +- a -> p b c
   ----- :: prec_wrap_left
-  gamma |- (fun x . cast +- a ( M ( cast -+ a x ) )) <= fun x . M' : b ! e
+  gamma |- (fun x . ecast +- e cast +- b ( M ( cast -+ a x ) )) <= fun x . M' : b ! e
 
   gamma |- fun x . M <= fun x . M' : c ! e
-  commutesr a +- b -> p c
+  commutesr c +- (a -> b ! e) c'
   ----- :: prec_wrap_right
-  gamma |- fun x . M <= (fun x . cast +- p ( M' ( cast -+ a ! id x ) )) : b ! e
+  gamma |- fun x . M <= (fun x . ecast +- e cast +- b ( M' ( cast -+ a x ) )) : c' ! e
 
   gamma |- M <= M' : id ! e
   ----- :: prec_op
