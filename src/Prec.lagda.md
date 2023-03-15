@@ -24,7 +24,7 @@ private variable
   Γ Γ′ Γ″ Δ Δ′ : Context
   P P′ P″ Q Q′ R R′ : CType
   A A′ A″ B B′ B″ C : Type
-  E E′ F F′ : Effect
+  E E′ E″ F F′ : Effect
   P≤ : P ≤ᶜ P′
   Q≤ : Q ≤ᶜ Q′
   A≤ : A ≤ A′
@@ -100,7 +100,7 @@ right-idᴳ (Γ≤Δ ▷ p) rewrite right-idᴳ Γ≤Δ
 
 ## Precision on variables
 
-Variable precision `Γ≤ ⊢ x ≤ˣ x′ ⦂ A≤` relates variables `x` and `x′` that
+Variable precision `Γ≤ ⊢ x ≤ˣ x′` relates variables `x` and `x′` that
 structurally represent the same natural number, \ie{} the same index in
 contexts of the same length.
 
@@ -111,26 +111,24 @@ of indices.
 
 \iffalse
 ```
-infix 3 _⊢_≤ˣ_⦂_
+infix 3 _⊢_≤ˣ_
 ```
 \fi
 
 ```
-data _⊢_≤ˣ_⦂_ : Γ ≤ᴳ Γ′
-              → Γ ∋ A
-              → Γ′ ∋ A′
-              → A ≤ A′
-              → Set where
+data _⊢_≤ˣ_ : Γ ≤ᴳ Γ′
+            → Γ ∋ A
+            → Γ′ ∋ A′
+            → Set where
 
   Z≤Z : {Γ≤ : Γ ≤ᴳ Γ′} {A≤ : A ≤ A′}
       ----------------------
-    → Γ≤ ▷ A≤ ⊢ Z ≤ˣ Z ⦂ A≤
+    → Γ≤ ▷ A≤ ⊢ Z ≤ˣ Z
 
-  S≤S : ∀ {x x′} {Γ≤ : Γ ≤ᴳ Γ′}
-      {A≤ : A ≤ A′} {B≤ : B ≤ B′}
-    → Γ≤ ⊢ x ≤ˣ x′ ⦂ A≤ 
+  S≤S : ∀ {x : Γ ∋ A} {x′ : Γ′ ∋ A′} {Γ≤ : Γ ≤ᴳ Γ′} {B≤ : B ≤ B′}
+    → Γ≤ ⊢ x ≤ˣ x′
       ---------------------------
-    → Γ≤ ▷ B≤ ⊢ S x ≤ˣ S x′ ⦂ A≤
+    → Γ≤ ▷ B≤ ⊢ S x ≤ˣ S x′
 ```
 
 ## Commuting diagram
@@ -151,7 +149,6 @@ commute≤ᶜ : (±p : P =>ᶜ Q) (q : Q ≤ᶜ R)
             (r : P ≤ᶜ R) → Set
 commute≤ᶜ (+ p) q r = p ⨟ᶜ q ≡ r
 commute≤ᶜ (- p) q r = p ⨟ᶜ r ≡ q
-commute≤ᶜ (* p) q r = ⊥
 ```
 
 A similar commutative triangle arises for casts on the right of term precision.
@@ -160,7 +157,6 @@ A similar commutative triangle arises for casts on the right of term precision.
             (r : P ≤ᶜ R) → Set
 ≤commuteᶜ p (+ q) r  =  p ⨟ᶜ q ≡ r
 ≤commuteᶜ p (- q) r  =  r ⨟ᶜ q ≡ p
-≤commuteᶜ p (* q) r  =  ⊥
 ```
 
 The same commutative triangles can be defined on value type precision.
@@ -169,13 +165,11 @@ commute≤ : (±p : A => B) (q : B ≤ C)
            (r : A ≤ C) → Set
 commute≤ (+ p) q r  =  p ⨟ q ≡ r
 commute≤ (- p) q r  =  p ⨟ r ≡ q
-commute≤ (* _) _ _  =  ⊥
 
 ≤commute : (p : A ≤ B) (±q : B => C)
            (r : A ≤ C) → Set
 ≤commute p (+ q) r  =  p ⨟ q ≡ r
 ≤commute p (- q) r  =  r ⨟ q ≡ p
-≤commute _ (* _) _  =  ⊥
 ```
 
 \iffalse
@@ -277,12 +271,12 @@ Inversion lemmas when the cast side of a commutative triangle is a function
 cast. It projects into commutative triangles relating respectively the domains
 and codomains of the function types.
 ```
-dom≤ :  ∀ {A A′ A″ P P′ P″}
-    {±p : A ⇒ P => A′ ⇒ P′}
-    {q : A′ ⇒ P′ ≤ A″ ⇒ P″}
-    {r : A ⇒ P ≤ A″ ⇒ P″}
-    {∓s : A′ => A} {±t : P =>ᶜ P′}
-  → split ±p ≡ ∓s ⇒ ±t
+dom≤ :  ∀ {A A′ A″ B B′ B″ E E′ E″}
+    {±p : A ⇒ ⟨ E ⟩ B => A′ ⇒ ⟨ E′ ⟩ B′}
+    {q : A′ ⇒ ⟨ E′ ⟩ B′ ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+    {r : A ⇒ ⟨ E ⟩ B ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+    {∓s : A′ => A} {±t : B => B′} {±e : E =>ᵉ E′}
+  → split ±p ≡ ∓s ⇒⟨ ±e ⟩ ±t
   → commute≤ ±p q r
     ---------------------------
   → commute≤ ∓s (dom r) (dom q)
@@ -291,26 +285,26 @@ dom≤ {±p = + s ⇒ t} {q = q} refl refl
 dom≤ {±p = - s ⇒ t} {r = r} refl refl
   = dom-⨟ (s ⇒ t) r
 
-cod≤ :  ∀ {A A′ A″ P P′ P″}
-    {±p : A ⇒ P => A′ ⇒ P′}
-    {q : A′ ⇒ P′ ≤ A″ ⇒ P″}
-    {r : A ⇒ P ≤ A″ ⇒ P″}
-    {∓s : A′ => A} {±t : P =>ᶜ P′}
-  → split ±p ≡ ∓s ⇒ ±t
+cod≤ :  ∀ {A A′ A″ B B′ B″ E E′ E″}
+    {±p : A ⇒ ⟨ E ⟩ B => A′ ⇒ ⟨ E′ ⟩ B′}
+    {q : A′ ⇒ ⟨ E′ ⟩ B′ ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+    {r : A ⇒ ⟨ E ⟩ B ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+    {∓s : A′ => A} {±t : B => B′} {±e : E =>ᵉ E′}
+  → split ±p ≡ ∓s ⇒⟨ ±e ⟩ ±t
   → commute≤ ±p q r
     ---------------------------
-  → commute≤ᶜ ±t (cod q) (cod r)
+  → commute≤ ±t (cod q) (cod r)
 cod≤ {±p = + s ⇒ t} {q = q} refl refl
   = cod-⨟ (s ⇒ t) q
 cod≤ {±p = - s ⇒ t} {r = r} refl refl
   = cod-⨟ (s ⇒ t) r
 
-≤dom :  ∀ {A A′ A″ B B′ B″}
-    {p : A ⇒ B ≤ A′ ⇒ B′}
-    {±q : A′ ⇒ B′ => A″ ⇒ B″}
-    {r : A ⇒ B ≤ A″ ⇒ B″}
-    {∓s : A″ => A′} {±t : B′ =>ᶜ B″}
-  → split ±q ≡ ∓s ⇒ ±t
+≤dom :  ∀ {A A′ A″ E E′ E″ B B′ B″}
+    {p : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
+    {±q : A′ ⇒ ⟨ E′ ⟩ B′ => A″ ⇒ ⟨ E″ ⟩ B″}
+    {r : A ⇒ ⟨ E ⟩ B ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+    {∓s : A″ => A′} {±t : B′ => B″} {±e : E′ =>ᵉ E″}
+  → split ±q ≡ ∓s ⇒⟨ ±e ⟩ ±t
   → ≤commute p ±q r
     ---------------------------
   → ≤commute (dom r) ∓s (dom p)
@@ -319,15 +313,15 @@ cod≤ {±p = - s ⇒ t} {r = r} refl refl
 ≤dom {p = p} {±q = - s ⇒ t} {r = r} refl refl
   = dom-⨟ r (s ⇒ t)
 
-≤cod :  ∀ {A A′ A″ B B′ B″}
-    {p : A ⇒ B ≤ A′ ⇒ B′}
-    {±q : A′ ⇒ B′ => A″ ⇒ B″}
-    {r : A ⇒ B ≤ A″ ⇒ B″}
-    {∓s : A″ => A′} {±t : B′ =>ᶜ B″}
-  → split ±q ≡ ∓s ⇒ ±t
+≤cod :  ∀ {A A′ A″ E E′ E″ B B′ B″}
+    {p : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
+    {±q : A′ ⇒ ⟨ E′ ⟩ B′ => A″ ⇒ ⟨ E″ ⟩ B″}
+    {r : A ⇒ ⟨ E ⟩ B ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+    {∓s : A″ => A′} {±t : B′ => B″} {±e : E′ =>ᵉ E″}
+  → split ±q ≡ ∓s ⇒⟨ ±e ⟩ ±t
   → ≤commute p ±q r
     ---------------------------
-  → ≤commuteᶜ (cod p) ±t (cod r)
+  → ≤commute (cod p) ±t (cod r)
 ≤cod {p = p} {±q = + s ⇒ t} refl refl
   = cod-⨟ p (s ⇒ t)
 ≤cod {±q = - s ⇒ t} {r = r} refl refl
@@ -341,35 +335,36 @@ Term precision `_⊢_≤ᴹ_⦂_` and handler precision `_⊢_≤_⦂_⇒ʰ_` ar
 
 \iffalse
 ```
-infix 3 _⊢_≤ᴹ_⦂_ _⊢_≤_⦂_⇒ʰ_
+infix 3 _⊢_≤ᴹ_ _⊢_≤_∋ᴹ_≤_ _⊢_≤ᴴ_
 ```
 \fi
 
 ```
-data _⊢_≤ᴹ_⦂_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
-  : ∀ {A A′} → Γ ⊢ A → Γ′ ⊢ A′ → A ≤ᶜ A′ → Set
-record _⊢_≤_⦂_⇒ʰ_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
+data _⊢_≤ᴹ_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
+  : ∀ {P P′} → Γ ⊢ P → Γ′ ⊢ P′ → Set
+record _⊢_≤ᴴ_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
   {P P′ Q Q′}
   (H : Γ ⊢ P ⇒ʰ Q)
-  (H′ : Γ′ ⊢ P′ ⇒ʰ Q′)
-  (P≤ : P ≤ᶜ P′)
-  (Q≤ : Q ≤ᶜ Q′) : Set
+  (H′ : Γ′ ⊢ P′ ⇒ʰ Q′) : Set
+
+_⊢_≤_∋ᴹ_≤_ : ∀ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′) P P′ → Γ ⊢ P → Γ′ ⊢ P′ → Set
+_⊢_≤_∋ᴹ_≤_ Γ≤ P P′ M M′ = _⊢_≤ᴹ_ Γ≤ {P = P} {P′ = P′} M M′
 ```
 
 Start by defining term precision.
 For constructs other than casts, the general rule is "a term `M` is more precise than `M′` if
 the subterms of `M` are more precise than the subterms of of `M′`".
 ```
-data _⊢_≤ᴹ_⦂_ {Γ Γ′} Γ≤ where
+data _⊢_≤ᴹ_ {Γ Γ′} Γ≤ where
 ```
 
 We defined variable precision `_⊢_≤ˣ_⦂_` previously.
 Note that the effects on both sides may be arbitrary effects `E` and `E′` satisfying `E ≤ᵉ E′`.
 ```
-  `≤` : ∀ {x x′} {pᵉ : E ≤ᵉ E′} {p : A ≤ A′}
-    → Γ≤ ⊢ x ≤ˣ x′ ⦂ p
+  `≤` : ∀ {x x′} {pᵉ : E ≤ᵉ E′}
+    → Γ≤ ⊢ x ≤ˣ x′
       --------------------
-    → Γ≤ ⊢ ` x ≤ᴹ ` x′ ⦂ ⟨ pᵉ ⟩ p
+    → Γ≤ ⊢ ⟨ E ⟩ A ≤ ⟨ E′ ⟩ A′ ∋ᴹ ` x ≤ ` x′
 ```
 
 The rules for abstraction and application are quantified over precision
@@ -379,16 +374,15 @@ and codomains `P ≤ᶜ P′`. This allows `p` to be either `_⇒_` or `id`.
 This lets us use `id` uniformly in the proof of reflexivity for term precision.
 ```
   ƛ≤ƛ : ∀ {N N′} {pᵉ : E ≤ᵉ E′} {p : A ⇒ P ≤ A′ ⇒ P′}
-    → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′ ⦂ cod p
+    → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′
       ----------------------------
-    → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ pᵉ ⟩ p
+    → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′
 
   ·≤· : ∀ {L L′ M M′} {p : A ⇒ P ≤ A′ ⇒ P′}
-      (let qᵉ = _≤ᶜ_.effects (cod p))
-    → Γ≤ ⊢ L ≤ᴹ L′ ⦂ ⟨ qᵉ ⟩ p
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ qᵉ ⟩ dom p
+    → Γ≤ ⊢ L ≤ᴹ L′
+    → Γ≤ ⊢ M ≤ᴹ M′
       -----------------------------
-    → Γ≤ ⊢ L · M ≤ᴹ L′ · M′ ⦂ cod p
+    → Γ≤ ⊢ L · M ≤ᴹ L′ · M′
 ```
 
 Base types are only related by `id`, which
@@ -397,15 +391,15 @@ thus serves as the index for constants and primitive operators.
   $≤$ : ∀ {ι} {pᵉ : E ≤ᵉ E′}
     → (k : rep ι)
       ------------------------
-    → Γ≤ ⊢ $ k ≤ᴹ $ k ⦂ ⟨ pᵉ ⟩ id
+    → Γ≤ ⊢ $ k ≤ᴹ $ k
 
   ⦅⦆≤⦅⦆ : ∀ {ι ι′ ι″ M M′ N N′} {pᵉ : E ≤ᵉ E′}
     → (_⊕_ : rep ι → rep ι′ → rep ι″)
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ id
-    → Γ≤ ⊢ N ≤ᴹ N′ ⦂ ⟨ pᵉ ⟩ id
+    → Γ≤ ⊢ M ≤ᴹ M′
+    → Γ≤ ⊢ N ≤ᴹ N′
       -------------------------------------
     → Γ≤ ⊢  M  ⦅ _⊕_ ⦆ N
-         ≤ᴹ M′ ⦅ _⊕_ ⦆ N′ ⦂ ⟨ pᵉ ⟩ id
+         ≤ᴹ M′ ⦅ _⊕_ ⦆ N′
 ```
 
 Handlers and effects also follow the same pattern of relating subterms.
@@ -416,15 +410,15 @@ will be defined below.
       {e∈E : e ∈☆ E} {e∈E′ : e ∈☆ E′}
       {E≤ : E ≤ᵉ E′} {M M′}
     → {eq : response e ≡ A}
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id
+    → Γ≤ ⊢ M ≤ᴹ M′
     → Γ≤ ⊢  perform- e∈E  M  eq
-         ≤ᴹ perform- e∈E′ M′ eq ⦂ ⟨ E≤ ⟩ id
+         ≤ᴹ perform- e∈E′ M′ eq
 
   handle≤handle :
       ∀ {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′ M M′}
-    → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
-    → Γ≤ ⊢ handle H M ≤ᴹ handle H′ M′ ⦂ Q≤
+    → Γ≤ ⊢ H ≤ᴴ H′
+    → Γ≤ ⊢ M ≤ᴹ M′
+    → Γ≤ ⊢ handle H M ≤ᴹ handle H′ M′
 ```
 
 Boxes have type `★`, and their contents have ground types, which
@@ -433,9 +427,9 @@ should be witnessed by `id`.
 ```
   ⇑≤⇑ : ∀ {G E E′ M M′} {pᵉ : E ≤ᵉ E′}
     → (g : Ground G)
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ id
+    → Γ≤ ⊢ M ≤ᴹ M′
       -----------------------------
-    → Γ≤ ⊢ (M ⇑ g) ≤ᴹ (M′ ⇑ g) ⦂ ⟨ pᵉ ⟩ id
+    → Γ≤ ⊢ (M ⇑ g) ≤ᴹ (M′ ⇑ g)
 ```
 
 `M` is more precise than a box `M′ ⇑ g` if `M` is more precise than the underlying term `M′`.
@@ -444,9 +438,9 @@ Intuitively, a more precisely typed term uses fewer dynamic boxes.
 ```
   ≤⇑ : ∀ {G M M′} {p : A ≤ G} {pᵉ : E ≤ᵉ E′}
     → (g : Ground G)
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ pᵉ ⟩ p
+    → Γ≤ ⊢ M ≤ᴹ M′
       --------------------------
-    → Γ≤ ⊢ M ≤ᴹ (M′ ⇑ g) ⦂ ⟨ pᵉ ⟩ (p ⇑ g)
+    → Γ≤ ⊢ M ≤ᴹ (M′ ⇑ g)
 ```
 
 Term precision does not imply that the more precise side has fewer casts.
@@ -467,39 +461,49 @@ consists of the cast `P =>ᶜ Q`, and the other two sides are the inequalities
 `P ≤ᶜ R` and `Q ≤ᶜ R`. We require that triangle to commute, using the predicate
 `commute≤ᶜ`.
 ```
-  cast≤ : ∀ {M : Γ ⊢ P} {M′ : Γ′ ⊢ R}
-      {±p : P =>ᶜ Q} {q : Q ≤ᶜ R} {r : P ≤ᶜ R}
-    → commute≤ᶜ ±p q r
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ r
+  cast≤ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+      {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ ⟨ E′ ⟩ A′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+    -- → commute≤ᶜ ±p q r
+    → B ≤ A′
+    → Γ≤ ⊢ M ≤ᴹ M′
       -------------------------
-    → Γ≤ ⊢ cast ±p M ≤ᴹ M′ ⦂ q
+    → Γ≤ ⊢ cast ±p M ≤ᴹ M′
 ```
 
 The `≤cast` rule is symmetrical to `cast≤`.
 ```
-  ≤cast : {M : Γ ⊢ P} {M′ : Γ′ ⊢ Q}
-      {p : P ≤ᶜ Q} {±q : Q =>ᶜ R} {r : P ≤ᶜ R}
-    → ≤commuteᶜ p ±q r
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ p
+  ≤cast : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+      {p : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′} {±q : A′ => B′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+    → A ≤ B′
+    → Γ≤ ⊢ M ≤ᴹ M′
       -------------------------
-    → Γ≤ ⊢ M ≤ᴹ cast ±q M′ ⦂ r
+    → Γ≤ ⊢ M ≤ᴹ cast ±q M′
+```
+
+```
+  castᵉ≤ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+      {±p : E =>ᵉ F} {q : ⟨ E ⟩ B ≤ᶜ ⟨ E′ ⟩ A′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+    → F ≤ᵉ E′
+    → Γ≤ ⊢ M ≤ᴹ M′
+      -------------------------
+    → Γ≤ ⊢ castᵉ ±p M ≤ᴹ M′
+```
+
+The `≤castᵉ` rule is symmetrical to `castᵉ≤`.
+```
+  ≤castᵉ : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+      {p : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′} {±q : E′ =>ᵉ F′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+    → E ≤ᵉ F′
+    → Γ≤ ⊢ M ≤ᴹ M′
+      -------------------------
+    → Γ≤ ⊢ M ≤ᴹ castᵉ ±q M′
 ```
 
 
 ```
   blame≤ : ∀ {A A′ M′} {p : A ≤ᶜ A′}
       ---------------------
-    → Γ≤ ⊢ blame ≤ᴹ M′ ⦂ p
-```
-
-Subtyping TODO.
-```
-  *≤* : ∀ {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′}
-          {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′}
-          {P⊑Q : P ⊑ᶜ Q} {P′⊑Q′ : P′ ⊑ᶜ Q′}
-    → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
-      -------------------------
-    → Γ≤ ⊢ cast (* P⊑Q) M ≤ᴹ cast (* P′⊑Q′) M′ ⦂ Q≤
+    → Γ≤ ⊢ blame ≤ᴹ M′
 ```
 
 A cast between function types eventually steps to a `ƛ-wrap`, so
@@ -508,18 +512,18 @@ the resulting terms will related using `cast≤` for `wrap≤`,
 and `≤cast` for `≤wrap`.
 ```
   wrap≤ :
-      {N : Γ ▷ A ⊢ P} {N′ : Γ′ ▷ A″ ⊢ P″}
+      {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {N′ : Γ′ ▷ A″ ⊢ ⟨ E″ ⟩ B″}
       {E≤ : E ≤ᵉ E′}
-      {±p : A ⇒ P => A′ ⇒ P′}
-      {q : A′ ⇒ P′ ≤ A″ ⇒ P″}
-      {r : A ⇒ P ≤ A″ ⇒ P″}
-      {∓s : A′ => A} {±t : P =>ᶜ P′}
-    → split ±p ≡ ∓s ⇒ ±t
+      {±p : A ⇒ ⟨ E ⟩ B => A′ ⇒ ⟨ E′ ⟩ B′}
+      {q : A′ ⇒ ⟨ E′ ⟩ B′ ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+      {r : A ⇒ ⟨ E ⟩ B ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+      {∓s : A′ => A} {±t : B => B′} {±e : E =>ᵉ E′}
+    → split ±p ≡ ∓s ⇒⟨ ±e ⟩ ±t
     → commute≤ ±p q r
     → (∀ {F F′} {F≤ : F ≤ᵉ F′} →
-         Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ F≤ ⟩ r)
+         Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′)
       ------------------------------------------
-    → Γ≤ ⊢ ƛ-wrap ∓s ±t (ƛ N) ≤ᴹ ƛ N′ ⦂ ⟨ E≤ ⟩ q
+    → Γ≤ ⊢ ƛ-wrap ∓s ±t ±e (ƛ N) ≤ᴹ ƛ N′
 ```
 
 Here is an example reduction sequence (with some oversimplifications for conciseness)
@@ -537,44 +541,42 @@ the last term.
 
 ```
   ≤wrap :
-      {N : Γ ▷ A ⊢ P} {N′ : Γ′ ▷ A′ ⊢ P′}
+      {N : Γ ▷ A ⊢ ⟨ E ⟩ B} {N′ : Γ′ ▷ A′ ⊢ ⟨ E′ ⟩ B′}
       {E≤ : E ≤ᵉ E′}
-      {p : A ⇒ P ≤ A′ ⇒ P′}
-      {±q : A′ ⇒ P′ => A″ ⇒ P″}
-      {r : A ⇒ P ≤ A″ ⇒ P″}
-      {∓s : A″ => A′} {±t : P′ =>ᶜ P″}
-    → split ±q ≡ ∓s ⇒ ±t
+      {p : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
+      {±q : A′ ⇒ ⟨ E′ ⟩ B′ => A″ ⇒ ⟨ E″ ⟩ B″}
+      {r : A ⇒ ⟨ E ⟩ B ≤ A″ ⇒ ⟨ E″ ⟩ B″}
+      {∓s : A″ => A′} {±t : B′ => B″} {±e : E′ =>ᵉ E″}
+    → split ±q ≡ ∓s ⇒⟨ ±e ⟩ ±t
     → ≤commute p ±q r
-    → (∀ {F F′} {F≤ : F ≤ᵉ F′} → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ F≤ ⟩ p)
+    → (∀ {F F′} {F≤ : F ≤ᵉ F′} → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′)
       -----------------------------------------------------
-    → Γ≤ ⊢ ƛ N ≤ᴹ ƛ-wrap ∓s ±t (ƛ N′) ⦂ ⟨ E≤ ⟩ r
+    → Γ≤ ⊢ ƛ N ≤ᴹ ƛ-wrap ∓s ±t ±e (ƛ N′)
 ```
 
 Precision between the operation clauses of handlers.
 ```
 On-Perform :
-    ∀ (Γ≤ : Γ ≤ᴳ Γ′) (Q≤ : Q ≤ᶜ Q′) → ∀ {Eh Eh′}
+    ∀ (Γ≤ : Γ ≤ᴳ Γ′) → ∀ {Eh Eh′}
   → Core.On-Perform Γ Q Eh
   → Core.On-Perform Γ′ Q′ Eh′ → Set
-On-Perform Γ≤ Q≤
-  = All₂′ λ M M′ →
-      ∃[ B⇒Q≤ ] dom B⇒Q≤ ≡ id ×
-                cod B⇒Q≤ ≡ Q≤ ×
-                (Γ≤ ▷ id ▷ (B⇒Q≤) ⊢ M ≤ᴹ M′ ⦂ Q≤)
+On-Perform Γ≤
+  = All₂′ λ M M′ → ∃[ B⇒Q≤ ] (Γ≤ ▷ id ▷ B⇒Q≤ ⊢ M ≤ᴹ M′)
 ```
 
 Precision between handlers.
 ```
-record _⊢_≤_⦂_⇒ʰ_ Γ≤ {P P′ Q Q′} H H′ P≤ Q≤ where
+record _⊢_≤ᴴ_ Γ≤ {P P′ Q Q′} H H′ where
   inductive
   open _≤ᶜ_ using (returns)
   field
+    rets≤ : CType.returns P ≤ CType.returns P′
     on-return :
-      Γ≤ ▷ returns P≤ ⊢ on-return H ≤ᴹ on-return H′ ⦂ Q≤
+      Γ≤ ▷ rets≤ ⊢ on-return H ≤ᴹ on-return H′
     on-perform :
-      On-Perform Γ≤ Q≤ (on-perform H) (on-perform H′)
+      On-Perform Γ≤ (on-perform H) (on-perform H′)
 
-open _⊢_≤_⦂_⇒ʰ_ public
+open _⊢_≤ᴴ_ public
 ```
 
 Term precision is reflexive. Because term precision is indexed by context precision and type precision,
@@ -607,25 +609,24 @@ The following lemmas derive such rules when both sides are casts with the same p
 
 Upcast congruence:
 ```
-+≤+  : {M : Γ ⊢ P} {M′ : Γ′ ⊢ P′} {Γ≤ : Γ ≤ᴳ Γ′}
-     {p : P ≤ᶜ Q} {q : P′ ≤ᶜ Q′}
-     {s : P ≤ᶜ P′} {t : Q ≤ᶜ Q′}
-  →  p ⨟ᶜ t ≡ s ⨟ᶜ q
-  →  Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
++≤+  : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′} {Γ≤ : Γ ≤ᴳ Γ′}
+     {p : A ≤ B} {q : A′ ≤ B′}
+  →  B ≤ B′
+  →  Γ≤ ⊢ M ≤ᴹ M′
      ------------------------------------
-  →  Γ≤ ⊢ cast (+ p) M ≤ᴹ cast (+ q) M′ ⦂ t
-+≤+ e M≤M′ = cast≤ e (≤cast refl M≤M′)
+  →  Γ≤ ⊢ cast (+ p) M ≤ᴹ cast (+ q) M′
++≤+ {p = p} t M≤M′ = cast≤ t (≤cast (p ⨟ t) M≤M′)
 ```
 
 Here is the derivation of upcast congruence:
 
-    Γ≤ ⊢ M ≤ᴹ M′ ⦂ s
+    Γ≤ ⊢ M ≤ᴹ M′
     s ⨟ q ≡ r
     ---------------------- ≤+
-    Γ≤ ⊢ M ≤ᴹ (cast (+ q) M′) ⦂ r
+    Γ≤ ⊢ M ≤ᴹ (cast (+ q) M′)
     p ⨟ t ≡ r
     ---------------------------- +≤
-    Γ≤ ⊢ (cast (+ p) M) ≤ᴹ (cast (+ q) M′) ⦂ t
+    Γ≤ ⊢ (cast (+ p) M) ≤ᴹ (cast (+ q) M′)
 
 Here it is illustrated:
 
@@ -640,26 +641,24 @@ Here it is illustrated:
 Downcast congruence:
 ```
 -≤- : {Γ≤ : Γ ≤ᴳ Γ′}
-    {M : Γ ⊢ Q} {M′ : Γ′ ⊢ Q′}
-    {p : P ≤ᶜ Q} {q : P′ ≤ᶜ Q′}
-    {s : P ≤ᶜ P′} {t : Q ≤ᶜ Q′}
-  → s ⨟ᶜ q ≡ p ⨟ᶜ t
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ t
+    {M : Γ ⊢ ⟨ E ⟩ B} {M′ : Γ′ ⊢ ⟨ E′ ⟩ B′}
+    {p : A ≤ B} {q : A′ ≤ B′}
+  → A ≤ A′
+  → Γ≤ ⊢ M ≤ᴹ M′
     --------------------------------------
-  → Γ≤ ⊢  cast (- p) M
-       ≤ᴹ cast (- q) M′ ⦂ s
--≤- e M≤M′ = ≤cast e (cast≤ refl M≤M′)
+  → Γ≤ ⊢  cast (- p) M ≤ᴹ cast (- q) M′
+-≤- {q = q} s M≤M′ = ≤cast s (cast≤ (s ⨟ q) M≤M′)
 ```
 
 Here is the derivation of downcast congruence:
 
-    Γ≤ ⊢ M ≤ᴹ M′ ⦂ t
+    Γ≤ ⊢ M ≤ᴹ M′
     p ⨟ t ≡ r
     ---------------------- ≤+
-    Γ≤ ⊢ (cast (- p) M) ≤ᴹ M′ ⦂ r
+    Γ≤ ⊢ (cast (- p) M) ≤ᴹ M′
     s ⨟ q ≡ r
     ---------------------------- +≤
-    Γ≤ ⊢ (cast (- p) M) ≤ᴹ (cast (- q) M′) ⦂ t
+    Γ≤ ⊢ (cast (- p) M) ≤ᴹ (cast (- q) M′)
 
 Here it is illustrated:
 
@@ -687,7 +686,7 @@ instead of constructing them using `_⇒_` which is distinct from `id`.
 reflˣ : ∀ {Γ A}
     → (x : Γ ∋ A)
       -------------------
-    → idᴳ ⊢ x ≤ˣ x ⦂ id
+    → idᴳ ⊢ x ≤ˣ x
 reflˣ Z      =  Z≤Z
 reflˣ (S x)  =  S≤S (reflˣ x)
 ```
@@ -695,7 +694,7 @@ reflˣ (S x)  =  S≤S (reflˣ x)
 ```
 reflʰ : ∀ {Γ P Q}
   → (H : Γ ⊢ P ⇒ʰ Q)
-  → idᴳ ⊢ H ≤ H ⦂ ⟨ id ⟩ id ⇒ʰ ⟨ id ⟩ id
+  → idᴳ ⊢ H ≤ᴴ H
 ```
 \fi
 
@@ -703,7 +702,7 @@ reflʰ : ∀ {Γ P Q}
 reflᴹ : ∀ {Γ P}
     → (M : Γ ⊢ P)
       -------------------
-    → idᴳ ⊢ M ≤ᴹ M ⦂ ⟨ id ⟩ id
+    → idᴳ ⊢ M ≤ᴹ M
 ```
 
 \iffalse
@@ -715,10 +714,9 @@ reflᴹ ($ k)           =  $≤$ k
 reflᴹ (M ⦅ _⊕_ ⦆ N)   =  ⦅⦆≤⦅⦆ _⊕_ (reflᴹ M)
                                    (reflᴹ N)
 reflᴹ (M ⇑ g)         =  ⇑≤⇑ g (reflᴹ M)
-reflᴹ (cast (+ p) M)  =  +≤+ (sym (left-idᶜ p))
-                             (reflᴹ M)
-reflᴹ (cast (- p) M)  =  -≤- (left-idᶜ p) (reflᴹ M)
-reflᴹ (cast (* p) M)  =  *≤* (reflᴹ M)
+reflᴹ (cast (+ p) M)  =  +≤+ id (reflᴹ M)
+reflᴹ (cast (- p) M)  =  -≤- id (reflᴹ M)
+reflᴹ (castᵉ ±e M) = ?
 reflᴹ blame           =  blame≤
 reflᴹ (perform- e∈E M eq)
   =  perform≤perform (reflᴹ M)
@@ -726,15 +724,14 @@ reflᴹ (handle H M)
   =  handle≤handle (reflʰ H) (reflᴹ M)
 
 reflʰ H = record
-  { on-return = reflᴹ (H .on-return)
+  { rets≤ = id
+  ; on-return = reflᴹ (H .on-return)
   ; on-perform = refl-on-perform (H .on-perform) }
   where
     refl-on-perform : ∀ {Eh} Ms →
-      On-Perform _ _ {Eh = Eh} Ms Ms
+      On-Perform _ {Eh = Eh} Ms Ms
     refl-on-perform [] = []
-    refl-on-perform (M ∷ Ms)
-      = (refl , id , refl , refl , reflᴹ M)
-        ∷ refl-on-perform Ms
+    refl-on-perform (M ∷ Ms) = (refl , id , reflᴹ M) ∷ refl-on-perform Ms
 ```
 \fi
 
@@ -750,27 +747,27 @@ _→ᴿ_∋_≤_ : (Γ≤ : Γ ≤ᴳ Γ′) (Δ≤ : Δ ≤ᴳ Δ′)
   → (Γ →ᴿ Δ) → (Γ′ →ᴿ Δ′) → Set
 Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
   = ∀ {A A′} {A≤ : A ≤ A′} {x x′}
-  → Γ≤ ⊢ x ≤ˣ x′ ⦂ A≤
+  → Γ≤ ⊢ x ≤ˣ x′
     -----------------------
-  → Δ≤ ⊢ ρ x ≤ˣ ρ′ x′ ⦂ A≤
+  → Δ≤ ⊢ ρ x ≤ˣ ρ′ x′
 
 _→ˢ_∋_≤_ : (Γ≤ : Γ ≤ᴳ Γ′) (Δ≤ : Δ ≤ᴳ Δ′)
   → (Γ →ˢ Δ) → (Γ′ →ˢ Δ′) → Set
 Γ≤ →ˢ Δ≤ ∋ σ ≤ σ′
   = ∀ {A A′} {A≤ : A ≤ A′}
       {E E′} {E≤ : E ≤ᵉ E′} {x x′}
-  → Γ≤ ⊢ x ≤ˣ x′ ⦂ A≤
+  → Γ≤ ⊢ x ≤ˣ x′
     -----------------------
-  → Δ≤ ⊢ σ x ≤ᴹ σ′ x′ ⦂ ⟨ E≤ ⟩ A≤
+  → Δ≤ ⊢ σ x ≤ᴹ σ′ x′
 
 _→ᵀ_∋_≤_ : (Γ≤ : Γ ≤ᴳ Γ′) (Δ≤ : Δ ≤ᴳ Δ′)
   → (Γ →ᵀ Δ) → (Γ′ →ᵀ Δ′) → Set
 Γ≤ →ᵀ Δ≤ ∋ s ≤ s′
   = ∀ {A A′} {A≤ : A ≤ A′}
       {E E′} {E≤ : E ≤ᵉ E′} {M M′}
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ A≤
+  → Γ≤ ⊢ M ≤ᴹ M′
     -----------------------
-  → Δ≤ ⊢ s M ≤ᴹ s′ M′ ⦂ ⟨ E≤ ⟩ A≤
+  → Δ≤ ⊢ s M ≤ᴹ s′ M′
 ```
 \fi
 
@@ -789,17 +786,17 @@ ren▷≤ ρ≤ (S≤S x≤)  =  S≤S (ρ≤ x≤)
 ```
 
 ```
-ren∘ƛ-wrap : ∀ {Γ Δ A A′ P P′ E} {∓s : A′ => A} {±t : P =>ᶜ P′}
-    (ρ : Γ →ᴿ Δ) (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P))
-  → ren ρ (ƛ-wrap ∓s ±t M {E = E}) ≡ ƛ-wrap ∓s ±t (ren ρ M)
-ren∘ƛ-wrap {A′ = A′} {P = ⟨ E ⟩ _} {∓s = ∓s} {±t} ρ M
-  rewrite (lift∘ren {A = A′} ρ (M {E = E})) = refl
+ren∘ƛ-wrap : ∀ {Γ Δ A A′ B B′ F F′ E} {∓s : A′ => A} {±t : B => B′} {±e : F =>ᵉ F′}
+    (ρ : Γ →ᴿ Δ) (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ F ⟩ B))
+  → ren ρ (ƛ-wrap ∓s ±t ±e M {F = E}) ≡ ƛ-wrap ∓s ±t ±e (ren ρ M)
+ren∘ƛ-wrap {A′ = A′} {F = F} {∓s = ∓s} {±t} ρ M
+  rewrite (lift∘ren {A = A′} ρ (M {E = F})) = refl
 
-sub∘ƛ-wrap : ∀ {Γ Δ A A′ P P′ E} {∓s : A′ => A} {±t : P =>ᶜ P′}
-    (σ : Γ →ˢ Δ) (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P))
-  → sub σ (ƛ-wrap ∓s ±t M {E = E}) ≡ ƛ-wrap ∓s ±t (sub σ M)
-sub∘ƛ-wrap {A′ = A′} {P = ⟨ E ⟩ _} {∓s = ∓s} {±t} σ M
-  rewrite (lift∘sub {A = A′} σ (M {E = E})) = refl
+sub∘ƛ-wrap : ∀ {Γ Δ A A′ B B′ F F′ E} {∓s : A′ => A} {±t : B => B′} {±e : F =>ᵉ F′}
+    (σ : Γ →ˢ Δ) (M : ∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ F ⟩ B))
+  → sub σ (ƛ-wrap ∓s ±t ±e M {F = E}) ≡ ƛ-wrap ∓s ±t ±e (sub σ M)
+sub∘ƛ-wrap {A′ = A′} {F = F} {∓s = ∓s} {±t} σ M
+  rewrite (lift∘sub {A = A′} σ (M {E = F})) = refl
 ```
 
 Preservation of precision under renaming
@@ -808,15 +805,15 @@ ren≤ʰ : ∀ {Γ Γ′ Δ Δ′} {Γ≤ : Γ ≤ᴳ Γ′} {Δ≤ : Δ ≤ᴳ 
   → Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
     -------------------------------------------
   → (∀ {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′}
-      → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
-      → Δ≤ ⊢ renʰ ρ H ≤ renʰ ρ′ H′ ⦂ P≤ ⇒ʰ Q≤)
+      → Γ≤ ⊢ H ≤ᴴ H′
+      → Δ≤ ⊢ renʰ ρ H ≤ᴴ renʰ ρ′ H′)
 
 ren≤ : ∀ {Γ Γ′ Δ Δ′} {Γ≤ : Γ ≤ᴳ Γ′} {Δ≤ : Δ ≤ᴳ Δ′} {ρ : Γ →ᴿ Δ} {ρ′ : Γ′ →ᴿ Δ′} 
   →  Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
     -------------------------------------------
   → (∀ {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {M M′}
-      → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ A≤
-      → Δ≤ ⊢ ren ρ M ≤ᴹ ren ρ′ M′ ⦂ ⟨ E≤ ⟩ A≤)
+      → Γ≤ ⊢ M ≤ᴹ M′
+      → Δ≤ ⊢ ren ρ M ≤ᴹ ren ρ′ M′)
 ren≤ ρ≤ (`≤` x)              =  `≤` (ρ≤ x)
 ren≤ ρ≤ (ƛ≤ƛ N≤)             =  ƛ≤ƛ (ren≤ (ren▷≤ ρ≤) N≤)
 ren≤ ρ≤ (·≤· L≤ M≤)          =  ·≤· (ren≤ ρ≤ L≤) (ren≤ ρ≤ M≤)
@@ -826,7 +823,6 @@ ren≤ ρ≤ (⇑≤⇑ g M≤)           =  ⇑≤⇑ g (ren≤ ρ≤ M≤)
 ren≤ ρ≤ (≤⇑ g M≤)            =  ≤⇑ g (ren≤ ρ≤ M≤)
 ren≤ ρ≤ (cast≤ e M≤)         =  cast≤ e (ren≤ ρ≤ M≤)
 ren≤ ρ≤ (≤cast e M≤)         =  ≤cast e (ren≤ ρ≤ M≤)
-ren≤ ρ≤ (*≤* M≤)  =  *≤* (ren≤ ρ≤ M≤)
 ren≤ ρ≤ blame≤               =  blame≤
 ren≤ {ρ = ρ} ρ≤ {A≤ = A≤} {E = E}
   (wrap≤ {N = N} {∓s = ∓s} {±t} i e ƛN≤ƛN′)
@@ -843,29 +839,29 @@ ren≤ʰ ρ≤ H≤ = record
   { on-return = ren≤ (ren▷≤ ρ≤) (on-return H≤)
   ; on-perform = ren≤-on-perform (on-perform H≤) }
   where
-    open _⊢_≤_⦂_⇒ʰ_
+    open _⊢_≤ᴴ_
 
     ren≤-on-perform : ∀ {Eh Eh′ Ms Ms′}
-      → On-Perform _ _ {Eh} {Eh′} Ms Ms′
-      → On-Perform _ _ (ren-on-perform _ Ms) (ren-on-perform _ Ms′)
+      → On-Perform _ {Eh} {Eh′} Ms Ms′
+      → On-Perform _ (ren-on-perform _ Ms) (ren-on-perform _ Ms′)
     ren≤-on-perform [] = []
-    ren≤-on-perform ((refl , B⇒Q≤ , dom≡ , cod≡ , M≤) ∷ Ms≤)
-      = (refl , B⇒Q≤ , dom≡ , cod≡ , ren≤ (ren▷≤ (ren▷≤ ρ≤)) M≤) ∷ ren≤-on-perform Ms≤
+    ren≤-on-perform ((refl , B⇒Q≤ , M≤) ∷ Ms≤)
+      = (refl , B⇒Q≤ , ren≤ (ren▷≤ (ren▷≤ ρ≤)) M≤) ∷ ren≤-on-perform Ms≤
 ```
 
 ```
 lift≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {B B′} {B≤ : B ≤ B′}
           {A A′} {A≤ : A ≤ A′} {E E′} {E≤ : E ≤ᵉ E′} {M M′}
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ A≤
+  → Γ≤ ⊢ M ≤ᴹ M′
     ---------------------------------------
-  → Γ≤ ▷ B≤ ⊢ lift M ≤ᴹ lift M′ ⦂ ⟨ E≤ ⟩ A≤
+  → Γ≤ ▷ B≤ ⊢ lift M ≤ᴹ lift M′
 lift≤ = ren≤ S≤S
 
 lift≤ʰ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′} {A A′} {A≤ : A ≤ A′}
-          {P P′ Q Q′} {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′}
-  → Γ≤ ⊢ H ≤ H′ ⦂ P≤ ⇒ʰ Q≤
+          {P P′ Q Q′} {H : Γ ⊢ P ⇒ʰ Q} {H′ : Γ′ ⊢ P′ ⇒ʰ Q′}
+  → Γ≤ ⊢ H ≤ᴴ H′
     --------------------------------------
-  → Γ≤ ▷ A≤ ⊢ liftʰ H ≤ liftʰ H′ ⦂ P≤ ⇒ʰ Q≤
+  → Γ≤ ▷ A≤ ⊢ liftʰ H ≤ᴴ liftʰ H′
 lift≤ʰ = ren≤ʰ S≤S 
 ```
 
@@ -904,7 +900,6 @@ sub≤ σ≤ (⇑≤⇑ g M≤)           =  ⇑≤⇑ g (sub≤ σ≤ M≤)
 sub≤ σ≤ (≤⇑ g M≤)            =  ≤⇑ g (sub≤ σ≤ M≤)
 sub≤ σ≤ (cast≤ e M≤)         =  cast≤ e (sub≤ σ≤ M≤)
 sub≤ σ≤ (≤cast e M≤)         =  ≤cast e (sub≤ σ≤ M≤)
-sub≤ σ≤ (*≤* M≤)  =  *≤* (sub≤ σ≤ M≤)
 sub≤ σ≤ blame≤               =  blame≤
 sub≤ {σ = σ} σ≤ {E = E} (wrap≤ {N = N} {∓s = ∓s} {±t} i e ƛN≤ƛN′)
   rewrite sub∘ƛ-wrap {E = E} {∓s = ∓s} {±t} σ (ƛ N)
@@ -915,7 +910,7 @@ sub≤ {σ′ = σ′} σ≤ {E′ = E′} (≤wrap {N′ = N′} {∓s = ∓s} 
 sub≤ σ≤ (perform≤perform M≤) = perform≤perform (sub≤ σ≤ M≤)
 sub≤ σ≤ (handle≤handle H≤ M≤) = handle≤handle sub≤ʰ (sub≤ σ≤ M≤)
   where
-    open _⊢_≤_⦂_⇒ʰ_
+    open _⊢_≤ᴴ_
 
     sub≤-on-perform : ∀ {Eh Eh′ Ms Ms′}
       → On-Perform _ _ {Eh} {Eh′} Ms Ms′
@@ -939,7 +934,7 @@ Preservation of precision under substitution, special case for beta
     {M′ : ∀ {E′} → Γ′ ⊢ ⟨ E′ ⟩ A′}
     {Γ≤ : Γ ≤ᴳ Γ′} {s : A ≤ A′}
   → (∀ {E E′} {E≤ : E ≤ᵉ E′}
-       → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ s)
+       → Γ≤ ⊢ M ≤ᴹ M′)
   → Γ≤ ▷ s →ˢ Γ≤ ∋ σ₀ M ≤ σ₀ M′
 σ₀≤σ₀ M≤M′ Z≤Z         =  M≤M′
 σ₀≤σ₀ M≤M′ (S≤S x≤x′)  =  `≤` x≤x′
@@ -948,11 +943,11 @@ Preservation of precision under substitution, special case for beta
           {M′ : ∀ {E′} → Γ′ ⊢ ⟨ E′ ⟩ A′}
           {Γ≤ : Γ ≤ᴳ Γ′} {s : A ≤ A′}
           {t : B ≤ B′} {E≤ : E ≤ᵉ E′}
-        → Γ≤ ▷ s ⊢ N ≤ᴹ N′ ⦂ ⟨ E≤ ⟩ t
+        → Γ≤ ▷ s ⊢ N ≤ᴹ N′
         → (∀ {E E′} {E≤ : E ≤ᵉ E′}
-             → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ s)
+             → Γ≤ ⊢ M ≤ᴹ M′)
           -----------------------------
-        → Γ≤ ⊢ N [ M ] ≤ᴹ N′ [ M′ ] ⦂ ⟨ E≤ ⟩ t
+        → Γ≤ ⊢ N [ M ] ≤ᴹ N′ [ M′ ]
 []≤[] N≤N′ M≤M′ =  sub≤ (σ₀≤σ₀ M≤M′) N≤N′
 ```
 
@@ -962,46 +957,45 @@ Preservation of precision under substitution, special case for beta
 ƛ≤ƛ★ : ∀ {N N′} {Γ≤ : Γ ≤ᴳ Γ′}
          {F≤ : F ≤ᵉ F′}
          {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ☆ ⟩ ★}
-  → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′ ⦂ cod p
+  → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′
     ----------------------------
-  → Γ≤ ⊢ ƛ N ≤ᴹ ƛ★ N′ ⦂ ⟨ F≤ ⟩ (p ⇑ ★⇒★)
-ƛ≤ƛ★ N≤N′ = ≤cast refl (ƛ≤ƛ N≤N′)
+  → Γ≤ ⊢ ƛ N ≤ᴹ ƛ★ N′
+ƛ≤ƛ★ {p = p} N≤N′ = ≤cast (p ⇑ ★⇒★) (ƛ≤ƛ N≤N′)
 
 ·≤·★ : ∀ {L L′ M M′} {Γ≤ : Γ ≤ᴳ Γ′}
          {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ☆ ⟩ ★}
-    (let ⟨ E≤ ⟩ _ = cod p)
-  → Γ≤ ⊢ L ≤ᴹ L′ ⦂ ⟨ E≤ ⟩ (p ⇑ ★⇒★)
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ dom p
+  → Γ≤ ⊢ L ≤ᴹ L′
+  → Γ≤ ⊢ M ≤ᴹ M′
     ------------------------------
-  → Γ≤ ⊢ L · M ≤ᴹ L′ ·★ M′ ⦂ cod p
-·≤·★ L≤L′ M≤M′ = ·≤· (≤cast refl L≤L′) M≤M′
+  → Γ≤ ⊢ L · M ≤ᴹ L′ ·★ M′
+·≤·★ L≤L′ M≤M′ = ·≤· (≤cast ? L≤L′) M≤M′
 
 $≤$★ : ∀ {ι} {E≤ : E ≤ᵉ ☆} (k : rep ι)
-  → Γ≤ ⊢ $ k ≤ᴹ $★ k ⦂ ⟨ E≤ ⟩ (ι ≤★)
+  → Γ≤ ⊢ $ k ≤ᴹ $★ k
 $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
 
 ⦅⦆≤⦅⦆★ : ∀ {ι ι′ ι″ M M′ N N′} {E≤ : E ≤ᵉ ☆}
   → (_⊕_ : rep ι → rep ι′ → rep ι″)
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ (ι ≤★)
-  → Γ≤ ⊢ N ≤ᴹ N′ ⦂ ⟨ E≤ ⟩ (ι′ ≤★)
+  → Γ≤ ⊢ M ≤ᴹ M′
+  → Γ≤ ⊢ N ≤ᴹ N′
     -------------------------------------
   → Γ≤ ⊢  M  ⦅ _⊕_ ⦆  N
-       ≤ᴹ M′ ⦅ _⊕_ ⦆★ N′ ⦂ ⟨ E≤ ⟩ (ι″ ≤★)
+       ≤ᴹ M′ ⦅ _⊕_ ⦆★ N′
 ⦅⦆≤⦅⦆★ _⊕_ M≤M′ N≤N′
-  = ≤cast refl (⦅⦆≤⦅⦆ _⊕_ (≤cast refl M≤M′)
-                          (≤cast refl N≤N′))
+  = ≤cast ? (⦅⦆≤⦅⦆ _⊕_ (≤cast ? M≤M′)
+                          (≤cast ? N≤N′))
 
 ⌈_⌉≤ᴳ : ∀ (Γ : Context) → Γ ≤ᴳ ⌈ Γ ⌉ᴳ
 ⌈ ∅ ⌉≤ᴳ          =  ∅
 ⌈ Γ ▷ A ⌉≤ᴳ      =  ⌈ Γ ⌉≤ᴳ ▷ A≤★
 
-⌈_⌉≤ˣ : ∀ {Γ A} → (x : Γ ∋ A) → ⌈ Γ ⌉≤ᴳ ⊢ x ≤ˣ ⌈ x ⌉ˣ ⦂ A≤★
+⌈_⌉≤ˣ : ∀ {Γ A} → (x : Γ ∋ A) → ⌈ Γ ⌉≤ᴳ ⊢ x ≤ˣ ⌈ x ⌉ˣ
 ⌈ Z ⌉≤ˣ          =  Z≤Z
 ⌈ S x ⌉≤ˣ        =  S≤S ⌈ x ⌉≤ˣ
 
 ⌈_⌉≤ : {M : Γ ⊢ ⟨ E ⟩ A}
   → (m : Static M)
-  → ⌈ Γ ⌉≤ᴳ ⊢ M ≤ᴹ ⌈ m ⌉ ⦂ ⟨ E≤☆ ⟩ A≤★
+  → ⌈ Γ ⌉≤ᴳ ⊢ M ≤ᴹ ⌈ m ⌉
 ⌈ ` x ⌉≤         =  `≤` ⌈ x ⌉≤ˣ
 ⌈ ƛ N ⌉≤         =  ƛ≤ƛ★ ⌈ N ⌉≤
 ⌈ L · M ⌉≤       =  ·≤·★ ⌈ L ⌉≤ ⌈ M ⌉≤
@@ -1012,20 +1006,20 @@ $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
 ## Example {#example-prec}
 
 ```
-inc≤inc★ : ∅ ⊢ inc ≤ᴹ inc★ ⦂ ⟨ ε≤☆ ⟩ ℕ⇒ℕ≤★
+inc≤inc★ : ∅ ⊢ inc ≤ᴹ inc★
 inc≤inc★ = ⌈ Inc ⌉≤
 
-inc≤inc★′ : ∅ ⊢ inc ≤ᴹ inc★′ ⦂ ⟨ ε≤☆ ⟩ ℕ⇒ℕ≤★
-inc≤inc★′ = ≤cast refl (reflᴹ inc)
+inc≤inc★′ : ∅ ⊢ inc ≤ᴹ inc★′
+inc≤inc★′ = ≤castᵉ ? (≤cast ? (reflᴹ inc))
 
 inc2≤inc★2★ :
   ∅ ⊢  inc · ($ 2)
-    ≤ᴹ inc★ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
+    ≤ᴹ inc★ ·★ ($★ 2)
 inc2≤inc★2★ = ⌈ Inc · ($ 2) ⌉≤
 
 inc2≤inc★′2★ :
   ∅ ⊢  inc · ($ 2)
-    ≤ᴹ inc★′ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
+    ≤ᴹ inc★′ ·★ ($★ 2)
 inc2≤inc★′2★ = ·≤·★ inc≤inc★′ ($≤$★ 2)
 ```
 \fi
@@ -1040,241 +1034,231 @@ of that form `handle H′ (ℰ′ [ perform e V′ ])`, with
 on frames `ℰ ≤ ℰ′`, whose rules can be derived from the rules
 of precision on terms.
 
-```
-infix 3 _⊢_⇒ᶠ_∋_≤_
-
-data _⊢_⇒ᶠ_∋_≤_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
-                {P P′} (P≤ : P ≤ᶜ P′)
-            : ∀ {Q Q′} (Q≤ : Q ≤ᶜ Q′)
-            →            Frame Γ P Q
-            →            Frame Γ′ P′ Q′
-            → Set where
-  □ : Γ≤ ⊢ P≤ ⇒ᶠ P≤ ∋ □ ≤ □
-
-  [_]·_ : ∀ {ℰ ℰ′} {M M′}
-      {A⇒B≤ : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
-      (let E≤ = _≤ᶜ_.effects (cod A⇒B≤))
-    → (ℰ≤ : Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ A⇒B≤ ∋ ℰ ≤ ℰ′)
-    → (M≤ : Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ dom A⇒B≤)
-      ----------------------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ cod A⇒B≤ ∋ [ ℰ ]· M ≤ [ ℰ′ ]· M′
-
-  _·[_] : ∀ {V V′} {ℰ ℰ′}
-      {A⇒B≤ : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
-      (let E≤ = _≤ᶜ_.effects (cod A⇒B≤))
-    → ((v , v′ , _) :
-         Value V × Value V′ ×
-         (Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A⇒B≤))
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ dom A⇒B≤ ∋ ℰ ≤ ℰ′
-      -----------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ cod A⇒B≤
-         ∋ v ·[ ℰ ] ≤ v′ ·[ ℰ′ ]
-
-  [_]⦅_⦆_ : ∀ {ι ι′ ι″} {ℰ ℰ′} {M M′}
-    → (ℰ≤ : Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′)
-    → (f : rep ι → rep ι′ → rep ι″)
-    → (M≤ : Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ id)
-      ------------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
-         ∋ [ ℰ ]⦅ f ⦆ M ≤ [ ℰ′ ]⦅ f ⦆ M′
-
-  _⦅_⦆[_] : ∀ {ι ι′ ι″} {V V′} {ℰ ℰ′}
-    → ((v , v′ , _) :
-         Value V × Value V′ ×
-         (Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ id))
-    → (f : rep ι → rep ι′ → rep ι″)
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′
-      ----------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
-         ∋ v ⦅ f ⦆[ ℰ ] ≤ v′ ⦅ f ⦆[ ℰ′ ]
-
-  [_]⇑_ : ∀ {G ℰ ℰ′}
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′
-    → (g : Ground G)
-      -------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
-         ∋ [ ℰ ]⇑ g ≤ [ ℰ′ ]⇑ g
-
-  ≤⇑ : ∀ {G} {A≤G : A′ ≤ G}
-         {g : Ground G} {ℰ ℰ′}
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ A≤G ∋ ℰ ≤ ℰ′
-      ---------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ (A≤G ⇑ g)
-         ∋ ℰ ≤ [ ℰ′ ]⇑ g
-
-  cast≤ : ∀ {A B C} {ℰ ℰ′} {A=>B : A =>ᶜ B}
-            {B≤C : B ≤ᶜ C} {A≤C : A ≤ᶜ C}
-    → commute≤ᶜ A=>B B≤C A≤C
-    → Γ≤ ⊢ P≤ ⇒ᶠ A≤C ∋ ℰ ≤ ℰ′
-      --------------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ B≤C ∋ `cast A=>B [ ℰ ] ≤ ℰ′
-
-  ≤cast : ∀ {A B C} {ℰ ℰ′} {A≤B : A ≤ᶜ B}
-            {B=>C : B =>ᶜ C} {A≤C : A ≤ᶜ C}
-    → ≤commuteᶜ A≤B B=>C A≤C
-    → Γ≤ ⊢ P≤ ⇒ᶠ A≤B ∋ ℰ ≤ ℰ′
-      --------------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ A≤C ∋ ℰ ≤ `cast B=>C [ ℰ′ ]
-
-  *≤* : ∀ {Q≤ : Q ≤ᶜ Q′} {R≤ : R ≤ᶜ R′} {ℰ ℰ′}
-          {Q⊑R : Q ⊑ᶜ R} {Q′⊑R′ : Q′ ⊑ᶜ R′}
-    → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
-      ----------------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ R≤
-         ∋ `cast (* Q⊑R) [ ℰ ]
-         ≤ `cast (* Q′⊑R′) [ ℰ′ ]
-
-  ″perform_[_]_ : ∀ {e} {ℰ ℰ′}
-    → ((e∈E , e∈E′) : e ∈☆ E × e ∈☆ E′)
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′
-    → ∀ {A}
-    → (eq : response e ≡ A)
-      ---------------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
-         ∋ ″perform e∈E [ ℰ ] eq
-         ≤ ″perform e∈E′ [ ℰ′ ] eq
-
-  ′handle_[_] : ∀ {Q₁ Q₁′ Q₂ Q₂′}
-      {Q₁≤ : Q₁ ≤ᶜ Q₁′}
-      {Q₂≤ : Q₂ ≤ᶜ Q₂′}
-      {H H′} {ℰ ℰ′}
-    → Γ≤ ⊢ H ≤ H′ ⦂ Q₁≤ ⇒ʰ Q₂≤
-    → Γ≤ ⊢ P≤ ⇒ᶠ Q₁≤ ∋ ℰ ≤ ℰ′
-      --------------------------
-    → Γ≤ ⊢ P≤ ⇒ᶠ Q₂≤
-         ∋ ′handle H [ ℰ ]
-         ≤ ′handle H′ [ ℰ′ ]
-```
-
-TODO: three solutions to handle subtyping
-- only judgement-level effect subtyping _⊑ᶜ_ = _⊑ᵉ_ × _≡_
-- or treat all casts uniformly in cast≤ and ≤cast (requires indexing term precision by ≤⊑)
-- or introduce subtyping square A ⊑ B -> A ≤ A′ → B ≤ B′ → A′ ⊑ B′ → Set
-
-\iffalse
-
-```
-ren≤ᶠ : ∀ {ρ : Γ →ᴿ Δ} {ρ′ : Γ′ →ᴿ Δ′} {ℰ ℰ′}
-  → Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
-  → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
-  → Δ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ renᶠ ρ ℰ ≤ renᶠ ρ′ ℰ′
-ren≤ᶠ ρ≤ □ = □
-ren≤ᶠ ρ≤ ([ ℰ≤ ]· M≤) = [ ren≤ᶠ ρ≤ ℰ≤ ]· ren≤ ρ≤ M≤
-ren≤ᶠ ρ≤ ((v , v′ , V≤) ·[ ℰ≤ ]) = (ren-val _ v , ren-val _ v′ , ren≤ ρ≤ V≤) ·[ ren≤ᶠ ρ≤ ℰ≤ ]
-ren≤ᶠ ρ≤ ([ ℰ≤ ]⦅ f ⦆ M≤) = [ ren≤ᶠ ρ≤ ℰ≤ ]⦅ f ⦆ ren≤ ρ≤ M≤
-ren≤ᶠ ρ≤ ((v , v′ , V≤) ⦅ f ⦆[ ℰ≤ ]) = (ren-val _ v , ren-val _ v′ , ren≤ ρ≤ V≤) ⦅ f ⦆[ ren≤ᶠ ρ≤ ℰ≤ ]
-ren≤ᶠ ρ≤ ([ ℰ≤ ]⇑ g) = [ ren≤ᶠ ρ≤ ℰ≤ ]⇑ g
-ren≤ᶠ ρ≤ (≤⇑ ℰ≤) = ≤⇑ (ren≤ᶠ ρ≤ ℰ≤)
-ren≤ᶠ ρ≤ (cast≤ comm ℰ≤) = cast≤ comm (ren≤ᶠ ρ≤ ℰ≤)
-ren≤ᶠ ρ≤ (≤cast comm ℰ≤) = ≤cast comm (ren≤ᶠ ρ≤ ℰ≤)
-ren≤ᶠ ρ≤ (*≤* ℰ≤) = *≤* (ren≤ᶠ ρ≤ ℰ≤)
-ren≤ᶠ ρ≤ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) = ″perform (e∈E , e∈E′) [ ren≤ᶠ ρ≤ ℰ≤ ] eq
-ren≤ᶠ ρ≤ (′handle H≤ [ ℰ≤ ]) = ′handle (ren≤ʰ ρ≤ H≤) [ ren≤ᶠ ρ≤ ℰ≤ ]
-
-lift≤ᶠ : ∀ {ℰ ℰ′}
-  → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
-  → Γ≤ ▷ A≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ liftᶠ ℰ ≤ liftᶠ ℰ′
-lift≤ᶠ = ren≤ᶠ S≤S
-
-⟦⟧≤⟦⟧ : ∀ {ℰ ℰ′ M M′}
-  → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
-  → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤
-  → Γ≤ ⊢ ℰ ⟦ M ⟧ ≤ᴹ ℰ′ ⟦ M′ ⟧ ⦂ Q≤
-⟦⟧≤⟦⟧ □ M≤ = M≤
-⟦⟧≤⟦⟧ ([ ℰ≤ ]· N≤) M≤ = ·≤· (⟦⟧≤⟦⟧ ℰ≤ M≤) N≤
-⟦⟧≤⟦⟧ ((v , v′ , V≤) ·[ ℰ≤ ]) M≤ = ·≤· V≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ ([ ℰ≤ ]⦅ f ⦆ N≤) M≤ = ⦅⦆≤⦅⦆ f (⟦⟧≤⟦⟧ ℰ≤ M≤) N≤
-⟦⟧≤⟦⟧ ((v , v′ , V≤) ⦅ f ⦆[ ℰ≤ ]) M≤ = ⦅⦆≤⦅⦆ f V≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ ([ ℰ≤ ]⇑ g) M≤ = ⇑≤⇑ g (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (≤⇑ ℰ≤) M≤ = ≤⇑ _ (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (cast≤ comm ℰ≤) M≤ = cast≤ comm (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (≤cast comm ℰ≤) M≤ = ≤cast comm (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (*≤* ℰ≤) M≤ = *≤* (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) M≤ = perform≤perform (⟦⟧≤⟦⟧ ℰ≤ M≤)
-⟦⟧≤⟦⟧ (′handle H≤ [ ℰ≤ ]) M≤ = handle≤handle H≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
-```
-\fi
-
-## Precision on values
-
-Values are a subset of terms, so we don't need to define a separate relation for them.
-The following lemmas state that value precision is preserved by generalization (`gvalue`).
-```
-gvalue≤gvalue :
-    {V : Γ ⊢ ⟨ E ⟩ A}
-    {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-  → (v  : Value V)
-  → (v′ : Value V′)
-  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
-  → ∀ {F F′} {F≤ : F ≤ᵉ F′}
-    --------------------------------------
-  → Γ≤ ⊢ gvalue v ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
-```
-
-\iffalse
-```
-gvalue≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
-gvalue≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤gvalue v v′ V≤)
-gvalue≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤gvalue v v′ V≤)
-gvalue≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-gvalue≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
-gvalue≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
-```
-\fi
-
-\iffalse
-```
-gValue : {V : Γ ⊢ ⟨ E ⟩ A}
-       → (v : Value V) → ∀ {F}
-       → Value (gvalue v {F = F})
-gValue (ƛ N) = ƛ N
-gValue ($ κ) = $ κ
-gValue (v ⇑ g) = gValue v ⇑ g
-```
-
-```
-≤gvalue :
-    {V : Γ ⊢ ⟨ E ⟩ A}
-    {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-  → (v  : Value V)
-  → (v′ : Value V′)
-  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
-  → ∀ {F′} {F≤ : E ≤ᵉ F′}
-  → Γ≤ ⊢ V ≤ᴹ gvalue v′ ⦂ ⟨ F≤ ⟩ A≤
-```
-\fi
-
-\iffalse
-```
-≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
-≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (≤gvalue v v′ V≤)
-≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (≤gvalue v v′ V≤)
-≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
-≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
-```
-\fi
-
-\iffalse
-```
-gvalue≤ :
-    {V : Γ ⊢ ⟨ E ⟩ A}
-    {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-  → (v : Value V)
-  → (v′ : Value V′)
-  → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ A≤
-  → ∀ {F} {F≤ : F ≤ᵉ E′}
-  → Γ≤ ⊢ gvalue v ≤ᴹ V′ ⦂ ⟨ F≤ ⟩ A≤
-```
-\fi
-
-\iffalse
-```
-gvalue≤ ($ _) ($ _) ($≤$ κ) = $≤$ κ
-gvalue≤ (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤ v v′ V≤)
-gvalue≤ v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤ v v′ V≤)
-gvalue≤ (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
-gvalue≤ (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
-gvalue≤ (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
-```
-\fi
+-- ```
+-- infix 3 _⊢_⇒ᶠ_∋_≤_
+--
+-- data _⊢_⇒ᶠ_∋_≤_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
+--                 {P P′} (P≤ : P ≤ᶜ P′)
+--             : ∀ {Q Q′} (Q≤ : Q ≤ᶜ Q′)
+--             →            Frame Γ P Q
+--             →            Frame Γ′ P′ Q′
+--             → Set where
+--   □ : Γ≤ ⊢ P≤ ⇒ᶠ P≤ ∋ □ ≤ □
+--
+--   [_]·_ : ∀ {ℰ ℰ′} {M M′}
+--       {A⇒B≤ : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
+--       (let E≤ = _≤ᶜ_.effects (cod A⇒B≤))
+--     → (ℰ≤ : Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ A⇒B≤ ∋ ℰ ≤ ℰ′)
+--     → (M≤ : Γ≤ ⊢ M ≤ᴹ M′)
+--       ----------------------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ cod A⇒B≤ ∋ [ ℰ ]· M ≤ [ ℰ′ ]· M′
+--
+--   _·[_] : ∀ {V V′} {ℰ ℰ′}
+--       {A⇒B≤ : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′}
+--       (let E≤ = _≤ᶜ_.effects (cod A⇒B≤))
+--     → ((v , v′ , _) :
+--          Value V × Value V′ ×
+--          (Γ≤ ⊢ V ≤ᴹ V′))
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ dom A⇒B≤ ∋ ℰ ≤ ℰ′
+--       -----------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ cod A⇒B≤
+--          ∋ v ·[ ℰ ] ≤ v′ ·[ ℰ′ ]
+--
+--   [_]⦅_⦆_ : ∀ {ι ι′ ι″} {ℰ ℰ′} {M M′}
+--     → (ℰ≤ : Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′)
+--     → (f : rep ι → rep ι′ → rep ι″)
+--     → (M≤ : Γ≤ ⊢ M ≤ᴹ M′)
+--       ------------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
+--          ∋ [ ℰ ]⦅ f ⦆ M ≤ [ ℰ′ ]⦅ f ⦆ M′
+--
+--   _⦅_⦆[_] : ∀ {ι ι′ ι″} {V V′} {ℰ ℰ′}
+--     → ((v , v′ , _) :
+--          Value V × Value V′ ×
+--          (Γ≤ ⊢ V ≤ᴹ V′))
+--     → (f : rep ι → rep ι′ → rep ι″)
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′
+--       ----------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
+--          ∋ v ⦅ f ⦆[ ℰ ] ≤ v′ ⦅ f ⦆[ ℰ′ ]
+--
+--   [_]⇑_ : ∀ {G ℰ ℰ′}
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′
+--     → (g : Ground G)
+--       -------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
+--          ∋ [ ℰ ]⇑ g ≤ [ ℰ′ ]⇑ g
+--
+--   ≤⇑ : ∀ {G} {A≤G : A′ ≤ G}
+--          {g : Ground G} {ℰ ℰ′}
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ A≤G ∋ ℰ ≤ ℰ′
+--       ---------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ (A≤G ⇑ g)
+--          ∋ ℰ ≤ [ ℰ′ ]⇑ g
+--
+--   cast≤ : ∀ {A B C} {ℰ ℰ′} {A=>B : A =>ᶜ B}
+--             {B≤C : B ≤ᶜ C} {A≤C : A ≤ᶜ C}
+--     → commute≤ᶜ A=>B B≤C A≤C
+--     → Γ≤ ⊢ P≤ ⇒ᶠ A≤C ∋ ℰ ≤ ℰ′
+--       --------------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ B≤C ∋ `cast A=>B [ ℰ ] ≤ ℰ′
+--
+--   ≤cast : ∀ {A B C} {ℰ ℰ′} {A≤B : A ≤ᶜ B}
+--             {B=>C : B =>ᶜ C} {A≤C : A ≤ᶜ C}
+--     → ≤commuteᶜ A≤B B=>C A≤C
+--     → Γ≤ ⊢ P≤ ⇒ᶠ A≤B ∋ ℰ ≤ ℰ′
+--       --------------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ A≤C ∋ ℰ ≤ `cast B=>C [ ℰ′ ]
+--
+--   ″perform_[_]_ : ∀ {e} {ℰ ℰ′}
+--     → ((e∈E , e∈E′) : e ∈☆ E × e ∈☆ E′)
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id ∋ ℰ ≤ ℰ′
+--     → ∀ {A}
+--     → (eq : response e ≡ A)
+--       ---------------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ ⟨ E≤ ⟩ id
+--          ∋ ″perform e∈E [ ℰ ] eq
+--          ≤ ″perform e∈E′ [ ℰ′ ] eq
+--
+--   ′handle_[_] : ∀ {Q₁ Q₁′ Q₂ Q₂′}
+--       {Q₁≤ : Q₁ ≤ᶜ Q₁′}
+--       {Q₂≤ : Q₂ ≤ᶜ Q₂′}
+--       {H H′} {ℰ ℰ′}
+--     → Γ≤ ⊢ H ≤ᴴ H′
+--     → Γ≤ ⊢ P≤ ⇒ᶠ Q₁≤ ∋ ℰ ≤ ℰ′
+--       --------------------------
+--     → Γ≤ ⊢ P≤ ⇒ᶠ Q₂≤
+--          ∋ ′handle H [ ℰ ]
+--          ≤ ′handle H′ [ ℰ′ ]
+-- ```
+--
+-- TODO: three solutions to handle subtyping
+-- - only judgement-level effect subtyping _⊑ᶜ_ = _⊑ᵉ_ × _≡_
+-- - or treat all casts uniformly in cast≤ and ≤cast (requires indexing term precision by ≤⊑)
+-- - or introduce subtyping square A ⊑ B -> A ≤ A′ → B ≤ B′ → A′ ⊑ B′ → Set
+--
+-- \iffalse
+--
+-- ```
+-- ren≤ᶠ : ∀ {ρ : Γ →ᴿ Δ} {ρ′ : Γ′ →ᴿ Δ′} {ℰ ℰ′}
+--   → Γ≤ →ᴿ Δ≤ ∋ ρ ≤ ρ′
+--   → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
+--   → Δ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ renᶠ ρ ℰ ≤ renᶠ ρ′ ℰ′
+-- ren≤ᶠ ρ≤ □ = □
+-- ren≤ᶠ ρ≤ ([ ℰ≤ ]· M≤) = [ ren≤ᶠ ρ≤ ℰ≤ ]· ren≤ ρ≤ M≤
+-- ren≤ᶠ ρ≤ ((v , v′ , V≤) ·[ ℰ≤ ]) = (ren-val _ v , ren-val _ v′ , ren≤ ρ≤ V≤) ·[ ren≤ᶠ ρ≤ ℰ≤ ]
+-- ren≤ᶠ ρ≤ ([ ℰ≤ ]⦅ f ⦆ M≤) = [ ren≤ᶠ ρ≤ ℰ≤ ]⦅ f ⦆ ren≤ ρ≤ M≤
+-- ren≤ᶠ ρ≤ ((v , v′ , V≤) ⦅ f ⦆[ ℰ≤ ]) = (ren-val _ v , ren-val _ v′ , ren≤ ρ≤ V≤) ⦅ f ⦆[ ren≤ᶠ ρ≤ ℰ≤ ]
+-- ren≤ᶠ ρ≤ ([ ℰ≤ ]⇑ g) = [ ren≤ᶠ ρ≤ ℰ≤ ]⇑ g
+-- ren≤ᶠ ρ≤ (≤⇑ ℰ≤) = ≤⇑ (ren≤ᶠ ρ≤ ℰ≤)
+-- ren≤ᶠ ρ≤ (cast≤ comm ℰ≤) = cast≤ comm (ren≤ᶠ ρ≤ ℰ≤)
+-- ren≤ᶠ ρ≤ (≤cast comm ℰ≤) = ≤cast comm (ren≤ᶠ ρ≤ ℰ≤)
+-- ren≤ᶠ ρ≤ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) = ″perform (e∈E , e∈E′) [ ren≤ᶠ ρ≤ ℰ≤ ] eq
+-- ren≤ᶠ ρ≤ (′handle H≤ [ ℰ≤ ]) = ′handle (ren≤ʰ ρ≤ H≤) [ ren≤ᶠ ρ≤ ℰ≤ ]
+--
+-- lift≤ᶠ : ∀ {ℰ ℰ′}
+--   → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
+--   → Γ≤ ▷ A≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ liftᶠ ℰ ≤ liftᶠ ℰ′
+-- lift≤ᶠ = ren≤ᶠ S≤S
+--
+-- ⟦⟧≤⟦⟧ : ∀ {ℰ ℰ′ M M′}
+--   → Γ≤ ⊢ P≤ ⇒ᶠ Q≤ ∋ ℰ ≤ ℰ′
+--   → Γ≤ ⊢ M ≤ᴹ M′
+--   → Γ≤ ⊢ ℰ ⟦ M ⟧ ≤ᴹ ℰ′ ⟦ M′ ⟧
+-- ⟦⟧≤⟦⟧ □ M≤ = M≤
+-- ⟦⟧≤⟦⟧ ([ ℰ≤ ]· N≤) M≤ = ·≤· (⟦⟧≤⟦⟧ ℰ≤ M≤) N≤
+-- ⟦⟧≤⟦⟧ ((v , v′ , V≤) ·[ ℰ≤ ]) M≤ = ·≤· V≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ ([ ℰ≤ ]⦅ f ⦆ N≤) M≤ = ⦅⦆≤⦅⦆ f (⟦⟧≤⟦⟧ ℰ≤ M≤) N≤
+-- ⟦⟧≤⟦⟧ ((v , v′ , V≤) ⦅ f ⦆[ ℰ≤ ]) M≤ = ⦅⦆≤⦅⦆ f V≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ ([ ℰ≤ ]⇑ g) M≤ = ⇑≤⇑ g (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ (≤⇑ ℰ≤) M≤ = ≤⇑ _ (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ (cast≤ comm ℰ≤) M≤ = cast≤ comm (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ (≤cast comm ℰ≤) M≤ = ≤cast comm (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ (″perform (e∈E , e∈E′) [ ℰ≤ ] eq) M≤ = perform≤perform (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ⟦⟧≤⟦⟧ (′handle H≤ [ ℰ≤ ]) M≤ = handle≤handle H≤ (⟦⟧≤⟦⟧ ℰ≤ M≤)
+-- ```
+-- \fi
+--
+-- ## Precision on values
+--
+-- Values are a subset of terms, so we don't need to define a separate relation for them.
+-- The following lemmas state that value precision is preserved by generalization (`gvalue`).
+-- ```
+-- gvalue≤gvalue :
+--     {V : Γ ⊢ ⟨ E ⟩ A}
+--     {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+--   → (v  : Value V)
+--   → (v′ : Value V′)
+--   → Γ≤ ⊢ V ≤ᴹ V′
+--   → ∀ {F F′} {F≤ : F ≤ᵉ F′}
+--     --------------------------------------
+--   → Γ≤ ⊢ gvalue v ≤ᴹ gvalue v′
+-- ```
+--
+-- \iffalse
+-- ```
+-- gvalue≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
+-- gvalue≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤gvalue v v′ V≤)
+-- gvalue≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤gvalue v v′ V≤)
+-- gvalue≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
+-- gvalue≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
+-- gvalue≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
+-- ```
+-- \fi
+--
+-- \iffalse
+-- ```
+-- gValue : {V : Γ ⊢ ⟨ E ⟩ A}
+--        → (v : Value V) → ∀ {F}
+--        → Value (gvalue v {F = F})
+-- gValue (ƛ N) = ƛ N
+-- gValue ($ κ) = $ κ
+-- gValue (v ⇑ g) = gValue v ⇑ g
+-- ```
+--
+-- ```
+-- ≤gvalue :
+--     {V : Γ ⊢ ⟨ E ⟩ A}
+--     {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+--   → (v  : Value V)
+--   → (v′ : Value V′)
+--   → Γ≤ ⊢ V ≤ᴹ V′
+--   → ∀ {F′} {F≤ : E ≤ᵉ F′}
+--   → Γ≤ ⊢ V ≤ᴹ gvalue v′
+-- ```
+-- \fi
+--
+-- \iffalse
+-- ```
+-- ≤gvalue ($ _) ($ _) ($≤$ κ) = $≤$ κ
+-- ≤gvalue (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (≤gvalue v v′ V≤)
+-- ≤gvalue v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (≤gvalue v v′ V≤)
+-- ≤gvalue (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
+-- ≤gvalue (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
+-- ≤gvalue (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
+-- ```
+-- \fi
+--
+-- \iffalse
+-- ```
+-- gvalue≤ :
+--     {V : Γ ⊢ ⟨ E ⟩ A}
+--     {V′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+--   → (v : Value V)
+--   → (v′ : Value V′)
+--   → Γ≤ ⊢ V ≤ᴹ V′
+--   → ∀ {F} {F≤ : F ≤ᵉ E′}
+--   → Γ≤ ⊢ gvalue v ≤ᴹ V′
+-- ```
+-- \fi
+--
+-- \iffalse
+-- ```
+-- gvalue≤ ($ _) ($ _) ($≤$ κ) = $≤$ κ
+-- gvalue≤ (v ⇑ _) (v′ ⇑ _) (⇑≤⇑ g V≤) = ⇑≤⇑ g (gvalue≤ v v′ V≤)
+-- gvalue≤ v (v′ ⇑ _) (≤⇑ g V≤) = ≤⇑ g (gvalue≤ v v′ V≤)
+-- gvalue≤ (ƛ _) (ƛ _) (ƛ≤ƛ N≤N′) = ƛ≤ƛ N≤N′
+-- gvalue≤ (ƛ _) (ƛ _) (wrap≤ i e ƛN≤ƛN′) = wrap≤ i e ƛN≤ƛN′
+-- gvalue≤ (ƛ _) (ƛ _) (≤wrap i e ƛN≤ƛN′) = ≤wrap i e ƛN≤ƛN′
+-- ```
+-- \fi

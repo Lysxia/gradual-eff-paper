@@ -20,7 +20,7 @@ import Data.List.Relation.Unary.All as All
 \iffalse
 ```
 private variable
-  A A′ B C G : Type
+  A A′ B B′ C G : Type
   E E′ F : Effect
   P P′ Q Q′ R : CType
   Γ Δ : Context
@@ -105,11 +105,17 @@ with only one immediate subterm.
        --------------
     →  Frame Γ C (⟨ E ⟩ ★)
 
-  `cast_[_] : ∀ {P Q}
-    →  (±p : P =>ᶜ Q)
-    →  (ℰ : Frame Γ C P)
+  `cast_[_] : ∀ {E A B}
+    →  (±a : A => B)
+    →  (ℰ : Frame Γ C (⟨ E ⟩ A))
        -------------
-    →  Frame Γ C Q
+    →  Frame Γ C (⟨ E ⟩ B)
+
+  `castᵉ_[_] : ∀ {E F A}
+    →  (±e : E =>ᵉ F)
+    →  (ℰ : Frame Γ C (⟨ E ⟩ A))
+       -------------
+    →  Frame Γ C (⟨ F ⟩ A)
 
   ″perform_[_]_ : ∀ {E e}
     →  e ∈☆ E
@@ -142,6 +148,7 @@ _⟦_⟧ : ∀{Γ P B} → Frame Γ P B → Γ ⊢ P → Γ ⊢ B
 (v ⦅ _⊕_ ⦆[ ℰ ]) ⟦ N ⟧  =  value v ⦅ _⊕_ ⦆ ℰ ⟦ N ⟧
 ([ ℰ ]⇑ g) ⟦ M ⟧        =  ℰ ⟦ M ⟧ ⇑ g
 (`cast ±p [ ℰ ]) ⟦ M ⟧  =  cast ±p (ℰ ⟦ M ⟧)
+(`castᵉ ±p [ ℰ ]) ⟦ M ⟧ =  castᵉ ±p (ℰ ⟦ M ⟧)
 (′handle H [ ℰ ]) ⟦ M ⟧ = handle H (ℰ ⟦ M ⟧)
 (″perform e [ ℰ ] eq) ⟦ M ⟧
   = perform- e (ℰ ⟦ M ⟧) eq
@@ -162,6 +169,7 @@ _∘∘_ : Frame Γ Q R → Frame Γ P Q → Frame Γ P R
 (v ⦅ _⊕_ ⦆[ ℰ ]) ∘∘ 𝐹  =  v ⦅ _⊕_ ⦆[ ℰ ∘∘ 𝐹 ]
 ([ ℰ ]⇑ g) ∘∘ 𝐹        =  [ ℰ ∘∘ 𝐹 ]⇑ g
 (`cast ±p [ ℰ ]) ∘∘ 𝐹  =  `cast ±p [ ℰ ∘∘ 𝐹 ]
+(`castᵉ ±p [ ℰ ]) ∘∘ 𝐹 =  `castᵉ ±p [ ℰ ∘∘ 𝐹 ]
 (′handle H [ ℰ ]) ∘∘ 𝐹 =  ′handle H [ ℰ ∘∘ 𝐹 ]
 (″perform e [ ℰ ] eq) ∘∘ 𝐹
   = ″perform e [ ℰ ∘∘ 𝐹 ] eq
@@ -187,6 +195,7 @@ Composition and plugging
 ∘∘-lemma (v ⦅ _⊕_ ⦆[ ℰ ]) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma ([ ℰ ]⇑ g) 𝐹 M        rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma (`cast ±p [ ℰ ]) 𝐹 M  rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
+∘∘-lemma (`castᵉ ±p [ ℰ ]) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma (″perform e [ ℰ ] eq) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ∘∘-lemma (′handle H [ ℰ ]) 𝐹 M rewrite ∘∘-lemma ℰ 𝐹 M  =  refl
 ```
@@ -208,6 +217,7 @@ renᶠ ρ ([ ℰ ]⦅ f ⦆ M) = [ renᶠ ρ ℰ ]⦅ f ⦆ ren ρ M
 renᶠ ρ (v ⦅ f ⦆[ ℰ ]) = ren-val ρ v ⦅ f ⦆[ renᶠ ρ ℰ ]
 renᶠ ρ ([ ℰ ]⇑ g) = [ renᶠ ρ ℰ ]⇑ g
 renᶠ ρ (`cast ±p [ ℰ ]) = `cast ±p [ renᶠ ρ ℰ ]
+renᶠ ρ (`castᵉ ±p [ ℰ ]) = `castᵉ ±p [ renᶠ ρ ℰ ]
 renᶠ ρ (″perform e [ ℰ ] eq) = ″perform e [ renᶠ ρ ℰ ] eq
 renᶠ ρ (′handle H [ ℰ ]) = ′handle (renʰ ρ H) [ renᶠ ρ ℰ ]
 ```
@@ -221,24 +231,17 @@ liftᶠ = renᶠ S_
 liftʰ : Γ ⊢ P ⇒ʰ Q → Γ ▷ A ⊢ P ⇒ʰ Q
 liftʰ = renʰ S_
 ```
-
-The effect in the codomain of the cast. 
-```
-cast-effect : P =>ᶜ Q → Effect
-cast-effect {Q = ⟨ E ⟩ B} _ = E
-```
 \fi
 
 ```
-forbidden : P =>ᶜ Q → Op → Set
-forbidden (+ x) = λ _ → ⊥
-forbidden (- ⟨ id ⟩ returns) = λ _ → ⊥
-forbidden (- ⟨ ¡≤☆ {E = E} ⟩ returns) = λ e → ¬ e ∈ E
-forbidden (* x) = λ _ → ⊥
+boundᵉ : E =>ᵉ F → Op → Set
+boundᵉ (+ x) = λ _ → ⊥
+boundᵉ (- id) = λ _ → ⊥
+boundᵉ (- ¡≤☆ {E = E}) = λ e → ¬ e ∈ E
 ```
 
 ```
--- Set of operations bound by a frame -- cf. Shallow Effect Handlers
+-- Set of operations bound by a frame -- notation from Shallow Effect Handlers
 bound : Frame Γ P Q → Op → Set
 bound □ = λ _ → ⊥  -- Empty set
 bound ([ ℰ ]· M) = bound ℰ
@@ -248,7 +251,8 @@ bound (v ⦅ _⊕_ ⦆[ ℰ ]) = bound ℰ
 bound ([ ℰ ]⇑ g) = bound ℰ
 bound (″perform x [ ℰ ] x₁) = bound ℰ
 bound (′handle H [ ℰ ]) = (_∈ H .Hooks) ∪ bound ℰ
-bound (`cast ±p [ ℰ ]) = forbidden ±p ∪ bound ℰ
+bound (`cast ±a [ ℰ ]) = bound ℰ
+bound (`castᵉ ±e [ ℰ ]) = boundᵉ ±e ∪ bound ℰ
 ```
 
 `handled e ℰ` means that the operation `e` is handled by the evaluation context `ℰ`:
@@ -268,25 +272,32 @@ An evaluation context `ℰ₀` containing only an upcast may never raise blame: 
 effects are handled by `ℰ₀`.
 
 ```
-upcast-safety : ∀ {Γ P Q} (P≤Q : P ≤ᶜ Q) →
-  let  ℰ₀ : Frame Γ P Q
-       ℰ₀ = `cast (+ P≤Q) [ □ ] in
-  ∀ (e : Op) → e ∈☆ CType.effects P → ¬ handled e ℰ₀
-upcast-safety (⟨ ¡≤☆ ⟩ _) e e∈E (inj₁ ¬e∈☆) = ¬e∈☆
-upcast-safety (⟨ id  ⟩ _) e e∈E (inj₁ ¬e∈E) = ¬e∈E
+upcast-handled : ∀ {Γ E F A P} (p : E ≤ᵉ F) (ℰ : Frame Γ P (⟨ E ⟩ A)) {e : Op}
+  → ¬ handled e ℰ → ¬ handled e (`castᵉ (+ p) [ ℰ ])
+upcast-handled id ℰ e//ℰ (inj₂ e∈ℰ) = e//ℰ e∈ℰ
+upcast-handled ¡≤☆ ℰ e//ℰ (inj₂ e∈ℰ) = e//ℰ e∈ℰ
+```
+
+```
+upcast-safety : ∀ {Γ E F A} (E≤F : E ≤ᵉ F) →
+  let  ℰ₀ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ A)
+       ℰ₀ = `castᵉ (+ E≤F) [ □ ] in
+  ∀ (e : Op) → e ∈☆ E → ¬ handled e ℰ₀
+upcast-safety ¡≤☆ e e∈E (inj₁ ¬e∈☆) = ¬e∈☆
+upcast-safety id  e e∈E (inj₁ ¬e∈E) = ¬e∈E
 ```
 
 An operation `e` is not handled by a cast `±p` if `e` is not an element of the
 target effect of the cast.
 ```
 ¬handled-cast : ∀ {e}
-    {±p : (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)}
+    {±p : E =>ᵉ F}
     (ℰ : Frame Γ P (⟨ E ⟩ A))
   → e ∈☆ F
   → ¬ handled e ℰ
     -------------------------
-  → ¬ handled e (`cast ±p [ ℰ ])
-¬handled-cast {±p = - ⟨ ¡≤☆ ⟩ returns} ℰ (¡ e∈F) ¬e//ℰ (inj₁ ¬e∈F) = ¬e∈F e∈F
+  → ¬ handled e (`castᵉ ±p [ ℰ ])
+¬handled-cast {±p = - ¡≤☆} ℰ (¡ e∈F) ¬e//ℰ (inj₁ ¬e∈F) = ¬e∈F e∈F
 ¬handled-cast ℰ e∈F ¬e//ℰ (inj₂ e//ℰ) = ¬e//ℰ e//ℰ
 ```
 
@@ -330,11 +341,11 @@ postulate TODO : ∀ {a} {A : Set a} → A
 ¬handled-∈ (v ⦅ _⊕_ ⦆[ ℰ ]) = ¬handled-∈ ℰ
 ¬handled-∈ ([ ℰ ]⇑ g) = ¬handled-∈ ℰ
 ¬handled-∈ (″perform e [ ℰ ] x₁) = ¬handled-∈ ℰ
-¬handled-∈ `cast + ⟨ id ⟩ returns [ ℰ ] ¬e//ℰ = ¬handled-∈ ℰ (¬e//ℰ ∘ inj₂)
-¬handled-∈ `cast + ⟨ ¡≤☆ ⟩ returns [ ℰ ] ¬e//ℰ e = ☆
-¬handled-∈ `cast - ⟨ id ⟩ returns [ ℰ ] ¬e//ℰ = ¬handled-∈ ℰ (¬e//ℰ ∘ inj₂)
-¬handled-∈ `cast - ⟨ ¡≤☆ ⟩ returns [ ℰ ] ¬e//ℰ e = ¡ (¬¬-dec (_ ∈? _) (¬e//ℰ ∘ inj₁))
-¬handled-∈ `cast * x [ ℰ ] ¬e//ℰ e = TODO
+¬handled-∈ `cast ±a [ ℰ ] = ¬handled-∈ ℰ
+¬handled-∈ `castᵉ + id  [ ℰ ] ¬e//ℰ = ¬handled-∈ ℰ (¬e//ℰ ∘ inj₂)
+¬handled-∈ `castᵉ + ¡≤☆ [ ℰ ] ¬e//ℰ e = ☆
+¬handled-∈ `castᵉ - id  [ ℰ ] ¬e//ℰ = ¬handled-∈ ℰ (¬e//ℰ ∘ inj₂)
+¬handled-∈ `castᵉ - ¡≤☆ [ ℰ ] ¬e//ℰ e = ¡ (¬¬-dec (_ ∈? _) (¬e//ℰ ∘ inj₁))
 ¬handled-∈ (′handle H [ ℰ ]) ¬e//ℰ e
   = ¬∈-handler H (¬handled-∈ ℰ (¬e//ℰ ∘ inj₂) e) (¬e//ℰ ∘ inj₁)
 ```
@@ -356,11 +367,12 @@ data _==>_ : Type → Type → Set where
       -------
     → A ==> A
 
-  _⇒_ : ∀ {A A′ P P′}
+  _⇒⟨_⟩_ : ∀ {A A′ E E′ B B′}
     → A′ => A
-    → P =>ᶜ P′
+    → E =>ᵉ E′
+    → B => B′
       -----------------
-    → A ⇒ P ==> A′ ⇒ P′
+    → A ⇒ ⟨ E ⟩ B ==> A′ ⇒ ⟨ E′ ⟩ B′
 
   other : ∀ {A B}
       -------
@@ -369,22 +381,13 @@ data _==>_ : Type → Type → Set where
 split : ∀ {A B} → A => B → A ==> B
 split (+ id)     =  id
 split (- id)     =  id
-split (+ s ⇒ t)  =  (- s) ⇒ (+ t)
-split (- s ⇒ t)  =  (+ s) ⇒ (- t)
+split (+ s ⇒ ⟨ e ⟩ t)  =  (- s) ⇒⟨ + e ⟩ (+ t)
+split (- s ⇒ ⟨ e ⟩ t)  =  (+ s) ⇒⟨ - e ⟩ (- t)
 split (+ p ⇑ g)  =  other
 split (- p ⇑ g)  =  other
-split (* id)     =  id
-split (* s ⇒ t)  =  (* s) ⇒ (* t)
 ```
 
 \iffalse
-Safe casts are only `id` or `_⇒_`.
-```
-split-*≢other :
-  (q : A ⊑ B) → split (* q) ≢ other
-split-*≢other id ()
-```
-
 ```
 splitᶜ : ∀ {E F A B}
   →  (⟨ E ⟩ A) =>ᶜ (⟨ F ⟩ B)
@@ -403,11 +406,11 @@ infix 2 _↦_ _—→_
 \fi
 
 ```
-ƛ-wrap : ∀ (∓s : A′ => A) (±t : P =>ᶜ P′) 
-  → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A ⇒ P))
-  → (∀ {E} → Γ ⊢ ⟨ E ⟩ (A′ ⇒ P′))
-ƛ-wrap ∓s ±t M =
-  ƛ cast ±t (lift M · (cast (pure± ∓s) (` Z)))
+ƛ-wrap : ∀ (∓s : A′ => A) (±t : B => B′) (±e : E =>ᵉ E′)
+  → (∀ {F} → Γ ⊢ ⟨ F ⟩ (A ⇒ ⟨ E ⟩ B))
+  → (∀ {F} → Γ ⊢ ⟨ F ⟩ (A′ ⇒ ⟨ E′ ⟩ B′))
+ƛ-wrap ∓s ±t ±e M =
+  ƛ castᵉ ±e (cast ±t (lift M · (cast ∓s (` Z))))
 ```
 
 ## Reduction
@@ -454,34 +457,34 @@ The `ident` rule removes identity casts, after the casted computation returned
 a value.
 ```
   ident : ∀ {V : Γ ⊢ ⟨ E ⟩ A}
-      {±p : (⟨ E ⟩ A) =>ᶜ ⟨ F ⟩ A}
-    → splitᶜ ±p ≡ id
+      {±a : A => A}
+    → split ±a ≡ id
     → (v : Value V)
       --------------
-    → cast ±p V ↦ gvalue v
+    → cast ±a V ↦ gvalue v
 ```
 
 The `wrap` rule reduces casts between function types.
 The cast `±p` is split into two casts, `∓s` between domains and `±t` codomains;
 the function being cast is wrapped using `ƛ-wrap`, composing it with those two casts.
 ```
-  wrap : {N : Γ ▷ A ⊢ P}
-      {∓s : A′ => A} {±t : P =>ᶜ P′}
-      {±p : ⟨ E ⟩ (A ⇒ P) =>ᶜ ⟨ E′ ⟩ (A′ ⇒ P′)}
-    → splitᶜ ±p ≡ ∓s ⇒ ±t
+  wrap : {N : Γ ▷ A ⊢ ⟨ E ⟩ B}
+      {∓s : A′ => A} {±t : B => B′} {±e : E =>ᵉ E′}
+      {±p : A ⇒ ⟨ E ⟩ B => A′ ⇒ ⟨ E′ ⟩ B′}
+    → split ±p ≡ ∓s ⇒⟨ ±e ⟩ ±t
       -----------------------------------------
-    → cast ±p (ƛ N) ↦ ƛ-wrap ∓s ±t (ƛ N)
+    → cast {E = F} ±p (ƛ N) ↦ ƛ-wrap ∓s ±t ±e (ƛ N)
 ```
 
 The `expand` rule reduces an upcast to `★` to a box.
 \lyx{and does something more with `p`}
 ```
   expand : ∀{V : Γ ⊢ ⟨ E ⟩ A}
-      {p : A ≤ G} {E≤E′ : E ≤ᵉ E′}
+      {p : A ≤ G}
     → Value V
     → (g : Ground G)
       -------------------------------
-    → cast (+ ⟨ E≤E′ ⟩ (p ⇑ g)) V ↦ cast (+ ⟨ E≤E′ ⟩ p) V ⇑ g
+    → cast (+ (p ⇑ g)) V ↦ cast (+ p) V ⇑ g
 ```
 
 The `collapse` rule reduces a downcast `(p ⇑ g)` from `★`, in which case
@@ -490,12 +493,12 @@ the box, provided the tag `g` in the box and in the cast match.
 \lyx{and does something more with `p`}
 ```
   collapse : ∀ {V : Γ ⊢ ⟨ E ⟩ G}
-      {p : A ≤ G} {E′≤E : E′ ≤ᵉ E}
+      {p : A ≤ G}
     → Value V
     → (g : Ground G)
       --------------------------------
-    →   cast (- ⟨ E′≤E ⟩ (p ⇑ g)) (V ⇑ g)
-      ↦ cast (- ⟨ E′≤E ⟩ p) V
+    →   cast (- (p ⇑ g)) (V ⇑ g)
+      ↦ cast (- p) V
 ```
 
 The `collide` rule reduces a downcast `(p ⇑ h)` applied to
@@ -503,13 +506,13 @@ a box `(V ⇑ g)` when the tags `g` and `h` don't match.
 This raises `blame`.
 ```
   collide : ∀{G H} {V : Γ ⊢ ⟨ E ⟩ G}
-      {p : A ≤ H} {E′≤E : E′ ≤ᵉ E}
+      {p : A ≤ H}
     → Value V
     → (g : Ground G)
     → (h : Ground H)
     → G ≢ H
       -----------------------------
-    → cast (- ⟨ E′≤E ⟩ (p ⇑ h)) (V ⇑ g) ↦ blame
+    → cast (- (p ⇑ h)) (V ⇑ g) ↦ blame
 ```
 
 Casts contain both a cast on values (whose behavior is defined by the previous five rules),
@@ -520,13 +523,20 @@ is not handled by any inner handler and is not a member of the target effect `F`
 ```
   blameᵉ : ∀ {e} {e∈E′ : e ∈☆ E′} {V} {M}
       {ℰ : Frame Γ (⟨ E′ ⟩ response e) (⟨ E ⟩ A)}
-      {±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B}
+      {±e : E =>ᵉ F}
     → ¬ e ∈☆ F
     → ¬ handled e ℰ
     → Value V
     → M ≡ ℰ ⟦ perform e∈E′ V ⟧
       ---------------------------
-    → cast ±p M ↦ blame
+    → castᵉ ±e M ↦ blame
+```
+
+```
+  castᵉ-return : ∀ {V : Γ ⊢ ⟨ E ⟩ A} {±e : E =>ᵉ F}
+    → (v : Value V)
+      --------------------------
+    → castᵉ ±e V ↦ gvalue v
 ```
 
 Note that there is no rule for "successful effect casts". When an effect passes successfully
@@ -758,11 +768,11 @@ data Progress {P} : (∅ ⊢ P) → Set where
 As one subcase of the proof of progress, we prove that a `cast` applied to a
 value always takes a step.
 ```
-progress± : ∀ {V : ∅ ⊢ P}
+progress± : ∀ {V : ∅ ⊢ ⟨ E ⟩ A}
   → (v : Value V)
-  → (±p : P =>ᶜ Q)
+  → (±a : A => B)
     --------------------
-  → ∃[ M ](cast ±p V ↦ M)
+  → ∃[ M ](cast ±a V ↦ M)
 ```
 
 \iffalse
@@ -771,7 +781,7 @@ the cast is a value. Only the value cast matters.
 The reduction rule to be applied depends on the structure of the `cast`.
 We first try to `split` the cast.
 ```
-progress± v ±p with splitᶜ ±p in e
+progress± v ±a with split ±a in e
 ```
 
 If the cast is an identity cast, then the `ident` rule applies, removing the
@@ -783,13 +793,13 @@ progress± v     _ | id                       =  _ , ident e v
 If the cast is between functions, then the `wrap` rule applies,
 wrapping the input and output of the function in casts.
 ```
-progress± (ƛ _) _ | _ ⇒ _                    =  _ , wrap e
+progress± (ƛ _) _ | _ ⇒⟨ _ ⟩ _               =  _ , wrap e
 ```
 
 Otherwise, we have a cast to or from the dynamic type `★`.
 If it is an upcast to `★`, the `expand` rule wraps the value in a box.
 ```
-progress± v       (+ ⟨ _ ⟩ (_ ⇑ g))
+progress± v       (+ (_ ⇑ g))
   | other  =  _ , expand v g
 ```
 
@@ -797,19 +807,12 @@ If it is a downcast from `★`, the cast value must be a box.
 A run-time tag comparison is performed. If the tags match, we unbox the box
 with `collapse`. If the tags don't match, we raise blame with `collide`.
 ```
-progress± (v ⇑ g) (- ⟨ _ ⟩ (_ ⇑ h)) | other
+progress± (v ⇑ g) (- (_ ⇑ h)) | other
     with ground g ≡? ground h
 ... | yes refl rewrite uniqueG g h
   =  _ , collapse v h
 ... | no  G≢H
   =  _ , collide v g h G≢H
-```
-
-Safe casts `(* q`) are either identity casts or function casts, so the `other` case is
-vacuous for those.
-```
-progress± _ (* ⟨ _ ⟩ q) | other
-  =  ⊥-elim (split-*≢other q e)
 ```
 
 We finally reach the proof of progress.
@@ -891,22 +894,7 @@ progress (cast ±p M) with progress M
 ... | blame ℰ         =  blame (`cast ±p [ ℰ ])
 ... | step (ξ ℰ M↦M′)
     =  step (ξ (`cast ±p [ ℰ ]) M↦M′)
-```
-
-When a computation under a cast performs an operation `e`,
-the effect cast validates that the operation is expected,
-\ie{} it checks whether `e` is a member of the effect `F`
-at that point. If it is (`yes`), then `e` remains unhandled.
-If `e` is not allowed (`no`), then blame is raised by `blameᵉ`.
-```
-progress (cast {Q = ⟨ F ⟩ _} ±p M)
-    | pending {e = e} ℰ e∈E v ¬e//ℰ
-      with e ∈☆? F
-...   | yes e∈F
-      = pending (`cast ±p [ ℰ ]) e∈E v
-          (¬handled-cast {±p = ±p} ℰ e∈F ¬e//ℰ)
-...   | no ¬∈
-      = step (ξ □ (blameᵉ ¬∈ ¬e//ℰ v refl))
+... | pending ℰ e v ¬e//ℰ = pending (`cast ±p [ ℰ ]) e v ¬e//ℰ
 ```
 
 Finally, when a cast is applied to a value, we apply the lemma `progress±`
@@ -918,6 +906,27 @@ progress (cast ±p M)
 ...     | _ , V⟨±p⟩↦N                        = step (ξ □ V⟨±p⟩↦N)
 ```
 
+
+When a computation under a cast performs an operation `e`,
+the effect cast validates that the operation is expected,
+\ie{} it checks whether `e` is a member of the effect `F`
+at that point. If it is (`yes`), then `e` remains unhandled.
+If `e` is not allowed (`no`), then blame is raised by `blameᵉ`.
+```
+progress (castᵉ ±p M) with ±p | progress M
+... | ±p | done v = step (ξ □ (castᵉ-return v))
+... | ±p | step (ξ ℰ M↦M′) = step (ξ (`castᵉ ±p [ ℰ ]) M↦M′)
+... | ±p | blame ℰ = blame (`castᵉ ±p [ ℰ ])
+... | + p | pending {e = e} ℰ e∈E v ¬e//ℰ = pending {e = e} (`castᵉ (+ p) [ ℰ ]) e∈E v (upcast-handled p ℰ ¬e//ℰ)
+... | - id | pending {e = e} ℰ e∈E v ¬e//ℰ
+    = pending {e = e} (`castᵉ (- id) [ ℰ ]) e∈E v (λ{ (inj₂ e//ℰ) → ¬e//ℰ e//ℰ })
+... | ±p@(- (¡≤☆ {E = F})) | pending {e = e} ℰ e∈E v ¬e//ℰ with e ∈? F
+...   | yes e∈F
+      = pending (`castᵉ ±p [ ℰ ]) e∈E v
+          (¬handled-cast {±p = - ¡≤☆} ℰ (¡ e∈F) ¬e//ℰ)
+...   | no ¬∈
+      = step (ξ □ (blameᵉ (λ{ (¡ e∈F) → ¬∈ e∈F }) ¬e//ℰ v refl))
+```
 Before pending an operation, we reduce its argument.
 Once it is a value, the operation is `pending`.
 ```
@@ -1100,16 +1109,16 @@ infix  6 _⦅_⦆★_
 infix  8 $★_
 
 pattern  ƛ★_ N
-  =  cast (+ ⟨ id ⟩ ★⇒★≤★) (ƛ N)
+  =  cast (+ ★⇒★≤★) (ƛ N)
 pattern  _·★_ L M
-  =  (cast (- ⟨ id ⟩ ★⇒★≤★) L) · M
+  =  (cast (- ★⇒★≤★) L) · M
 pattern  $★_ {ι = ι} k
   =  $ k ⇑ $ ι
 pattern  _⦅_⦆★_ {ι = ι} {ι′} {ι″} M _⊕_ N
-  =  cast (+ ⟨ id ⟩ (ι″ ≤★))
-     ( cast (- ⟨ id ⟩ (ι ≤★)) M
+  =  cast (+ (ι″ ≤★))
+     ( cast (- (ι ≤★)) M
        ⦅ _⊕_ ⦆
-       cast (- ⟨ id ⟩ (ι′ ≤★)) N) 
+       cast (- (ι′ ≤★)) N)
 ```
 
 The following functions define the embedding of a static term
@@ -1171,10 +1180,10 @@ _+ˢ_ = _⦅ Nat._+_ ⦆_
 pattern  $ℕ★_ k          =  $ k ⇑ $ℕ
 pattern  $𝔹★_ k          =  $ k ⇑ $𝔹
 pattern  _⦅_⦆ℕ★_ M _⊕_ N
-  =  cast (+ ⟨ id ⟩ ℕ≤★)
-     ( cast (- ⟨ id ⟩ ℕ≤★) M
+  =  cast (+ ℕ≤★)
+     ( cast (- ℕ≤★) M
        ⦅ _⊕_ ⦆
-       cast (- ⟨ id ⟩ ℕ≤★) N)
+       cast (- ℕ≤★) N)
 
 _+★_ : Γ ⊢ ⟨ E ⟩ ★ → Γ ⊢ ⟨ E ⟩ ★ → Γ ⊢ ⟨ E ⟩ ★
 _+★_ = _⦅ Nat._+_ ⦆ℕ★_
@@ -1189,139 +1198,139 @@ inc★    :  ∅ ⊢ ⟨ ☆ ⟩ ★
 inc★    =  ⌈ Inc ⌉
 
 inc★′   :  ∅ ⊢ ⟨ ☆ ⟩ ★
-inc★′   =  cast (+ ⟨ ≤☆ ⟩ ℕ⇒ℕ≤★) inc
+inc★′   =  castᵉ (+ ¡≤☆) (cast (+ ℕ⇒ℕ≤★) inc)
 ```
 
-The following are reductions of the statically typed `inc` and the dynamically
-typed `inc★`, both applied to the constant `2`.
-
-```
-inc2—↠3  : inc · ($ 2) —↠ $ 3
-inc2—↠3  =
-  begin
-    (ƛ (` Z + $ 1)) · $ 2
-  —→⟨ ξ □ (β ($ 2)) ⟩
-    $ 2 + $ 1
-  —→⟨ ξ □ δ ⟩ $ 3
-  ∎
-```
-
-```
-inc★2★—↠3★  : inc★ ·★ ($★ 2) —↠ $★ 3
-```
-
-```
-inc★2★—↠3★  =
-  begin
-    (ƛ★ (` Z +★ $ℕ★ 1)) ·★ $ℕ★ 2
-  —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★)
-                 [ □ ]
-         ]· $ℕ★ 2)
-        (expand (ƛ _) ★⇒★) ⟩
-    (cast (+ ⟨ id ⟩ id)
-          (ƛ (` Z +★ $ℕ★ 1)) ⇑ ★⇒★)
-      ·★ $ℕ★ 2
-  —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★)
-                 [ [ □ ]⇑ ★⇒★ ]
-         ]· $ℕ★ 2)
-        (ident refl (ƛ _)) ⟩
-    ((ƛ (` Z +★ $ℕ★ 1)) ⇑ ★⇒★)
-      ·★ $ℕ★ 2
-  —→⟨ ξ ([ □ ]· $ℕ★ 2) (collapse (ƛ _) ★⇒★) ⟩
-    (cast (- ⟨ id ⟩ id)
-          (ƛ (` Z +★ $ℕ★ 1)))
-      · $ℕ★ 2
-  —→⟨ ξ ([ □ ]· $ℕ★ 2) (ident refl (ƛ _)) ⟩
-    (ƛ (` Z +★ $ℕ★ 1)) · $ℕ★ 2
-  —→⟨ ξ □ (β ($ℕ★ 2)) ⟩
-    $ℕ★ 2 +★ $ℕ★ 1
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ Nat._+_ ⦆
-            cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ])
-        (collapse ($ 2) $ℕ) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★)
-         ( cast (- ⟨ id ⟩ id) ($ 2)
-           +
-           cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ Nat._+_ ⦆
-            cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ])
-        (ident refl ($ 2)) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★)
-         ($ 2 +
-          cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★)
-               [ $ 2 ⦅ Nat._+_ ⦆[ □ ] ])
-        (collapse ($ 1) $ℕ) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★)
-         ($ 2 +
-          cast (- ⟨ id ⟩ id) ($ 1))
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★)
-               [ $ 2 ⦅ Nat._+_ ⦆[ □ ] ])
-        (ident refl ($ 1)) ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★) ($ 2 + $ 1)
-  —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ □ ]) δ ⟩
-    cast (+ ⟨ id ⟩ ℕ≤★) ($ 3)
-  —→⟨ ξ □ (expand ($ 3) $ℕ) ⟩
-    cast (+ ⟨ id ⟩ id) ($ 3) ⇑ $ℕ
-  —→⟨ ξ ([ □ ]⇑ $ℕ) (ident refl ($ 3)) ⟩
-    $ℕ★ 3
-  ∎
-```
-\fi
-
-\iffalse
-```
-{- TODO
-inc★′2★—↠3★  : inc★′ ·★ ($★ 2) —↠ $★ 3
-inc★′2★—↠3★  =
-  begin
-    ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ⇒ℕ≤★)) ·★ $ℕ★ 2
-  —→⟨ ξ ([ [ [ □ ]▷ (+ ℕ⇒ℕ≤★) ]▷ (- ★⇒★≤★) ]· $ℕ★ 2) (castᵉ-value (ƛ _)) ⟩
-    ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ▷ (+ ℕ⇒ℕ≤★)) ·★ $ℕ★ 2
-  —→⟨ ξ ([ [ □ ]▷ (- ★⇒★≤★) ]· $ℕ★ 2) (expand (ƛ _) ★⇒★) ⟩
-    ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ▷ (+ ℕ≤★ ⇒ ⟨ E≤☆ ⟩ ℕ≤★) ⇑ ★⇒★) ·★ $ℕ★ 2
-  —→⟨ ξ ([ [ [ □ ]⇑ ★⇒★ ]▷ (- ★⇒★≤★) ]· $ℕ★ 2) (wrap refl) ⟩
-    let f = ƛ ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · (` Z ▷ (- ℕ≤★)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)) in
-    (f ⇑ ★⇒★) ·★ $ℕ★ 2
-  —→⟨ ξ ([ □ ]· $ℕ★ 2) (collapse (ƛ _) ★⇒★) ⟩
-    (f ▷ (- id)) · $ℕ★ 2
-  —→⟨ ξ ([ □ ]· $ℕ★ 2) (ident refl (ƛ _)) ⟩
-    f · $ℕ★ 2
-  —→⟨ ξ □ (β ($ℕ★ 2)) ⟩
-    (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · ($ℕ★ 2 ▷ (- ℕ≤★)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
-  —→⟨ ξ ([ [ (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ·[ □ ] ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) (collapse ($ 2) $ℕ) ⟩
-    (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · ($ 2 ▷ (- id)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
-  —→⟨ ξ ([ [ (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ·[ □ ] ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) (ident refl ($ 2)) ⟩
-    (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · $ 2 ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
-  —→⟨ ξ ([ [ □ ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) (β ($ 2)) ⟩
-    $ 2 ⦅ Nat._+_ ⦆ $ 1 ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
-  —→⟨ ξ ([ [ □ ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) δ ⟩
-    $ 3 ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
-  —→⟨ ξ ([ □ ]▷ (+ ℕ≤★)) (castᵉ-value ($ 3)) ⟩
-    $ 3 ▷ (+ ℕ≤★)
-  —→⟨ ξ □ (expand ($ 3) $ℕ) ⟩
-    $ 3 ▷ (+ id) ⇑ $ℕ
-  —→⟨ ξ ([ □ ]⇑ $ℕ) (ident refl ($ 3)) ⟩
-    $ℕ★ 3
-  ∎
-
-inc★true★—↠blame : inc★ ·★ ($★ true) —↠
-  ([ [ □ ]⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ]▷ (+ ℕ≤★)) ⟦ blame ⟧
-inc★true★—↠blame =
-  begin
-    (ƛ★ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ·★ $𝔹★ true
-  —→⟨ ξ ([ [ □ ]▷ (- ★⇒★≤★) ]· $𝔹★ true) (expand (ƛ _) ★⇒★) ⟩
-    ((ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ▷ (+ id) ⇑ ★⇒★) ·★ $𝔹★ true
-  —→⟨ ξ ([ [ [ □ ]⇑ ★⇒★ ]▷ (- ★⇒★≤★) ]· $𝔹★ true) (ident refl (ƛ _)) ⟩
-    ((ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ⇑ ★⇒★) ·★ $𝔹★ true
-  —→⟨ ξ ([ □ ]· $𝔹★ true) (collapse (ƛ _) ★⇒★) ⟩
-    ((ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ▷ (- id)) · $𝔹★ true
-  —→⟨ ξ ([ □ ]· $𝔹★ true) (ident refl (ƛ _)) ⟩
-    (ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) · $𝔹★ true
-  —→⟨ ξ □ (β ($𝔹★ true)) ⟩
-    $𝔹★ true ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1
-  —→⟨ ξ ([ [ □ ]⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ]▷ (+ ℕ≤★)) (collide ($ true) $𝔹 $ℕ (λ())) ⟩
-    blame ⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ▷ (+ ℕ≤★)
-  ∎
-  -}
-```
-\fi
+-- The following are reductions of the statically typed `inc` and the dynamically
+-- typed `inc★`, both applied to the constant `2`.
+--
+-- ```
+-- inc2—↠3  : inc · ($ 2) —↠ $ 3
+-- inc2—↠3  =
+--   begin
+--     (ƛ (` Z + $ 1)) · $ 2
+--   —→⟨ ξ □ (β ($ 2)) ⟩
+--     $ 2 + $ 1
+--   —→⟨ ξ □ δ ⟩ $ 3
+--   ∎
+-- ```
+--
+-- ```
+-- inc★2★—↠3★  : inc★ ·★ ($★ 2) —↠ $★ 3
+-- ```
+--
+-- ```
+-- inc★2★—↠3★  =
+--   begin
+--     (ƛ★ (` Z +★ $ℕ★ 1)) ·★ $ℕ★ 2
+--   —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★)
+--                  [ □ ]
+--          ]· $ℕ★ 2)
+--         (expand (ƛ _) ★⇒★) ⟩
+--     (cast (+ ⟨ id ⟩ id)
+--           (ƛ (` Z +★ $ℕ★ 1)) ⇑ ★⇒★)
+--       ·★ $ℕ★ 2
+--   —→⟨ ξ ([ `cast (- ⟨ id ⟩ ★⇒★≤★)
+--                  [ [ □ ]⇑ ★⇒★ ]
+--          ]· $ℕ★ 2)
+--         (ident refl (ƛ _)) ⟩
+--     ((ƛ (` Z +★ $ℕ★ 1)) ⇑ ★⇒★)
+--       ·★ $ℕ★ 2
+--   —→⟨ ξ ([ □ ]· $ℕ★ 2) (collapse (ƛ _) ★⇒★) ⟩
+--     (cast (- ⟨ id ⟩ id)
+--           (ƛ (` Z +★ $ℕ★ 1)))
+--       · $ℕ★ 2
+--   —→⟨ ξ ([ □ ]· $ℕ★ 2) (ident refl (ƛ _)) ⟩
+--     (ƛ (` Z +★ $ℕ★ 1)) · $ℕ★ 2
+--   —→⟨ ξ □ (β ($ℕ★ 2)) ⟩
+--     $ℕ★ 2 +★ $ℕ★ 1
+--   —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ Nat._+_ ⦆
+--             cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ])
+--         (collapse ($ 2) $ℕ) ⟩
+--     cast (+ ⟨ id ⟩ ℕ≤★)
+--          ( cast (- ⟨ id ⟩ id) ($ 2)
+--            +
+--            cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
+--   —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ [ □ ]⦅ Nat._+_ ⦆
+--             cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1) ])
+--         (ident refl ($ 2)) ⟩
+--     cast (+ ⟨ id ⟩ ℕ≤★)
+--          ($ 2 +
+--           cast (- ⟨ id ⟩ ℕ≤★) ($ℕ★ 1))
+--   —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★)
+--                [ $ 2 ⦅ Nat._+_ ⦆[ □ ] ])
+--         (collapse ($ 1) $ℕ) ⟩
+--     cast (+ ⟨ id ⟩ ℕ≤★)
+--          ($ 2 +
+--           cast (- ⟨ id ⟩ id) ($ 1))
+--   —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★)
+--                [ $ 2 ⦅ Nat._+_ ⦆[ □ ] ])
+--         (ident refl ($ 1)) ⟩
+--     cast (+ ⟨ id ⟩ ℕ≤★) ($ 2 + $ 1)
+--   —→⟨ ξ (`cast (+ ⟨ id ⟩ ℕ≤★) [ □ ]) δ ⟩
+--     cast (+ ⟨ id ⟩ ℕ≤★) ($ 3)
+--   —→⟨ ξ □ (expand ($ 3) $ℕ) ⟩
+--     cast (+ ⟨ id ⟩ id) ($ 3) ⇑ $ℕ
+--   —→⟨ ξ ([ □ ]⇑ $ℕ) (ident refl ($ 3)) ⟩
+--     $ℕ★ 3
+--   ∎
+-- ```
+-- \fi
+--
+-- \iffalse
+-- ```
+-- {- TODO
+-- inc★′2★—↠3★  : inc★′ ·★ ($★ 2) —↠ $★ 3
+-- inc★′2★—↠3★  =
+--   begin
+--     ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ⇒ℕ≤★)) ·★ $ℕ★ 2
+--   —→⟨ ξ ([ [ [ □ ]▷ (+ ℕ⇒ℕ≤★) ]▷ (- ★⇒★≤★) ]· $ℕ★ 2) (castᵉ-value (ƛ _)) ⟩
+--     ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ▷ (+ ℕ⇒ℕ≤★)) ·★ $ℕ★ 2
+--   —→⟨ ξ ([ [ □ ]▷ (- ★⇒★≤★) ]· $ℕ★ 2) (expand (ƛ _) ★⇒★) ⟩
+--     ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ▷ (+ ℕ≤★ ⇒ ⟨ E≤☆ ⟩ ℕ≤★) ⇑ ★⇒★) ·★ $ℕ★ 2
+--   —→⟨ ξ ([ [ [ □ ]⇑ ★⇒★ ]▷ (- ★⇒★≤★) ]· $ℕ★ 2) (wrap refl) ⟩
+--     let f = ƛ ((ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · (` Z ▷ (- ℕ≤★)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)) in
+--     (f ⇑ ★⇒★) ·★ $ℕ★ 2
+--   —→⟨ ξ ([ □ ]· $ℕ★ 2) (collapse (ƛ _) ★⇒★) ⟩
+--     (f ▷ (- id)) · $ℕ★ 2
+--   —→⟨ ξ ([ □ ]· $ℕ★ 2) (ident refl (ƛ _)) ⟩
+--     f · $ℕ★ 2
+--   —→⟨ ξ □ (β ($ℕ★ 2)) ⟩
+--     (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · ($ℕ★ 2 ▷ (- ℕ≤★)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
+--   —→⟨ ξ ([ [ (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ·[ □ ] ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) (collapse ($ 2) $ℕ) ⟩
+--     (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · ($ 2 ▷ (- id)) ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
+--   —→⟨ ξ ([ [ (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) ·[ □ ] ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) (ident refl ($ 2)) ⟩
+--     (ƛ (` Z ⦅ Nat._+_ ⦆ $ 1)) · $ 2 ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
+--   —→⟨ ξ ([ [ □ ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) (β ($ 2)) ⟩
+--     $ 2 ⦅ Nat._+_ ⦆ $ 1 ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
+--   —→⟨ ξ ([ [ □ ]▷⟨ + E≤☆ ⟩ ]▷ (+ ℕ≤★)) δ ⟩
+--     $ 3 ▷⟨ + E≤☆ ⟩ ▷ (+ ℕ≤★)
+--   —→⟨ ξ ([ □ ]▷ (+ ℕ≤★)) (castᵉ-value ($ 3)) ⟩
+--     $ 3 ▷ (+ ℕ≤★)
+--   —→⟨ ξ □ (expand ($ 3) $ℕ) ⟩
+--     $ 3 ▷ (+ id) ⇑ $ℕ
+--   —→⟨ ξ ([ □ ]⇑ $ℕ) (ident refl ($ 3)) ⟩
+--     $ℕ★ 3
+--   ∎
+--
+-- inc★true★—↠blame : inc★ ·★ ($★ true) —↠
+--   ([ [ □ ]⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ]▷ (+ ℕ≤★)) ⟦ blame ⟧
+-- inc★true★—↠blame =
+--   begin
+--     (ƛ★ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ·★ $𝔹★ true
+--   —→⟨ ξ ([ [ □ ]▷ (- ★⇒★≤★) ]· $𝔹★ true) (expand (ƛ _) ★⇒★) ⟩
+--     ((ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ▷ (+ id) ⇑ ★⇒★) ·★ $𝔹★ true
+--   —→⟨ ξ ([ [ [ □ ]⇑ ★⇒★ ]▷ (- ★⇒★≤★) ]· $𝔹★ true) (ident refl (ƛ _)) ⟩
+--     ((ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ⇑ ★⇒★) ·★ $𝔹★ true
+--   —→⟨ ξ ([ □ ]· $𝔹★ true) (collapse (ƛ _) ★⇒★) ⟩
+--     ((ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) ▷ (- id)) · $𝔹★ true
+--   —→⟨ ξ ([ □ ]· $𝔹★ true) (ident refl (ƛ _)) ⟩
+--     (ƛ (` Z ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1)) · $𝔹★ true
+--   —→⟨ ξ □ (β ($𝔹★ true)) ⟩
+--     $𝔹★ true ⦅ Nat._+_ ⦆ℕ★ $ℕ★ 1
+--   —→⟨ ξ ([ [ □ ]⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ]▷ (+ ℕ≤★)) (collide ($ true) $𝔹 $ℕ (λ())) ⟩
+--     blame ⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ▷ (+ ℕ≤★)
+--   ∎
+--   -}
+-- ```
+-- \fi

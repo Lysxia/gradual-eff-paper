@@ -408,9 +408,13 @@ dom : ∀ {A B A′ B′} → A ⇒ B ≤ A′ ⇒ B′ → A ≤ A′
 dom id       =  id
 dom (a ⇒ p)  =  a
 
-cod : ∀ {A B A′ B′} → A ⇒ B ≤ A′ ⇒ B′ → B ≤ᶜ B′
-cod id       =  ⟨ id ⟩ id
-cod (a ⇒ p)  =  p
+cod : ∀ {A B E A′ B′ E′} → A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′ → B ≤ B′
+cod id       =  id
+cod (a ⇒ ⟨ e ⟩ b)  =  b
+
+eff : ∀ {A B E A′ B′ E′} → A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′ → E ≤ᵉ E′
+eff id = id
+eff (a ⇒ ⟨ e ⟩ b) = e
 ```
 
 The use of these two functions is reminiscent of some gradually-typed
@@ -499,7 +503,7 @@ _⨟ᶜ_ : ∀ {A B C} → A ≤ᶜ B → B ≤ᶜ C → A ≤ᶜ C
 _⨟_ : ∀ {A B C} → A ≤ B → B ≤ C → A ≤ C
 p ⨟ id                     =  p
 p ⨟ (q ⇑ g)                =  (p ⨟ q) ⇑ g
-_⨟_ {A = _ ⇒ _} p (q ⇒ r)  =  (dom p ⨟ q) ⇒ (cod p ⨟ᶜ r)
+_⨟_ {A = _ ⇒ _} p (q ⇒ r)  =  (dom p ⨟ q) ⇒ ((⟨ eff p ⟩ cod p) ⨟ᶜ r)
 
 (⟨ d ⟩ p) ⨟ᶜ (⟨ e ⟩ q) = ⟨ d ⨟ᵉ e ⟩ (p ⨟ q)
 ```
@@ -581,7 +585,7 @@ dom-⨟ (_ ⇒ _) (_ ⇒ _) = refl
 cod-⨟ :
        (p : A ⇒ P ≤ A′ ⇒ P′)
     →  (q : A′ ⇒ P′ ≤  A″ ⇒ P″)
-    →  cod p ⨟ᶜ cod q ≡ cod (p ⨟ q)
+    →  cod p ⨟ cod q ≡ cod (p ⨟ q)
 cod-⨟ id id = refl
 cod-⨟ id (_ ⇒ _) = refl
 cod-⨟ (_ ⇒ _) id = refl
@@ -674,7 +678,7 @@ record _⊑ᶜ_ P Q where
 `\begin{AgdaAlign}`{=tex}
 ```
 infix  6 _=>_ _=>ᶜ_ _=>ᵉ_
-infix  4 +_ -_ *_
+infix  4 +_ -_
 ```
 
 We define notions of casts for the different precision relations
@@ -699,15 +703,6 @@ Downcasts increase precision.
         ----------------
       → Cast _<_ _⊏_ A B
 ```
-
-\iffalse
-Safe casts are upcasts along the subtyping relation.
-```
-  *_  : A ⊏ B
-        ----------------
-      → Cast _<_ _⊏_ A B
-```
-\fi
 `\end{AgdaAlign}`{=tex}
 
 The types of casts for value types, computation types, and effects
@@ -731,30 +726,17 @@ The empty list, viewed as a set, is a subset of any other list.
 []⊆ ()
 ```
 
-The empty effect is a subeffect of any other effect.
-```
-ε=>ᵉ : ∀ {E} → ε =>ᵉ E
-ε=>ᵉ {☆} = + ¡≤☆
-ε=>ᵉ {¡ _} = * (¡ []⊆)
-
-ε=>ᶜ : ∀ {E A} → (⟨ ε ⟩ A) =>ᶜ (⟨ E ⟩ A)
-ε=>ᶜ {☆} = + ⟨ ¡≤☆ ⟩ id
-ε=>ᶜ {¡ _} = * ⟨ ¡ []⊆ ⟩ id
-```
-
 Projections of computation casts.
 ```
 =>ᶜ-effects : (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B)
   → E =>ᵉ F
 =>ᶜ-effects (+ ⟨ p ⟩ _) = + p
 =>ᶜ-effects (- ⟨ p ⟩ _) = - p
-=>ᶜ-effects (* ⟨ p ⟩ _) = * p
 
 =>ᶜ-returns : (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ B)
   → A => B
 =>ᶜ-returns (+ ⟨ _ ⟩ q) = + q
 =>ᶜ-returns (- ⟨ _ ⟩ q) = - q
-=>ᶜ-returns (* ⟨ _ ⟩ q) = * q
 ```
 
 Pure casts: the identity on effects.
@@ -762,6 +744,5 @@ Pure casts: the identity on effects.
 pure± : A => B  →  ⟨ E ⟩ A =>ᶜ ⟨ E ⟩ B
 pure± (+ A≤) = + ⟨ id ⟩ A≤
 pure± (- A≤) = - ⟨ id ⟩ A≤
-pure± (* A⊑) = * ⟨ ⊑ᵉ-refl ⟩ A⊑
 ```
 \fi

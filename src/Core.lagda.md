@@ -157,11 +157,19 @@ according to the return type of `Q`.
 Note how casts looks similar to handlers (defined below).
 
 ```
-    cast : ∀ {Γ P Q}
-      →  P =>ᶜ Q
-      →  Γ ⊢ P
+    cast : ∀ {Γ E A B}
+      →  A => B
+      →  Γ ⊢ ⟨ E ⟩ A
          -------
-      →  Γ ⊢ Q
+      →  Γ ⊢ ⟨ E ⟩ B
+```
+
+```
+    castᵉ : ∀ {Γ E F A}
+      → E =>ᵉ F
+      → Γ ⊢ ⟨ E ⟩ A
+        -----------
+      → Γ ⊢ ⟨ F ⟩ A
 ```
 
 A \emph{box} `(M ⇑ g)` constructs a value of the dynamic type `★`:
@@ -333,7 +341,8 @@ ren ρ (L · M)        =  (ren ρ L) · (ren ρ M)
 ren ρ ($ k)          =  $ k
 ren ρ (L ⦅ _⊕_ ⦆ M)  =  (ren ρ L) ⦅ _⊕_ ⦆ (ren ρ M)
 ren ρ (M ⇑ g)        =  (ren ρ M) ⇑ g
-ren ρ (cast ±p M)    =  cast ±p (ren ρ M)
+ren ρ (cast ±a M)    =  cast ±a (ren ρ M)
+ren ρ (castᵉ ±e M)   =  castᵉ ±e (ren ρ M)
 ren ρ blame          =  blame
 ren ρ (handle H M)   =  handle (renʰ ρ H) (ren ρ M)
 ren ρ (perform- e∈E M eq)
@@ -401,6 +410,7 @@ sub σ ($ k)          =  $ k
 sub σ (L ⦅ _⊕_ ⦆ M)  =  (sub σ L) ⦅ _⊕_ ⦆ (sub σ M)
 sub σ (M ⇑ g)        =  (sub σ M) ⇑ g
 sub σ (cast ±p M)    =  cast ±p (sub σ M)
+sub σ (castᵉ ±p M)   =  castᵉ ±p (sub σ M)
 sub σ blame          =  blame
 sub σ (handle H M)   =  handle (subʰ σ H) (sub σ M)
 sub σ (perform- e∈E M eq)
@@ -486,6 +496,7 @@ ren∘ren ρ≡ ($ k)                =  refl
 ren∘ren ρ≡ (L ⦅ _⊕_ ⦆ M)        =  cong₂ _⦅ _⊕_ ⦆_ (ren∘ren ρ≡ L) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ (M ⇑ g)              =  cong (_⇑ g) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ (cast ±p M)          =  cong (cast ±p) (ren∘ren ρ≡ M)
+ren∘ren ρ≡ (castᵉ ±p M)         =  cong (castᵉ ±p) (ren∘ren ρ≡ M)
 ren∘ren ρ≡ blame                =  refl
 ren∘ren ρ≡ (perform- e∈E M eq)  =  cong (λ M → perform- e∈E M eq) (ren∘ren ρ≡ M)
 ren∘ren {ρ = ρ} {ρ′ = ρ′} ρ≡ (handle H M)
@@ -538,6 +549,7 @@ sub∘ren σ≡ ($ k)                =  refl
 sub∘ren σ≡ (L ⦅ _⊕_ ⦆ M)        =  cong₂ _⦅ _⊕_ ⦆_ (sub∘ren σ≡ L) (sub∘ren σ≡ M)
 sub∘ren σ≡ (M ⇑ g)              =  cong (_⇑ g) (sub∘ren σ≡ M)
 sub∘ren σ≡ (cast ±p M)          =  cong (cast ±p) (sub∘ren σ≡ M)
+sub∘ren σ≡ (castᵉ ±p M)         =  cong (castᵉ ±p) (sub∘ren σ≡ M)
 sub∘ren σ≡ blame                =  refl
 sub∘ren ρ≡ (perform- e∈E M eq)  =  cong (λ M → perform- e∈E M eq) (sub∘ren ρ≡ M)
 sub∘ren {ρ = ρ} {σ′ = σ′} ρ≡ (handle H M)
@@ -589,6 +601,7 @@ ren∘sub σ≡ ($ k)          =  refl
 ren∘sub σ≡ (L ⦅ _⊕_ ⦆ M)  =  cong₂ _⦅ _⊕_ ⦆_ (ren∘sub σ≡ L) (ren∘sub σ≡ M)
 ren∘sub σ≡ (M ⇑ g)        =  cong (_⇑ g) (ren∘sub σ≡ M)
 ren∘sub σ≡ (cast ±p M)    =  cong (cast ±p) (ren∘sub σ≡ M)
+ren∘sub σ≡ (castᵉ ±p M)   =  cong (castᵉ ±p) (ren∘sub σ≡ M)
 ren∘sub σ≡ blame          =  refl
 ren∘sub ρ≡ (handle H M)   =  cong₂ handle (ren∘subʰ ρ≡ H) (ren∘sub ρ≡ M)
 ren∘sub ρ≡ (perform- e∈E M eq) = cong (λ M → perform- e∈E M eq) (ren∘sub ρ≡ M)
@@ -659,6 +672,7 @@ renId ρId ($ k)                                             =  refl
 renId ρId (L ⦅ _⊕_ ⦆ M) rewrite renId ρId L | renId ρId M   =  refl
 renId ρId (M ⇑ g) rewrite renId ρId M                       =  refl
 renId ρId (cast ±p M) rewrite renId ρId M                   =  refl
+renId ρId (castᵉ ±p M) rewrite renId ρId M                  =  refl
 renId ρId blame                                             =  refl
 renId ρId (perform- e∈E M eq) rewrite renId ρId M           =  refl
 renId ρId (handle H M) rewrite renIdʰ ρId H | renId ρId M   =  refl
@@ -700,6 +714,7 @@ subId σId ($ k)                                             =  refl
 subId σId (L ⦅ _⊕_ ⦆ M) rewrite subId σId L | subId σId M   =  refl
 subId σId (M ⇑ g) rewrite subId σId M                       =  refl
 subId σId (cast ±p M) rewrite subId σId M                   =  refl
+subId σId (castᵉ ±p M) rewrite subId σId M                  =  refl
 subId σId blame                                             =  refl
 subId σId (perform- e∈E M eq) rewrite subId σId M           =  refl
 subId ρId (handle H M) rewrite subIdʰ ρId H | subId ρId M   =  refl
