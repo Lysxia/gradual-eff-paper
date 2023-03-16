@@ -373,12 +373,12 @@ which can be projected to precision witnesses between their domains `dom p : A �
 and codomains `P ≤ᶜ P′`. This allows `p` to be either `_⇒_` or `id`.
 This lets us use `id` uniformly in the proof of reflexivity for term precision.
 ```
-  ƛ≤ƛ : ∀ {N N′} {pᵉ : E ≤ᵉ E′} {p : A ⇒ P ≤ A′ ⇒ P′}
-    → Γ≤ ▷ dom p ⊢ N ≤ᴹ N′
+  ƛ≤ƛ : ∀ {N : Γ ▷ A ⊢ P} {N′ : Γ′ ▷ A′ ⊢ P′} {a : A ≤ A′}
+    → Γ≤ ▷ a ⊢ N ≤ᴹ N′
       ----------------------------
-    → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′
+    → _⊢_≤ᴹ_ Γ≤ {P = ⟨ E ⟩ _} {P′ = ⟨ E′ ⟩ _} (ƛ N) (ƛ N′)
 
-  ·≤· : ∀ {L L′ M M′} {p : A ⇒ P ≤ A′ ⇒ P′}
+  ·≤· : ∀ {L : Γ ⊢ ⟨ E ⟩ (A ⇒ ⟨ E ⟩ B)} {L′ : Γ′ ⊢ ⟨ E′ ⟩ (A′ ⇒ ⟨ E′ ⟩ B′)} {M M′}
     → Γ≤ ⊢ L ≤ᴹ L′
     → Γ≤ ⊢ M ≤ᴹ M′
       -----------------------------
@@ -388,12 +388,12 @@ This lets us use `id` uniformly in the proof of reflexivity for term precision.
 Base types are only related by `id`, which
 thus serves as the index for constants and primitive operators.
 ```
-  $≤$ : ∀ {ι} {pᵉ : E ≤ᵉ E′}
+  $≤$ : ∀ {ι E E′}
     → (k : rep ι)
       ------------------------
-    → Γ≤ ⊢ $ k ≤ᴹ $ k
+    → Γ≤ ⊢ ⟨ E ⟩ _ ≤ ⟨ E′ ⟩ _ ∋ᴹ $ k ≤ $ k
 
-  ⦅⦆≤⦅⦆ : ∀ {ι ι′ ι″ M M′ N N′} {pᵉ : E ≤ᵉ E′}
+  ⦅⦆≤⦅⦆ : ∀ {ι ι′ ι″} {M : Γ ⊢ ⟨ E ⟩ _} {M′ : Γ′ ⊢ ⟨ E′ ⟩ _} {N N′}
     → (_⊕_ : rep ι → rep ι′ → rep ι″)
     → Γ≤ ⊢ M ≤ᴹ M′
     → Γ≤ ⊢ N ≤ᴹ N′
@@ -411,23 +411,25 @@ will be defined below.
       {E≤ : E ≤ᵉ E′} {M M′}
     → {eq : response e ≡ A}
     → Γ≤ ⊢ M ≤ᴹ M′
+      -------------------------------------
     → Γ≤ ⊢  perform- e∈E  M  eq
          ≤ᴹ perform- e∈E′ M′ eq
 
   handle≤handle :
       ∀ {P≤ : P ≤ᶜ P′} {Q≤ : Q ≤ᶜ Q′} {H H′ M M′}
     → Γ≤ ⊢ H ≤ᴴ H′
-    → Γ≤ ⊢ M ≤ᴹ M′
-    → Γ≤ ⊢ handle H M ≤ᴹ handle H′ M′
+    → Γ≤ ⊢ P ≤ P′ ∋ᴹ M ≤ M′
+      -------------------------------------
+    → Γ≤ ⊢ Q ≤ Q′ ∋ᴹ handle H M ≤ handle H′ M′
 ```
 
 Boxes have type `★`, and their contents have ground types, which
 can only be related by precision if they are equal. So the relation
 should be witnessed by `id`.
 ```
-  ⇑≤⇑ : ∀ {G E E′ M M′} {pᵉ : E ≤ᵉ E′}
+  ⇑≤⇑ : ∀ {G E E′ M M′}
     → (g : Ground G)
-    → Γ≤ ⊢ M ≤ᴹ M′
+    → Γ≤ ⊢ ⟨ E ⟩ G ≤ ⟨ E′ ⟩ G ∋ᴹ M ≤ M′
       -----------------------------
     → Γ≤ ⊢ (M ⇑ g) ≤ᴹ (M′ ⇑ g)
 ```
@@ -436,9 +438,9 @@ should be witnessed by `id`.
 Note the absence of a symmetric rule where the box is on the left.
 Intuitively, a more precisely typed term uses fewer dynamic boxes.
 ```
-  ≤⇑ : ∀ {G M M′} {p : A ≤ G} {pᵉ : E ≤ᵉ E′}
+  ≤⇑ : ∀ {G M M′} {p : A ≤ G}
     → (g : Ground G)
-    → Γ≤ ⊢ M ≤ᴹ M′
+    → Γ≤ ⊢ ⟨ E ⟩ A ≤ ⟨ E′ ⟩ G ∋ᴹ M ≤ M′
       --------------------------
     → Γ≤ ⊢ M ≤ᴹ (M′ ⇑ g)
 ```
@@ -461,9 +463,7 @@ consists of the cast `P =>ᶜ Q`, and the other two sides are the inequalities
 `P ≤ᶜ R` and `Q ≤ᶜ R`. We require that triangle to commute, using the predicate
 `commute≤ᶜ`.
 ```
-  cast≤ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-      {±p : A => B} {q : ⟨ E ⟩ B ≤ᶜ ⟨ E′ ⟩ A′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
-    -- → commute≤ᶜ ±p q r
+  cast≤ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′} {±p : A => B}
     → B ≤ A′
     → Γ≤ ⊢ M ≤ᴹ M′
       -------------------------
@@ -472,8 +472,7 @@ consists of the cast `P =>ᶜ Q`, and the other two sides are the inequalities
 
 The `≤cast` rule is symmetrical to `cast≤`.
 ```
-  ≤cast : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-      {p : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′} {±q : A′ => B′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+  ≤cast : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′} {±q : A′ => B′}
     → A ≤ B′
     → Γ≤ ⊢ M ≤ᴹ M′
       -------------------------
@@ -481,8 +480,7 @@ The `≤cast` rule is symmetrical to `cast≤`.
 ```
 
 ```
-  castᵉ≤ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-      {±p : E =>ᵉ F} {q : ⟨ E ⟩ B ≤ᶜ ⟨ E′ ⟩ A′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+  castᵉ≤ : ∀ {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′} {±p : E =>ᵉ F}
     → F ≤ᵉ E′
     → Γ≤ ⊢ M ≤ᴹ M′
       -------------------------
@@ -491,8 +489,7 @@ The `≤cast` rule is symmetrical to `cast≤`.
 
 The `≤castᵉ` rule is symmetrical to `castᵉ≤`.
 ```
-  ≤castᵉ : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
-      {p : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′} {±q : E′ =>ᵉ F′} {r : ⟨ E ⟩ A ≤ᶜ ⟨ E′ ⟩ A′}
+  ≤castᵉ : {M : Γ ⊢ ⟨ E ⟩ A} {M′ : Γ′ ⊢ ⟨ E′ ⟩ A′} {±q : E′ =>ᵉ F′}
     → E ≤ᵉ F′
     → Γ≤ ⊢ M ≤ᴹ M′
       -------------------------
@@ -501,9 +498,9 @@ The `≤castᵉ` rule is symmetrical to `castᵉ≤`.
 
 
 ```
-  blame≤ : ∀ {A A′ M′} {p : A ≤ᶜ A′}
+  blame≤ : ∀ {E E′ A A′ M′}
       ---------------------
-    → Γ≤ ⊢ blame ≤ᴹ M′
+    → Γ≤ ⊢ ⟨ E ⟩ A ≤ ⟨ E′ ⟩ A′ ∋ᴹ blame ≤ M′
 ```
 
 A cast between function types eventually steps to a `ƛ-wrap`, so
@@ -521,9 +518,9 @@ and `≤cast` for `≤wrap`.
     → split ±p ≡ ∓s ⇒⟨ ±e ⟩ ±t
     → commute≤ ±p q r
     → (∀ {F F′} {F≤ : F ≤ᵉ F′} →
-         Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′)
+         Γ≤ ⊢ ⟨ F ⟩ _ ≤ ⟨ F′ ⟩ _ ∋ᴹ  ƛ N ≤ ƛ N′)
       ------------------------------------------
-    → Γ≤ ⊢ ƛ-wrap ∓s ±t ±e (ƛ N) ≤ᴹ ƛ N′
+    → ∀ {F F′} → Γ≤ ⊢ ⟨ F ⟩ _ ≤ ⟨ F′ ⟩ _ ∋ᴹ ƛ-wrap ∓s ±t ±e (ƛ N) ≤ ƛ N′
 ```
 
 Here is an example reduction sequence (with some oversimplifications for conciseness)
@@ -549,9 +546,10 @@ the last term.
       {∓s : A″ => A′} {±t : B′ => B″} {±e : E′ =>ᵉ E″}
     → split ±q ≡ ∓s ⇒⟨ ±e ⟩ ±t
     → ≤commute p ±q r
-    → (∀ {F F′} {F≤ : F ≤ᵉ F′} → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′)
+    → (∀ {F F′} {F≤ : F ≤ᵉ F′} →
+         Γ≤ ⊢ ⟨ F ⟩ _ ≤ ⟨ F′ ⟩ _ ∋ᴹ  ƛ N ≤ ƛ N′)
       -----------------------------------------------------
-    → Γ≤ ⊢ ƛ N ≤ᴹ ƛ-wrap ∓s ±t ±e (ƛ N′)
+    → ∀ {F F′} → Γ≤ ⊢ ⟨ F ⟩ _ ≤ ⟨ F′ ⟩ _ ∋ᴹ ƛ N ≤ ƛ-wrap ∓s ±t ±e (ƛ N′)
 ```
 
 Precision between the operation clauses of handlers.
