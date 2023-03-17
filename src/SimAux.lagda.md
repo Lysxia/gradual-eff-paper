@@ -43,7 +43,6 @@ cast-lemma : ∀ {Γ Γ′ A B C}
   → Value V
   → Value V′
   → (±q : B =>ᶜ C)
-  → ≤commuteᶜ p ±q r
   → Γ≤ ⊢ V ≤ᴹ V′ ⦂ p
     ------------------------
   → ∃[ W ] Value W
@@ -141,10 +140,10 @@ When the right side is already a value, we are done.
 
 `ƛ-wrap` is also a value.
 ```
-catchup (ƛ _) (wrap≤ e′ e ƛN≤ƛN′)
-    =  _ , ƛ _ , (_ ∎) , wrap≤ e′ e ƛN≤ƛN′
-catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
-    =  _ , ƛ _ , (_ ∎) , ≤wrap e′ e ƛN≤ƛN′
+catchup (ƛ _) (wrap≤ ƛN≤ƛN′)
+    =  _ , ƛ _ , (_ ∎) , wrap≤ ƛN≤ƛN′
+catchup (ƛ _) (≤wrap ƛN≤ƛN′)
+    =  _ , ƛ _ , (_ ∎) , ≤wrap ƛN≤ƛN′
 ```
 
 $$ \input{figures/catchup-value} $$
@@ -186,10 +185,10 @@ are respectively represented by the left and bottom commutative triangles.
 $$ \input{figures/catchup-cast} $$
 
 ```
-catchup v (≤cast {M′ = M′} {±q = ±q} e V≤M′)
+catchup v (≤cast {M′ = M′} {±q = ±q} V≤M′)
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
-    with cast-lemma v v′ ±q e V≤V′
+    with cast-lemma v v′ ±q V≤V′
 ... |  W , w , V⟨±q⟩—↠W , V≤W
     =  W , w
     , (ξ* (`cast ±q [ □ ]) M′—↠V′ ++↠ V⟨±q⟩—↠W)
@@ -344,9 +343,9 @@ simβ {W = W}{W′} w w′ (wrap≤ {P = ⟨ E ⟩ _} {N = N}{N′}{r = r} e′ 
     =  (ƛ N′) · W′ , (_ ∎) , deriv
   where
     deriv =
-      cast≤ (cod≤ e′ e)
+      cast≤
         (·≤· ƛN≤ƛN′
-             (cast≤ (pure≤ (dom≤ e′ e)) (gvalue≤ w w′ W≤W′)))
+             (cast≤  (gvalue≤ w w′ W≤W′)))
 ```
 
 In the `≤wrap` case, the reduction sequence on the right is displayed in \Cref{fig:simbeta-wrapr}.
@@ -371,8 +370,6 @@ simβ {W = W}{W′} w w′
            e′ e ƛN≤ƛN′) W≤W′
     with cast-lemma w (gValue w′)
            (pure± ∓s)
-           (≤pure {E≤F = _≤ᶜ_.effects (cod p)}
-                  (≤dom e′ e))
            (≤gvalue w w′ W≤W′)
 ... |  W″ , w″ , W′—↠W″ , W≤W″
     with simβ w w″ ƛN≤ƛN′ W≤W″
@@ -390,7 +387,7 @@ simβ {W = W}{W′} w w′
                    [ƛN′]·W″—↠M′ ⟩
           cast ±t M′
         ∎) ,
-       (≤cast (≤cod e′ e) N[W]≤M′)
+       (≤cast N[W]≤M′)
 ```
 
 ## Left cast lemma
@@ -404,7 +401,6 @@ cast≤-lemma : ∀ {Γ Γ′} {P Q P′}
     {Q≤P′ : Q ≤ᶜ P′}
     {P≤P′ : P ≤ᶜ P′}
     {M N M′}
-  → commute≤ᶜ ±p Q≤P′ P≤P′
   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ P≤P′
   → cast ±p M ↦ N
   → ∃[ N′ ] (M′ —↠ N′)
@@ -420,52 +416,50 @@ The application of `catchup` in this lemma is made necessary by the presence of 
 in our type system. Otherwise, the `ident` rule would reduce
 `cast ±p V` to `V`, and we could conclude immediately with `V≤M′`.
 ```
-cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} comm V≤M′
+cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} V≤M′
     (ident eq v)
     with catchup v V≤M′
 ... | V′  , v′ , M′—↠V′ , V≤V′
-    rewrite ident≤ _ eq comm
+    rewrite ident≤ _ eq
     =  V′ , M′—↠V′ ,  gvalue≤ v v′ V≤V′ 
 ```
 
 For `wrap`, we have two subcases depending on whether the right-hand side
 reduces to an abstraction or to a box.
 ```
-cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} comm V≤M′
+cast≤-lemma {Q≤P′ = ⟨ _ ⟩ B≤} V≤M′
     (wrap eq)
     with B≤ | catchup (ƛ _) V≤M′
 ... | B≤
     |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
     =  V′ , M′—↠V′
-    , wrap≤ eq (returns≤ comm)
-        (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
+    , wrap≤ (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
 ... | B≤ ⇑ ★⇒★
     |  V′ ⇑ ★⇒★
        , (ƛ _) ⇑ ★⇒★
        , M′—↠V′⇑ , ≤⇑ ★⇒★ ƛN≤ƛN′
     =  V′ ⇑ ★⇒★ , M′—↠V′⇑ ,
        ≤⇑ ★⇒★
-        (wrap≤ eq (drop⇑ (returns≤ comm))
-          (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
+        (wrap≤ (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′))
 ```
 
 ```
 cast≤-lemma {±p = + ⟨ _ ⟩ (p ⇑ .g)}
     {Q≤P′ = ⟨ _ ⟩ id}
-    refl V≤M′
+    V≤M′
     (expand v g)
     with catchup v V≤M′
 ... |  V′ ⇑ .g , v′ ⇑ .g
        , M′—↠V′⇑ , ≤⇑ .g V≤V′
     =  V′ ⇑ g
     , M′—↠V′⇑
-    , ⇑≤⇑ g (cast≤ refl V≤V′)
+    , ⇑≤⇑ g (cast≤ V≤V′)
 ```
 
 ```
 cast≤-lemma {±p = + ⟨ _ ⟩ (p ⇑ .g)}
             {Q≤P′ = ⟨ _ ⟩ (q ⇑ h)}
-            refl V≤M′ (expand v g)
+            V≤M′ (expand v g)
     =  ⊥-elim (¬★≤G h q)
 ```
 
@@ -473,17 +467,17 @@ cast≤-lemma {±p = + ⟨ _ ⟩ (p ⇑ .g)}
 cast≤-lemma {±p = - ⟨ _ ⟩ (p ⇑ .g)}
             {P≤P′ = ⟨ _ ⟩ id}
             {M = W ⇑ .g}
-            refl V≤M′ (collapse w g)
+            V≤M′ (collapse w g)
    with catchup (w ⇑ g) V≤M′
 ... |  W′ ⇑ .g , w′ ⇑ .g , M′—↠W′⇑ , ⇑≤⇑ .g W≤W′
-    =  W′ ⇑ g , M′—↠W′⇑ , ≤⇑ g (cast≤ refl W≤W′)
+    =  W′ ⇑ g , M′—↠W′⇑ , ≤⇑ g (cast≤ W≤W′)
 ```
 
 ```
 cast≤-lemma {±p = - ⟨ _ ⟩ (p ⇑ .g)}
             {P≤P′ = ⟨ _ ⟩ (r ⇑ h)}
             {M = W ⇑ .g}
-            refl V≤M′ (collapse v g)
+            V≤M′ (collapse v g)
     =  ⊥-elim (¬★≤G h r)
 ```
 
@@ -550,10 +544,10 @@ catchup-⟦perform⟧≤ v ℰ (≤⇑ g M≤) ¬e//ℰ
     = Mk v′ V≤V′ (≤⇑ ℰ≤ℰ′) ¬e//ℰ′
          (ξ* ([ □ ]⇑ g) M′—↠ℰV′)
 catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = P≤} v ℰ
-       (≤cast {±q = ±q} comm M≤) ¬e//ℰ
+       (≤cast {±q = ±q} M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
 ... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk  v′ V≤V′ (≤cast comm ℰ≤ℰ′)
+    = Mk  v′ V≤V′ (≤cast ℰ≤ℰ′)
           (¬handled-cast {±p = ±q} ℰ′
              (∈-≤ (_≤ᶜ_.effects P≤)
                   (¬handled-∈ ℰ ¬e//ℰ e∈E))
@@ -597,11 +591,11 @@ catchup-⟦perform⟧≤ v ([ ℰ ]⇑ g) (⇑≤⇑ .g M≤) ¬e//ℰ
     = Mk v′ V≤V′ ([ ℰ≤ℰ′ ]⇑ g) ¬e//ℰ′
          (ξ* ([ □ ]⇑ g) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v (`cast ±p [ ℰ ])
-                   (cast≤ comm M≤) ¬e//ℰ
+                   (cast≤ M≤) ¬e//ℰ
   with catchup-⟦perform⟧≤ v ℰ M≤
                           (¬e//ℰ ∘ inj₂)
 ... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (cast≤ comm ℰ≤ℰ′) ¬e//ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ (cast≤ ℰ≤ℰ′) ¬e//ℰ′ M′—↠ℰV′
 catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = ⟨ F≤ ⟩ _} v
   (`cast ±p [ ℰ ])
   (*≤* {P′⊑Q′ = P′⊑Q′} M≤) ¬e//ℰ
