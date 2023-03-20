@@ -285,7 +285,7 @@ and codomains of the function types.
 --   = dom-⨟ (s ⇒ t) q
 -- dom≤ {±p = - s ⇒ t} {r = r} refl refl
 --   = dom-⨟ (s ⇒ t) r
---
+-- 
 -- cod≤ :  ∀ {A A′ A″ B B′ B″ E E′ E″}
 --     {±p : A ⇒ ⟨ E ⟩ B => A′ ⇒ ⟨ E′ ⟩ B′}
 --     {q : A′ ⇒ ⟨ E′ ⟩ B′ ≤ A″ ⇒ ⟨ E″ ⟩ B″}
@@ -299,7 +299,7 @@ and codomains of the function types.
 --   = cod-⨟ (s ⇒ t) q
 -- cod≤ {±p = - s ⇒ t} {r = r} refl refl
 --   = cod-⨟ (s ⇒ t) r
---
+-- 
 -- ≤dom :  ∀ {A A′ A″ B B′ B″}
 --     {p : A ⇒ B ≤ A′ ⇒ B′}
 --     {±q : A′ ⇒ B′ => A″ ⇒ B″}
@@ -313,7 +313,7 @@ and codomains of the function types.
 --   = dom-⨟ p (s ⇒ t)
 -- ≤dom {p = p} {±q = - s ⇒ t} {r = r} refl refl
 --   = dom-⨟ r (s ⇒ t)
---
+-- 
 -- ≤cod :  ∀ {A A′ A″ B B′ B″}
 --     {p : A ⇒ B ≤ A′ ⇒ B′}
 --     {±q : A′ ⇒ B′ => A″ ⇒ B″}
@@ -983,7 +983,7 @@ Preservation of precision under substitution, special case for beta
 --     ----------------------------
 --   → Γ≤ ⊢ ƛ N ≤ᴹ ƛ★ N′ ⦂ ⟨ F≤ ⟩ (p ⇑ ★⇒★)
 -- ƛ≤ƛ★ N≤N′ = ≤cast refl (ƛ≤ƛ N≤N′)
---
+-- 
 -- ·≤·★ : ∀ {L L′ M M′} {Γ≤ : Γ ≤ᴳ Γ′}
 --          {p : A ⇒ ⟨ E ⟩ B ≤ ★ ⇒ ⟨ ☆ ⟩ ★}
 --     (let ⟨ E≤ ⟩ _ = cod p)
@@ -992,11 +992,11 @@ Preservation of precision under substitution, special case for beta
 --     ------------------------------
 --   → Γ≤ ⊢ L · M ≤ᴹ L′ ·★ M′ ⦂ cod p
 -- ·≤·★ L≤L′ M≤M′ = ·≤· (≤cast refl L≤L′) M≤M′
---
+-- 
 -- $≤$★ : ∀ {ι} {E≤ : E ≤ᵉ ☆} (k : rep ι)
 --   → Γ≤ ⊢ $ k ≤ᴹ $★ k ⦂ ⟨ E≤ ⟩ (ι ≤★)
 -- $≤$★ {ι = ι} k  =  ≤⇑ ($ ι) ($≤$ k)
---
+-- 
 -- ⦅⦆≤⦅⦆★ : ∀ {ι ι′ ι″ M M′ N N′} {E≤ : E ≤ᵉ ☆}
 --   → (_⊕_ : rep ι → rep ι′ → rep ι″)
 --   → Γ≤ ⊢ M ≤ᴹ M′ ⦂ ⟨ E≤ ⟩ (ι ≤★)
@@ -1007,15 +1007,15 @@ Preservation of precision under substitution, special case for beta
 -- ⦅⦆≤⦅⦆★ _⊕_ M≤M′ N≤N′
 --   = ≤cast refl (⦅⦆≤⦅⦆ _⊕_ (≤cast refl M≤M′)
 --                           (≤cast refl N≤N′))
---
+-- 
 -- ⌈_⌉≤ᴳ : ∀ (Γ : Context) → Γ ≤ᴳ ⌈ Γ ⌉ᴳ
 -- ⌈ ∅ ⌉≤ᴳ          =  ∅
 -- ⌈ Γ ▷ A ⌉≤ᴳ      =  ⌈ Γ ⌉≤ᴳ ▷ A≤★
---
+-- 
 -- ⌈_⌉≤ˣ : ∀ {Γ A} → (x : Γ ∋ A) → ⌈ Γ ⌉≤ᴳ ⊢ x ≤ˣ ⌈ x ⌉ˣ ⦂ A≤★
 -- ⌈ Z ⌉≤ˣ          =  Z≤Z
 -- ⌈ S x ⌉≤ˣ        =  S≤S ⌈ x ⌉≤ˣ
---
+-- 
 -- ⌈_⌉≤ : {M : Γ ⊢ ⟨ E ⟩ A}
 --   → (m : Static M)
 --   → ⌈ Γ ⌉≤ᴳ ⊢ M ≤ᴹ ⌈ m ⌉ ⦂ ⟨ E≤☆ ⟩ A≤★
@@ -1025,21 +1025,21 @@ Preservation of precision under substitution, special case for beta
 -- ⌈ $ k ⌉≤         =  $≤$★ k
 -- ⌈ M ⦅ _⊕_ ⦆ N ⌉≤  =  ⦅⦆≤⦅⦆★ _⊕_ ⌈ M ⌉≤ ⌈ N ⌉≤
 -- ```
---
+-- 
 -- ## Example {#example-prec}
---
+-- 
 -- ```
 -- inc≤inc★ : ∅ ⊢ inc ≤ᴹ inc★ ⦂ ⟨ ε≤☆ ⟩ ℕ⇒ℕ≤★
 -- inc≤inc★ = ⌈ Inc ⌉≤
---
+-- 
 -- inc≤inc★′ : ∅ ⊢ inc ≤ᴹ inc★′ ⦂ ⟨ ε≤☆ ⟩ ℕ⇒ℕ≤★
 -- inc≤inc★′ = ≤cast refl (reflᴹ inc)
---
+-- 
 -- inc2≤inc★2★ :
 --   ∅ ⊢  inc · ($ 2)
 --     ≤ᴹ inc★ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
 -- inc2≤inc★2★ = ⌈ Inc · ($ 2) ⌉≤
---
+-- 
 -- inc2≤inc★′2★ :
 --   ∅ ⊢  inc · ($ 2)
 --     ≤ᴹ inc★′ ·★ ($★ 2) ⦂ ⟨ ε≤☆ ⟩ ℕ≤★
