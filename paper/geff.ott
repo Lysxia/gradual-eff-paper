@@ -100,8 +100,8 @@ Ex {{ tex \mathcal{E} }} :: E_ ::= {{ com Evaluation contexts }}
 | V Ex :: :: ExAppR
 | Ex + M :: :: ExPrimL
 | V + Ex :: :: ExPrimR
-| cast pa Ex :: :: ExCast
-| ecast pe Ex :: :: ExECast
+| cast pa Ex :: :: ExCast {{ tex [[Ex]] \,\MVAt\, [[pa]] }}
+| ecast pe Ex :: :: ExECast {{ tex [[Ex]] \,!\, [[pe]] }}
 | Ex Up G :: :: ExBox
 | op ( Ex ) :: :: ExOperation
 | handle H Ex :: :: ExHandle
@@ -400,6 +400,14 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   ----- :: prec_cast_right
   gamma |- M <= (cast +- b' M') : b ! e
 
+  gamma |- M <= M' : a ! e
+  ----- :: prec_ecast_left
+  gamma |- (ecast +- f M) <= M' : a ! f'
+
+  gamma |- M <= M' : a ! e
+  ----- :: prec_ecast_right
+  gamma |- M <= (ecast +- f' M') : a ! f
+
   gamma |- M <= M' : id ! e
   ----- :: prec_box
   gamma |- (M Up G) <= (M' Up G) : id ! e
@@ -412,15 +420,15 @@ gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$
   gamma |- blame <= M : p
 
   % TODO: There's a generalization here in the Agda code
-  gamma |- fun x . M <= fun x . M' : c ! e
-  commutesl +- a -> p b c
+  gamma |- fun x . M <= fun x . M' : c' ! e
+  commutesl +- (a -> b ! f) c c'
   ----- :: prec_wrap_left
-  gamma |- (fun x . ecast +- e cast +- b ( M ( cast -+ a x ) )) <= fun x . M' : b ! e
+  gamma |- (fun x . ecast +- f cast +- b ( M ( cast -+ a x ) )) <= fun x . M' : c ! e
 
   gamma |- fun x . M <= fun x . M' : c ! e
-  commutesr c +- (a -> b ! e) c'
+  commutesr c +- (a -> b ! f) c'
   ----- :: prec_wrap_right
-  gamma |- fun x . M <= (fun x . ecast +- e cast +- b ( M' ( cast -+ a x ) )) : c' ! e
+  gamma |- fun x . M <= (fun x . ecast +- f cast +- b ( M' ( cast -+ a x ) )) : c' ! e
 
   gamma |- M <= M' : id ! e
   ----- :: prec_op
