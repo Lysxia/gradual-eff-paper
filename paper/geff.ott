@@ -134,6 +134,7 @@ terminals :: 'terminals_' ::=
 | +- :: :: PlusMinus {{ tex \pm }}
 | -+ :: :: MinusPlus {{ tex \mp }}
 | square :: :: Square {{ tex \square }}
+| ~~ :: :: TTilda {{ tex \sim }}
 
 formula :: formula_ ::=
 | judgement :: :: judgement
@@ -367,20 +368,31 @@ M --> N :: ::red:: '' by
   handle H V --> H return [ V / x ]
 
 defn
+  a0 ~~ ( a -> b ! e ) :: ::split:: '' by
+
+  ----- :: split_id
+  id ~~ ( id -> id ! id )
+
+  ----- :: split_arr
+  ( a -> b ! e ) ~~ ( a -> b ! e )
+
+defn
 gamma |- M <= M' : p :: ::prec:: '' {{ com $[[M]]$ is more precise than $[[M']]$ with type-precision $[[p]]$ }} by
 
   gamma |- x : a
   ----- :: prec_var
   gamma |- x <= x : a ! e
 
-  gamma |- N <= N' : a ! eff ( a )
-  gamma |- M <= M' : dom ( a ) ! eff ( a )
+  gamma |- N <= N' : a0 ! e
+  a0 ~~ ( a -> b ! e )
+  gamma |- M <= M' : a ! e
   ----- :: prec_app
-  gamma |- N M <= N M' : cod ( a ) ! eff ( a )
+  gamma |- N M <= N M' : b ! e
 
-  gamma , x : dom ( a ) |- M <= M' : cod ( a ) ! eff ( a )
+  a0 ~~ ( a -> b ! e )
+  gamma , x : a |- M <= M' : b ! e
   ----- :: prec_abs
-  gamma |- fun x . M <= fun x . M' : a ! e
+  gamma |- fun x . M <= fun x . M' : a0 ! f
 
   ----- :: prec_kon
   gamma |- k <= k : id ! e

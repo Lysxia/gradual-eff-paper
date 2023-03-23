@@ -246,27 +246,47 @@ Inversion lemmas when the cast side of a commutative triangle is an identity:
 the commutative triangle contracts into an equation between the two remaining
 sides.
 ```
-ident≤ : ∀ {E F G A B} {q r : A ≤ B}
+ident≤ᶜ : ∀ {E F G A B} {q r : A ≤ B}
     {E≤G : E ≤ᵉ G} {F≤G : F ≤ᵉ G}
   → (±p : ⟨ E ⟩ A =>ᶜ ⟨ F ⟩ A)
   → splitᶜ ±p ≡ id
   → commute≤ᶜ ±p (⟨ F≤G ⟩ q) (⟨ E≤G ⟩ r)
     -----
   → q ≡ r
-ident≤ {q = q} (+ ⟨ _ ⟩ id) refl refl
+ident≤ᶜ {q = q} (+ ⟨ _ ⟩ id) refl refl
   rewrite left-id q = refl
-ident≤ {r = r} (- ⟨ _ ⟩ id) refl refl
+ident≤ᶜ {r = r} (- ⟨ _ ⟩ id) refl refl
   rewrite left-id r = refl
 
-≤ident : ∀ {E F G A B} {p r : A ≤ B}
+≤identᶜ : ∀ {E F G A B} {p r : A ≤ B}
     {E≤F : E ≤ᵉ F} {E≤G : E ≤ᵉ G}
   → (±q : ⟨ F ⟩ B =>ᶜ ⟨ G ⟩ B)
   → splitᶜ ±q ≡ id
   → ≤commuteᶜ (⟨ E≤F ⟩ p) ±q (⟨ E≤G ⟩ r)
     -----
   → p ≡ r
-≤ident (+ ⟨ _ ⟩ id) refl refl = refl
-≤ident (- ⟨ _ ⟩ id) refl refl = refl
+≤identᶜ (+ ⟨ _ ⟩ id) refl refl = refl
+≤identᶜ (- ⟨ _ ⟩ id) refl refl = refl
+
+ident≤ : ∀ {A B} {q r : A ≤ B}
+  → (±p : A => A)
+  → split ±p ≡ id
+  → commute≤ ±p q r
+    -----
+  → q ≡ r
+ident≤ {q = q} (+ id) refl refl
+  rewrite left-id q = refl
+ident≤ {r = r} (- id) refl refl
+  rewrite left-id r = refl
+
+≤ident : ∀ {A B} {p r : A ≤ B}
+  → (±q : B => B)
+  → split ±q ≡ id
+  → ≤commute p ±q r
+    -----
+  → p ≡ r
+≤ident (+ id) refl refl = refl
+≤ident (- id) refl refl = refl
 ```
 
 Inversion lemmas when the cast side of a commutative triangle is a function

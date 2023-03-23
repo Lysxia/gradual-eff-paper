@@ -410,7 +410,7 @@ infix 2 _↦_ _—→_
   → (∀ {F} → Γ ⊢ ⟨ F ⟩ (A ⇒ ⟨ E ⟩ B))
   → (∀ {F} → Γ ⊢ ⟨ F ⟩ (A′ ⇒ ⟨ E′ ⟩ B′))
 ƛ-wrap ∓s ±t ±e M =
-  ƛ castᵉ ±e (cast ±t (lift M · (cast ∓s (` Z))))
+  ƛ cast ±t (castᵉ ±e (lift M · (cast ∓s (` Z))))
 ```
 
 ## Reduction
