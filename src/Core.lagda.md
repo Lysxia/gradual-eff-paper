@@ -222,7 +222,7 @@ whose syntax is defined below.
   data _ where
 
     handle : ∀ {Γ P Q}
-      →  _⊢_⇒ʰ_ Γ P Q
+      →  Γ ⊢ P ⇒ʰ Q
       →  Γ ⊢ P
          -----------
       →  Γ ⊢ Q
@@ -760,7 +760,16 @@ gvalue : ∀ {Γ E A} {V : Γ ⊢ ⟨ E ⟩ A}
   → ∀ {F} → Γ ⊢ ⟨ F ⟩ A
 gvalue (ƛ N)  =  ƛ N
 gvalue ($ k)  =  $ k
-gvalue (V ⇑ g) = gvalue V ⇑ g
+gvalue (v ⇑ g) = gvalue v ⇑ g
+```
+
+```
+gvalue′ : ∀ {Γ E A} {V : Γ ⊢ ⟨ E ⟩ A}
+  → (v : Value V)
+  → ∀ {F} → Value (gvalue v {F = F})
+gvalue′ (ƛ N) = ƛ N
+gvalue′ ($ k) = $ k
+gvalue′ (v ⇑ g) = gvalue′ v ⇑ g
 ```
 
 \iffalse

@@ -235,9 +235,14 @@ liftʰ = renʰ S_
 
 ```
 boundᵉ : E =>ᵉ F → Op → Set
-boundᵉ (+ x) = λ _ → ⊥
+boundᵉ (+ e) = λ _ → ⊥
 boundᵉ (- id) = λ _ → ⊥
-boundᵉ (- ¡≤☆ {E = E}) = λ e → ¬ e ∈ E
+boundᵉ (- ¡≤☆ {E = F}) = λ e → ¬ e ∈ F
+```
+
+```
+∈-boundᵉ : {op : Op} → op ∈☆ F → (±e : E =>ᵉ F) → ¬ boundᵉ ±e op
+∈-boundᵉ (¡ op∈F) (- ¡≤☆) ¬op∈F = ¬op∈F op∈F
 ```
 
 ```

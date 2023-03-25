@@ -45,7 +45,7 @@ sim (`≤` x≤x′) M—→N
     =  ⊥-elim (variable-irreducible M—→N)
 sim ($≤$ k) M—→N
     =  ⊥-elim (value-irreducible ($ _) M—→N)
-sim (ƛ≤ƛ ƛN≤ƛN′) M—→N
+sim (ƛ≤ƛ refl ƛN≤ƛN′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
 sim (wrap≤ i e V≤V′) M—→N
     =  ⊥-elim (value-irreducible (ƛ _) M—→N)
@@ -82,7 +82,7 @@ We thus reduce `L′ · M′` to `N′ · M′` and prove
 `N · M′ ≤ N′ · M′` by the rule `·≤·`.
 
 ```
-sim (·≤· {L′ = L′} {M′ = M′} L≤L′ M≤M′)
+sim (·≤· {L′ = L′} {M′ = M′} refl L≤L′ M≤M′)
     (ξ ([ ℰ ]· M) L↦N)
     with sim L≤L′ (ξ ℰ L↦N)
 ... |  N′ , L′—↠N′ , N≤N′
@@ -92,7 +92,7 @@ sim (·≤· {L′ = L′} {M′ = M′} L≤L′ M≤M′)
            —↠⟨ ξ* ([ □ ]· _) L′—↠N′ ⟩
          N′ · M′
         ∎) ,
-       ·≤· N≤N′ M≤M′
+       ·≤· refl N≤N′ M≤M′
 ```
 
 If the reduction happens under `V ·[ ℰ ]`, the left
@@ -101,7 +101,7 @@ to reduce `L′ · M′` to `V′ · M′` where `V′` is a value,
 and the induction hypothesis `sim` to reduce `V′ · M′` to `V′ · N′`.
 
 ```
-sim (·≤· {L′ = L′} {M′ = M′} V≤L′ M≤M′)
+sim (·≤· {L′ = L′} {M′ = M′} refl V≤L′ M≤M′)
     (ξ (v ·[ ℰ ]) M↦N)
     with catchup v V≤L′
 ... |  V′ , v′ , L′—↠V′ , V≤V′
@@ -113,7 +113,7 @@ sim (·≤· {L′ = L′} {M′ = M′} V≤L′ M≤M′)
          V′ · M′  —↠⟨ ξ* (v′ ·[ □ ]) M′—↠N′ ⟩
          V′ · N′
        ∎) ,
-       ·≤· V≤V′ N≤N′
+       ·≤· refl V≤V′ N≤N′
 ```
 
 The last subcase for `·≤·` is `β`-reduction.
@@ -128,13 +128,13 @@ $$
 $$
 
 ```
-sim (·≤· {L′ = L′} {M′ = M′} ƛN≤L′ V≤M′)
+sim (·≤· {L′ = L′} {M′ = M′} refl ƛN≤L′ V≤M′)
     (ξ □ (β v))
     with catchup (ƛ _) ƛN≤L′
 ... |  ƛ N′ , ƛ N′ , L′—↠ƛN′ , ƛN≤ƛN′
     with catchup v V≤M′
 ... |  V′ , v′ , M′—↠V′ , V≤V′
-    with simβ v v′ ƛN≤ƛN′ V≤V′
+    with simβ refl v v′ ƛN≤ƛN′ V≤V′
 ... |  N″ , ƛN′·V′—↠N″ , N[V]≤N″
     =  N″ ,
        (begin
@@ -230,27 +230,6 @@ sim (cast≤ comm M≤M′)
   = cast≤-lemma comm M≤M′ castM↦N
 ```
 
-\iffalse
-Subtyping TODO
-```
-sim (*≤* V≤M′) (ξ □ (wrap e′))
-    with catchup (ƛ _) V≤M′
-... |  V′ , ƛ _ , M′—↠V′ , ƛN≤ƛN′
-    =  _
-    , (ξ* (`cast (* _) [ □ ]) M′—↠V′ ++↠ unit {!!})
-    , {!!} -- wrap≤ e′ ? ? -- (gvalue≤gvalue (ƛ _) (ƛ _) ƛN≤ƛN′)
-... |  (V′ ⇑ g) , v′ ⇑ g , M′—↠V′⇑g , λN≤λN′ = {!!}
-```
-
-```
-sim (*≤* V≤M′) (ξξ □ refl eq M₀↦N) = {!!}
-```
-
-```
-sim (*≤* M≤M′) (ξξ (`cast ±q [ ℰ ]) refl eq M₀↦N) = {!!}
-```
-\fi
-
 Reduction under `″perform _ [ ℰ ] _`.
 ```
 sim (perform≤perform M≤M′)
@@ -293,15 +272,15 @@ sim (handle≤handle H≤ V≤M′)
 ```
 sim (handle≤handle H≤ M≤)
     (ξ □ (handle-perform {ℰ = ℰ} v ¬e//ℰ eq))
-    with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
+    with catchup-⟦perform⟧≤ v ℰ M≤
        | lookup-All₂′ (on-perform H≤) eq
-... | Mk v′ V≤V′ ℰ≤ ¬e//ℰ′ M′—↠N′
+... | Mk v′ V≤V′ ℰ≤ M′—↠N′
     | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
     = _ , (ξ* (′handle _ [ □ ]) M′—↠N′
-            ++↠ unit (handle-perform v′ ¬e//ℰ′ eq′))
+            ++↠ unit (handle-perform v′ (≤-handled ℰ≤ ? ¬e//ℰ) eq′))
         , []≤[]
             ([]≤[] HM′≤
-              (ƛ≤ƛ (handle≤handle
+              (ƛ≤ƛ refl (handle≤handle
                 (lift≤ʰ (lift≤ʰ
                   (subst (_ ⊢ _ ≤ _ ⦂ _ ⇒ʰ_)
                          (sym cod≡) H≤)))
@@ -380,9 +359,11 @@ Applying `gg` to `inc2≤inc★2★`, `inc2—↠3`, and evidence that `3`
 yields the reduction sequence `inc★2★—↠3★`, and similarly for
 `inc★′2★`.
 ```
+{-
 _ : gg inc2≤inc★2★ inc2—↠3 ($ 3) ≡
       ($★ 3 , $ 3 ⇑ $ℕ , inc★2★—↠3★ , $≤$★ 3)
 _ = refl
+-}
 
 {-
 _ : gg inc2≤inc★′2★ inc2—↠3 ($ 3) ≡

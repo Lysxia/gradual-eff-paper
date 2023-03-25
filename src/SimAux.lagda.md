@@ -10,6 +10,7 @@ open import Core
 open import Progress
 open import Prec
 open import VecPointwise2
+open import Data.Sum using ([_,_])
 ```
 \fi
 
@@ -142,8 +143,8 @@ catchup (ƛ _) (≤wrap e′ e ƛN≤ƛN′)
 $$ \input{figures/catchup-value} $$
 
 ```
-catchup (ƛ _) (ƛ≤ƛ {N′ = N′} ƛN≤ƛN′)
-    =  ƛ N′ , ƛ N′ , (ƛ N′ ∎) , ƛ≤ƛ ƛN≤ƛN′
+catchup (ƛ _) (ƛ≤ƛ {N′ = N′} split≡ ƛN≤ƛN′)
+    =  ƛ N′ , ƛ N′ , (ƛ N′ ∎) , ƛ≤ƛ split≡ ƛN≤ƛN′
 catchup ($ _) ($≤$ k)
     =  $ k , $ k , ($ k ∎) , ($≤$ k)
 ```
@@ -186,6 +187,15 @@ catchup v (≤cast {M′ = M′} {±q = ±q} e V≤M′)
     =  W , w
     , (ξ* (`cast ±q [ □ ]) M′—↠V′ ++↠ V⟨±q⟩—↠W)
     , V≤W
+```
+
+```
+catchup v (≤castᵉ {M′ = M′} {±f = ±f} V≤M′)
+    with catchup v V≤M′
+... |  V′ , v′ , M′—↠V′ , V≤V′
+    =  _ , gvalue′ v′
+    , (ξ* (`castᵉ ±f [ □ ]) M′—↠V′ ++↠ unit (castᵉ-return v′))
+    , ≤gvalue v v′ V≤V′
 ```
 
 The following lemma formalizes the intuition that substituting for a variable
@@ -253,18 +263,19 @@ $$ \input{figures/simbeta} $$
 ```
 simβ : ∀ {Γ Γ′ A A′ B B′ E E′}
     {Γ≤ : Γ ≤ᴳ Γ′}
-    {E≤ : E ≤ᵉ E′}
     {p : A ⇒  ⟨ E ⟩ B ≤ A′ ⇒  ⟨ E′ ⟩ B′}
+    {a e b}
     {N : Γ ▷ A ⊢ ⟨ E ⟩ B}
     {N′ : Γ′ ▷ A′ ⊢ ⟨ E′ ⟩ B′}
     {W : Γ ⊢ ⟨ E ⟩ A} {W′ : Γ′ ⊢ ⟨ E′ ⟩ A′}
+  → split⇒ p ≡ (a , e , b)
   → (w  : Value W)
   → (w′ : Value W′)
-  → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ E≤ ⟩ p
-  → Γ≤ ⊢ W ≤ᴹ W′ ⦂ ⟨ E≤ ⟩ dom p
+  → Γ≤ ⊢ ƛ N ≤ᴹ ƛ N′ ⦂ ⟨ e ⟩ p
+  → Γ≤ ⊢ W ≤ᴹ W′ ⦂ ⟨ e ⟩ a
     -----------------------------------------
   → ∃[ M′ ] ((ƛ N′) · W′ —↠ M′)
-          × Γ≤ ⊢ N [ gvalue w ] ≤ᴹ M′ ⦂ ⟨ eff p ⟩ cod p
+          × Γ≤ ⊢ N [ gvalue w ] ≤ᴹ M′ ⦂ ⟨ e ⟩ b
 ```
 
 Proceed by induction on the derivation of `ƛ N ≤ᴹ ƛ N′`. There
@@ -292,7 +303,7 @@ case `ƛ≤ƛ` of `simβ`
 \end{figure}
 
 ```
-simβ {W′ = W′} w w′ (ƛ≤ƛ {N′ = N′} N≤N′) W≤W′
+simβ {W′ = W′} refl w w′ (ƛ≤ƛ {N′ = N′} refl N≤N′) W≤W′
     =  _ ,
        (begin
          (ƛ N′) · W′   —→⟨ ξ □ (β w′) ⟩    N′ [ gvalue w′ ]
@@ -330,14 +341,14 @@ $$ \input{figures/simbeta-wrap-left} $$
 \end{figure}
 
 ```
-simβ {W = W}{W′} w w′ (wrap≤ {E = E} {N = N}{N′}{r = r} e′ e ƛN≤ƛN′) W≤W′
+simβ {W = W}{W′} refl w w′ (wrap≤ {E = E} {N = N}{N′}{r = r} e′ e ƛN≤ƛN′) W≤W′
     rewrite lift[] {P = ⟨ E ⟩ _} (ƛ N) (gvalue w)
     =  (ƛ N′) · W′ , (_ ∎) , deriv
   where
     deriv =
       cast≤ (cod≤ e′ e)
         (castᵉ≤
-          (·≤· ƛN≤ƛN′
+          (·≤· refl ƛN≤ƛN′
                (cast≤ (dom≤ e′ e) (gvalue≤ w w′ W≤W′))))
 ```
 
@@ -357,13 +368,13 @@ $$ \input{figures/simbeta-wrap-right} $$
 \end{figure}
 
 ```
-simβ {W = W}{W′} w w′
+simβ {W = W}{W′} refl w w′
     (≤wrap {E′ = E′} {N = N}{N′}
            {p = p}{r = r}{∓s = ∓s}{±t = ±t}{±e = ±e}
            e′ e ƛN≤ƛN′) W≤W′
     with cast-lemma w (gValue w′) ∓s (≤dom e′ e) (≤gvalue w w′ W≤W′)
 ... |  W″ , w″ , W′—↠W″ , W≤W″
-    with simβ w w″ ƛN≤ƛN′ W≤W″
+    with simβ refl w w″ ƛN≤ƛN′ W≤W″
 ... |  M′ , [ƛN′]·W″—↠M′ , N[W]≤M′
     =  _ ,
        (begin
@@ -488,7 +499,6 @@ data CatchupPerform {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
     → Value V′
     → Γ≤ ⊢ V ≤ᴹ V′ ⦂ ⟨ E≤ ⟩ id
     → Γ≤ ⊢ ⟨ E≤ ⟩ id ⇒ᶠ P≤ ∋ ℰ ≤ ℰ′
-    → ¬ handled e ℰ′
     → M′ —↠ ℰ′ ⟦ perform e∈E′ V′ ⟧
     → CatchupPerform Γ≤ P≤ e ℰ V M′
 ```
@@ -506,83 +516,104 @@ catchup-⟦perform⟧≤ : ∀ {Γ Γ′ E P P′ e}
     (v : Value V)
     (ℰ : Frame Γ (⟨ E ⟩ _) P)
   → Γ≤ ⊢ ℰ ⟦ perform e∈E V ⟧ ≤ᴹ M′ ⦂ P≤
-  → ¬ handled e ℰ
   → CatchupPerform Γ≤ P≤ e ℰ V M′
-catchup-⟦perform⟧≤ v □ (perform≤perform V≤M′)
-                   ¬e//ℰ with catchup v V≤M′
+catchup-⟦perform⟧≤ v □ (perform≤perform V≤M′) with catchup v V≤M′
 ... | V′ , v′ , M′—↠V′ , V≤V′
-    = Mk v′ V≤V′ □ (λ())
-         (ξ* (′perform _ [ □ ]) M′—↠V′)
-catchup-⟦perform⟧≤ v ℰ (≤⇑ g M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (≤⇑ ℰ≤ℰ′) ¬e//ℰ′
-         (ξ* ([ □ ]⇑ g) M′—↠ℰV′)
+    = Mk v′ V≤V′ □ (ξ* (′perform _ [ □ ]) M′—↠V′)
+catchup-⟦perform⟧≤ v ℰ (≤⇑ g M≤) with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ (≤⇑ ℰ≤ℰ′) (ξ* ([ □ ]⇑ g) M′—↠ℰV′)
 catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = P≤} v ℰ
-       (≤cast {±q = ±q} comm M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk  v′ V≤V′ (≤cast comm ℰ≤ℰ′) ¬e//ℰ′
-          (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
+       (≤cast {±q = ±q} comm M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk  v′ V≤V′ (≤cast comm ℰ≤ℰ′) (ξ* (`cast _ [ □ ]) M′—↠ℰV′)
+catchup-⟦perform⟧≤ {e∈E = e∈E} {P≤ = P≤} v ℰ
+       (≤castᵉ {±f = ±f} M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk  v′ V≤V′ (≤castᵉ ℰ≤ℰ′) (ξ* (`castᵉ _ [ □ ]) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v ([ ℰ ]· M)
-                   (·≤· N≤ M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ N≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ N′—↠ℰV′
-    = Mk v′ V≤V′ ([ ℰ≤ℰ′ ]· M≤) ¬e//ℰ′
-         (ξ* ([ □ ]· _) N′—↠ℰV′)
+                   (·≤· split≡ N≤ M≤)
+  with catchup-⟦perform⟧≤ v ℰ N≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ N′—↠ℰV′
+    = Mk v′ V≤V′ (by split≡ [ ℰ≤ℰ′ ]· M≤) (ξ* ([ □ ]· _) N′—↠ℰV′)
 catchup-⟦perform⟧≤ v (w ·[ ℰ ])
-                   (·≤· N≤ M≤) ¬e//ℰ
+                   (·≤· split≡ N≤ M≤)
   with catchup w N≤
 ... | W′ , w′ , N′—↠W′ , W≤
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk   v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk   v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
     = Mk   v′ V≤V′
-           ((w , w′ , W≤) ·[ ℰ≤ℰ′ ]) ¬e//ℰ′
+           (by split≡ , (w , w′ , W≤) ·[ ℰ≤ℰ′ ]) 
            (ξ* ([ □ ]· _) N′—↠W′
               ++↠ ξ* (w′ ·[ □ ]) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v ([ ℰ ]⦅ f ⦆ N)
-                   (⦅⦆≤⦅⦆ .f M≤ N≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ ([ ℰ≤ℰ′ ]⦅ f ⦆ N≤) ¬e//ℰ′
+                   (⦅⦆≤⦅⦆ .f M≤ N≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ ([ ℰ≤ℰ′ ]⦅ f ⦆ N≤)
          (ξ* ([ □ ]⦅ f ⦆ _) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v (w ⦅ f ⦆[ ℰ ])
-                   (⦅⦆≤⦅⦆ .f M≤ N≤) ¬e//ℰ
+                   (⦅⦆≤⦅⦆ .f M≤ N≤)
   with catchup w M≤
 ... | W′ , w′ , M′—↠W′ , W≤
-  with catchup-⟦perform⟧≤ v ℰ N≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ N′—↠ℰV′
+  with catchup-⟦perform⟧≤ v ℰ N≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ N′—↠ℰV′
     = Mk v′ V≤V′
-         ((w , w′ , W≤) ⦅ f ⦆[ ℰ≤ℰ′ ]) ¬e//ℰ′
+         ((w , w′ , W≤) ⦅ f ⦆[ ℰ≤ℰ′ ])
          (ξ* ([ □ ]⦅ f ⦆ _) M′—↠W′
             ++↠ ξ* (w′ ⦅ f ⦆[ □ ]) N′—↠ℰV′)
-catchup-⟦perform⟧≤ v ([ ℰ ]⇑ g) (⇑≤⇑ .g M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ ([ ℰ≤ℰ′ ]⇑ g) ¬e//ℰ′
+catchup-⟦perform⟧≤ v ([ ℰ ]⇑ g) (⇑≤⇑ .g M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ ([ ℰ≤ℰ′ ]⇑ g)
          (ξ* ([ □ ]⇑ g) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v (`cast ±p [ ℰ ])
-                   (cast≤ comm M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (cast≤ comm ℰ≤ℰ′) ¬e//ℰ′ M′—↠ℰV′
+                   (cast≤ comm M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ (cast≤ comm ℰ≤ℰ′) M′—↠ℰV′
+catchup-⟦perform⟧≤ v (`castᵉ ±p [ ℰ ])
+                   (castᵉ≤ M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ (castᵉ≤ ℰ≤ℰ′) M′—↠ℰV′
 catchup-⟦perform⟧≤ v (″perform e∈E [ ℰ ] eq)
-                     (perform≤perform M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ ¬e//ℰ
-... | Mk v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
-    = Mk v′ V≤V′ (″perform _ [ ℰ≤ℰ′ ] _) ¬e//ℰ′
+                     (perform≤perform M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
+    = Mk v′ V≤V′ (″perform _ [ ℰ≤ℰ′ ] _)
          (ξ* (″perform _ [ □ ] _) M′—↠ℰV′)
 catchup-⟦perform⟧≤ v (′handle H [ ℰ ])
-       (handle≤handle {H′ = H′} H≤ M≤) ¬e//ℰ
-  with catchup-⟦perform⟧≤ v ℰ M≤ (¬e//ℰ ∘ inj₂)
-... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ ¬e//ℰ′ M′—↠ℰV′
+       (handle≤handle {H′ = H′} H≤ M≤)
+  with catchup-⟦perform⟧≤ v ℰ M≤
+... | Mk {ℰ′ = ℰ′} v′ V≤V′ ℰ≤ℰ′ M′—↠ℰV′
     = Mk  v′ V≤V′ (′handle H≤ [ ℰ≤ℰ′ ])
-          (¬handled-handle {H = H′} ℰ′
-            (subst (λ Eh → ¬ _ ∈ Eh)
-                   (Hooks-≤ H≤)
-                   (¬e//ℰ ∘ inj₁))
-            ¬e//ℰ′)
           (ξ* (′handle _ [ □ ]) M′—↠ℰV′)
+```
+
+```
+≤-handled : ∀ {Γ Γ′ E E′ A A′ P P′}
+      {Γ≤ : Γ ≤ᴳ Γ′} {e : E ≤ᵉ E′} {a : A ≤ A′} {p : P ≤ᶜ P′}
+      {ℰ ℰ′} {op : _}
+    → Γ≤ ⊢ ⟨ e ⟩ a ⇒ᶠ p ∋ ℰ ≤ ℰ′
+    → op ∈☆ E
+    → ¬ handled op ℰ
+    → ¬ handled op ℰ′
+≤-handled □ op∈E op//ℰ = op//ℰ
+≤-handled (by x [ ℰ≤ ]· M≤) = ≤-handled ℰ≤
+≤-handled (by x , v ·[ ℰ≤ ]) = ≤-handled ℰ≤
+≤-handled ([ ℰ≤ ]⦅ f ⦆ M≤) = ≤-handled ℰ≤
+≤-handled (v ⦅ f ⦆[ ℰ≤ ]) = ≤-handled ℰ≤
+≤-handled ([ ℰ≤ ]⇑ g) = ≤-handled ℰ≤
+≤-handled (≤⇑ ℰ≤) = ≤-handled ℰ≤
+≤-handled (cast≤ x ℰ≤) = ≤-handled ℰ≤
+≤-handled (≤cast x ℰ≤) = ≤-handled ℰ≤
+≤-handled (castᵉ≤ ℰ≤) op∈E op//ℰ = ≤-handled ℰ≤ op∈E (op//ℰ ∘ inj₂)
+≤-handled {ℰ = ℰ} (≤castᵉ {±f = ±f} {f′ = f′} ℰ≤) op∈E op//ℰ = [ ∈-boundᵉ (∈-≤ f′ (¬handled-∈ ℰ op//ℰ op∈E)) ±f , ≤-handled ℰ≤ op∈E op//ℰ ]
+≤-handled (″perform op′ [ ℰ≤ ] eq) = ≤-handled ℰ≤
+≤-handled ′handle H≤ [ ℰ≤ ] op∈E op//ℰ = [ op//ℰ ∘ inj₁ ∘ subst (_ ∈_) (sym (Hooks-≤ H≤)) , ≤-handled ℰ≤ op∈E (op//ℰ ∘ inj₂) ]
   where
     Hooks-≤ : ∀ {Γ Γ′} {Γ≤ : Γ ≤ᴳ Γ′}
                 {P P′} {P≤ : P ≤ᶜ P′}

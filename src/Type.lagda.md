@@ -404,17 +404,20 @@ record _≤ᶜ_ P Q where
 Domain and codomain of function precision.
 
 ```
+split⇒ : ∀ {A A′ E E′ B B′} (p : A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′) → (A ≤ A′) × (E ≤ᵉ E′) × (B ≤ B′)
+split⇒ id = id , id , id
+split⇒ (a ⇒ ⟨ e ⟩ b) = a , e , b
+```
+
+```
 dom : ∀ {A B A′ B′} → A ⇒ B ≤ A′ ⇒ B′ → A ≤ A′
-dom id       =  id
-dom (a ⇒ p)  =  a
+dom a = proj₁ (split⇒ a)
 
 cod : ∀ {A B E A′ B′ E′} → A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′ → B ≤ B′
-cod id       =  id
-cod (a ⇒ ⟨ e ⟩ b)  =  b
+cod a = proj₂ (proj₂ (split⇒ a))
 
 eff : ∀ {A B E A′ B′ E′} → A ⇒ ⟨ E ⟩ B ≤ A′ ⇒ ⟨ E′ ⟩ B′ → E ≤ᵉ E′
-eff id = id
-eff (a ⇒ ⟨ e ⟩ b) = e
+eff a = proj₁ (proj₂ (split⇒ a))
 ```
 
 The use of these two functions is reminiscent of some gradually-typed
