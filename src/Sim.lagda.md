@@ -221,6 +221,30 @@ sim (cast≤ e M≤M′)
     =  N′ , M′—↠N′ , cast≤ e N≤N′
 ```
 
+```
+sim (castᵉ≤ M≤M′) (ξ (`castᵉ ±p [ ℰ ]) M↦N)
+    with sim M≤M′ (ξ ℰ M↦N)
+... | N′ , M′—↠N′ , N≤N′
+    = N′ , M′—↠N′ , castᵉ≤ N≤N′
+```
+
+```
+sim (castᵉ≤ M≤M′) (ξ □ (blameᵉ _ _ _ _))
+    = _ , (_ ∎) , blame≤
+```
+
+```
+sim (castᵉ≤ M≤M′) (ξ □ (castᵉ-return v))
+    = ?
+```
+
+```
+sim (≤castᵉ M≤M′) M↦N
+    with sim M≤M′ M↦N
+... | N′ , M′—↠N′ , N≤N′
+    = ?
+```
+
 Otherwise, if the reduction happens under the evaluation context `□`,
 the reduction rules that may apply are
 `ident`, `wrap`, `expand`, `collapse`, `collide`, or `blameᵉ`.
@@ -271,13 +295,13 @@ sim (handle≤handle H≤ V≤M′)
 
 ```
 sim (handle≤handle H≤ M≤)
-    (ξ □ (handle-perform {ℰ = ℰ} v ¬e//ℰ eq))
+    (ξ □ (handle-perform {e∈E = op∈E} {ℰ = ℰ} v ¬op//ℰ eq))
     with catchup-⟦perform⟧≤ v ℰ M≤
        | lookup-All₂′ (on-perform H≤) eq
 ... | Mk v′ V≤V′ ℰ≤ M′—↠N′
     | _ , eq′ , _ , dom≡ , cod≡ , HM′≤
     = _ , (ξ* (′handle _ [ □ ]) M′—↠N′
-            ++↠ unit (handle-perform v′ (≤-handled ℰ≤ ? ¬e//ℰ) eq′))
+            ++↠ unit (handle-perform v′ (≤-handled ℰ≤ op∈E ¬op//ℰ) eq′))
         , []≤[]
             ([]≤[] HM′≤
               (ƛ≤ƛ refl (handle≤handle
