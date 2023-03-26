@@ -234,15 +234,17 @@ sim (castᵉ≤ M≤M′) (ξ □ (blameᵉ _ _ _ _))
 ```
 
 ```
-sim (castᵉ≤ M≤M′) (ξ □ (castᵉ-return v))
-    = ?
+sim (castᵉ≤ V≤M′) (ξ □ (castᵉ-return v))
+    with catchup v V≤M′
+... | V′ , v′ , M′—↠V′ , V≤V′
+    = V′ , M′—↠V′ , gvalue≤ v v′ V≤V′
 ```
 
 ```
 sim (≤castᵉ M≤M′) M↦N
     with sim M≤M′ M↦N
 ... | N′ , M′—↠N′ , N≤N′
-    = ?
+    = castᵉ _ N′ , ξ* (`castᵉ _ [ □ ]) M′—↠N′ , ≤castᵉ N≤N′
 ```
 
 Otherwise, if the reduction happens under the evaluation context `□`,
