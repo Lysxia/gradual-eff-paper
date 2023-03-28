@@ -32,8 +32,8 @@ St = $ ′ℕ
 
 The state effect consists of `"get"` and `"put"` operations.
 ```
-state : Effect
-state = ¡ ("get" ∷ "put" ∷ [])
+state : List Op
+state = ("get" ∷ "put" ∷ [])
 ```
 
 The state handler interprets a stateful computation as a function `St ⇒ ⟨ ε ⟩ A`.
@@ -43,11 +43,23 @@ whereas the operation clause for `"put"` discards the current state and continue
 value that the operation was called with.
 ```
 state-handler : ∀ {Γ A}
-  → Γ ⊢ ⟨ state ⟩ A ⇒ʰ ⟨ ε ⟩ (St ⇒ ⟨ ε ⟩ A)
+  → Γ ⊢ ⟨ ¡ state ⟩ A ⇒ʰ ⟨ ε ⟩ (St ⇒ ⟨ ε ⟩ A)
 state-handler = record
   { -- Hooks = "get" ∷ "put" ∷ []
   -- ;
     Hooks-handled = refl
+  ; on-return = return! x ⇒ fun _ ⇒ x
+  ; on-perform
+      = handle! "get" ⇒ (λ _ k → fun s ⇒ k · s · s)
+      ∣ handle! "put" ⇒ (λ s k → fun _ ⇒ k · ⦅⦆ · s)
+      ∣ []
+  }
+```
+
+```
+state-handler☆ : ∀ {Γ A} → Γ ⊢ ⟨ ☆ ⟩ A ⇒ʰ ⟨ ☆ ⟩ (St ⇒ ⟨ ☆ ⟩ A)
+state-handler☆ = record
+  { Hooks-handled = refl
   ; on-return = return! x ⇒ fun _ ⇒ x
   ; on-perform
       = handle! "get" ⇒ (λ _ k → fun s ⇒ k · s · s)
@@ -64,10 +76,18 @@ Note that this definition cannot be eta-reduced since
 -- ------------------------------
 -- run-state M : {F} (St ⇒ {E} A)
 run-state : ∀ {Γ A}
-  →  Γ ⊢ ⟨ state ⟩ A
-  →  Γ ⊢ ⟨ ε ⟩ (St ⇒ ⟨ ε ⟩ A)
+  →  Γ ⊢ ⟨ ¡ state ⟩ A
+  →  Γ ⊢ ⟨ ε ⟩       A
 run-state M =
-  fun s ⇒ (handle state-handler (lift M) · s)
+  handle state-handler M · $ 0
+```
+
+```
+run-state☆ : ∀ {Γ A}
+  →  Γ ⊢ ⟨ ☆ ⟩ A
+  →  Γ ⊢ ⟨ ☆ ⟩ A
+run-state☆ M =
+  handle state-handler☆ M · $ 0
 ```
 
 Some computation that uses state:
@@ -75,38 +95,55 @@ Some computation that uses state:
 infixl 4 _|>_
 pattern _|>_ N M = M · N
 
--- Given initial state x, this computes 2*(x+1).
-some-comp : ∀ {Γ} → Γ ⊢ ⟨ state ⟩ $ℕ
-some-comp =
+incr-state : ∀ {Γ} → Γ ⊢ ⟨ ¡ state ⟩ $ℕ
+incr-state =
   Let x := perform! "get" ⦅⦆        In
   Let _ := perform! "put" (x + $ 1) In
-  Let y := perform! "get" ⦅⦆        In
-  Let _ := perform! "put" (y + y)   In
+  perform! "get" ⦅⦆
+
+incr-state☆ : ∀ {Γ} → Γ ⊢ ⟨ ☆ ⟩ $ℕ
+incr-state☆ =
+  Let x := perform! "get" ⦅⦆        In
+  Let _ := perform! "put" (x + $ 1) In
   perform! "get" ⦅⦆
 ```
 
-Apply `run-state` to `some-comp`
+Apply `run-state` to `incr-state`
 ```
 state-example : ∀ {Γ} → Γ ⊢ ⟨ ε ⟩ $ℕ
-state-example = run-state some-comp · $ 1
+state-example = run-state incr-state
+
+state-example☆ : ∀ {Γ} → Γ ⊢ ⟨ ☆ ⟩ $ℕ
+state-example☆ = run-state☆ incr-state☆
+
+state-example☆ˡ : ∀ {Γ} → Γ ⊢ ⟨ ☆ ⟩ $ℕ
+state-example☆ˡ = run-state☆ (castᵉ (+ (¡≤☆ {E = state})) incr-state)
+
+state-example☆ʳ : ∀ {Γ} → Γ ⊢ ⟨ ε ⟩ $ℕ
+state-example☆ʳ = run-state (castᵉ (- (¡≤☆ {E = state})) incr-state☆)
 ```
 
 `state-example` reduces to the constant `$ 4`.
 ```
 eval-state-example : ∃[ M—↠N ]
      eval (gas 25) state-example
-  ≡  steps {⟨ ¡ [] ⟩ $ℕ} M—↠N (done ($ 4))
+  ≡  steps {⟨ ¡ [] ⟩ $ℕ} M—↠N (done ($ 1))
 eval-state-example = _ , refl
-```
 
-TODO: Dynamic version:
+eval-state-example☆ : ∃[ M—↠N ]
+     eval (gas 25) state-example☆
+  ≡  steps {⟨ ☆ ⟩ $ℕ} M—↠N (done ($ 1))
+eval-state-example☆ = _ , refl
 
-```
-postulate run-state-dyn : ∅ ⊢ ⟨ ☆ ⟩ ★ → ∅ ⊢ ⟨ ☆ ⟩ (★ ⇒ ⟨ ☆ ⟩ ★)
-postulate some-comp-dyn : ∅ ⊢ ⟨ ☆ ⟩ ★
+eval-state-example☆ˡ : ∃[ M—↠N ]
+     eval (gas 25) state-example☆ˡ
+  ≡  steps {⟨ ☆ ⟩ $ℕ} M—↠N (done ($ 1))
+eval-state-example☆ˡ = _ , refl
 
-state-example-dyn : ∅ ⊢ ⟨ ☆ ⟩ ★
-state-example-dyn = run-state-dyn some-comp-dyn · (($ 1) ⇑ $ ′ℕ)
+eval-state-example☆ʳ : ∃[ M—↠N ]
+     eval (gas 25) state-example☆ʳ
+  ≡  steps {⟨ ¡ [] ⟩ $ℕ} M—↠N (done ($ 1))
+eval-state-example☆ʳ = _ , refl
 ```
 
 ## Nondeterminism
