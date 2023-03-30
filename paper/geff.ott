@@ -70,8 +70,8 @@ pa {{ tex {\pm a} }} :: 'pa_' ::= {{ com Polarized value cast }}
 pe {{ tex {\pm e} }} :: 'pe_' ::= {{ com Polarized effect cast }}
 | + e :: :: Plus
 | - e :: :: Minus
-| +- e :: X:: PM
-| -+ e :: X:: MP
+| +- e :: X:: PM {{ tex {\pm [[e]]} }}
+| -+ e :: X:: MP {{ tex {\mp [[e]]} }}
 
 p, q, r :: 'p_' ::= {{ com Computation cast }}
 | a ! e :: :: Dirt
@@ -170,6 +170,7 @@ Gamma |- x : A :: ::varhastype:: '' {{ com in context $[[Gamma]]$, $[[x]]$ has t
   ----- :: var_here
   Gamma , x : A |- x : A
 
+  Gamma |- x : A
   x /= y
   ----- :: var_there
   Gamma , y : B |- x : A
@@ -357,7 +358,7 @@ M --> N :: ::red:: '' by
   op is not bound Ex
   op is bound +- e
   ----- :: cast_op_blame
-  cast +- a (Ex [ op ( V ) ]) --> blame
+  ecast +- e (Ex [ op ( V ) ]) --> blame
 
   op is not bound Ex
   op is bound H

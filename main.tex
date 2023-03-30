@@ -348,30 +348,27 @@ $$
 When the typed handler is applied to the untyped client,
 the composed program is considered well-typed,
 and casts are inserted to ensure that the client indeed behaves as expected by
-the static argument type of the handler.
+the static argument type of the handler, only emitting \texttt{log} events.
+
+To ensure that such a migration goes smoothly, the addition of type annotations
+should not change the behavior of the program. This property
+is called \emph{the gradual guarantee}~\citep{siek2015}.
+As we make the types in the program more precise, some type errors may be
+revealed, never hidden, and when the program does run successfully, the output
+should not change.
 
 \paragraph{Contributions}
 
 \begin{itemize}
   \item We formalize a cast calculus with effect handlers.
     Our work is mechanized in the Agda proof assistant.
-    (Syntax (\Cref{types-and-effects,syntax}), operational semantics (\Cref{operational-semantics}).)
-    \Cref{types-and-effects}~defines types and the precision relation on types.
   \item We prove that this language satisfies the gradual guarantee
     (\Cref{gradual-guarantee}).
 \end{itemize}
 
-\paragraph{TODO}
-
-\begin{itemize}
-  \item Is there an interesting claim to make about "proof-relevant" precision?
-  \item Should we formalize a surface calculus that compiles to the cast calculus?
-  \item Should we prove the second direction of the gradual guarantee? (via determinism?)
-\end{itemize}
-
-\paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
-and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
-is less precise than $V$ ($M' \to V' \wedge V \le V'$).
+% \paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
+% and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
+% is less precise than $V$ ($M' \to V' \wedge V \le V'$).
 
 \input{paper/core.tex}
 % \input{src_tex/Example}
