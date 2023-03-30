@@ -70,10 +70,11 @@ Effect subtyping can be added as an orthogonal feature.
 A proof of precision $a : A \le A'$ serves as a cast between $A$ and $A'$:
 either an upcast $+a : A \Rightarrow A'$ or a downcast $-a : A' \Rightarrow A$.
 
-We chose to have a reflexivity rule for all types. Another design choice would
-be to only introduce that rule for base types, which would make proofs of precision
-$a : A \le A'$ unique for a given $A$ and $A'$.
-It is more efficient to have an identity cast.
+We chose to have a reflexivity rule for all types, which provides an
+identity cast for all types. Another design choice would be to only introduce
+that rule for base types, which would make proofs of precision $a : A \le A'$
+unique for a given $A$ and $A'$. Although reflexivity would remain derivable
+for all types, it would be less efficient as a cast.
 
 \subsection{Terms}
 
@@ -96,6 +97,9 @@ handled computation, and zero or more operation clauses.
 
 There are two kinds of casts: value casts and effect casts, respectively
 changing the value type and the effect of a term.
+A value cast $\pm a : A \Rightarrow A'$ transforms values to a more or less precise type.
+An effect cast $\pm e : E \Rightarrow E'$ asserts that a computation with effect $E$
+only performs operations allowed by effect $E'$.
 
 A box is a value of the dynamic type. It contains a ground type $G$
 (which correspond to a type constructor) and a value of that type.
@@ -110,17 +114,21 @@ The $\mathbf{blame}$ constructor indicates a type error at run time.
 
 The behavior of casts depends on the structure of the cast.
 A function cast $\pm (a \to b ! e)$
-is split into casts on its domain, codomain, and effect, $\mp a$ (note the inverted polarity), $\pm b$, $\pm e$,
-and the cast function is wrapped in a new function which applies those casts on
-the input and output of the wrapped function.
-An upcast into the dynamic type, $+ (a \Uparrow G)$
-recursively applies the cast $+ a$ into $G$, and then put the
-result in a box $V \Uparrow G$.
-A downcast from the dynamic type, $- (a \Uparrow G)$ compares
-the tag $G$ with the tag in the box $V \Uparrow G'$. The value is unboxed
-if the tags are equal, otherwise we raise $\mathbf{blame}$.
+is split into casts on its domain $\mp a$ (note the inverted polarity), codomain $\pm b$, and effect $\pm e$.
+An upcast into the dynamic type $+ (a \Uparrow G)$
+recursively applies the cast $+ a$ and puts the result in a box.
+A downcast from the dynamic type $- (a \Uparrow G)$ compares
+the tag $G$ with the tag in the box; if the tags are equal, the value is
+unboxed and the cast $- a$ is applied recursively,
+otherwise we raise $\mathbf{blame}$.
 
-The semantics of handlers is standard. A handler handles operations under an
+Effect casts have reduction rules for values and disallowed effects,
+but not for allowed effects. When an effect is allowed, it is simply
+forwarded to the next handler or effect cast. In that sense,
+an effect cast can be thought of as a handler which handles all operations
+except the allowed ones.
+
+The reduction rule for handlers is standard. A handler handles operations under an
 evaluation context. The closest matching handler is selected by ensuring that
 the evaluation context cannot already handle the operation.
 Operations may be handled not only by handlers, but also by effect casts.
