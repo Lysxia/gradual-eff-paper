@@ -179,8 +179,7 @@ for all types, it would be less efficient as a cast.
 Unlike Eff, we do not define fine-grained call-by-value calculus, as that leads
 to complications when treating function casts in the proof of the gradual guarantee.
 
-Thus, all terms are treated as computations, and are given computation types
-in the judgement $\Gamma \vdash M : P$.
+Thus, all terms are treated as computations, with a single judgement $\Gamma \vdash M : P$.
 In particular, function applications $N\;M$ and operator applications $M + N$
 sequence the computations for their operands, so they must all have the same
 effect $E$.
@@ -193,17 +192,16 @@ $\mathbf{handle}\,H\,M$ is a handler $H$ applied to a computation $M$.
 A handler $H$ consists of one return clause which expects the result of the
 handled computation, and zero or more operation clauses.
 
-There are two kinds of casts: value casts and effect casts, respectively
-changing the value type and the effect of a term.
-A value cast $\pm a : A \Rightarrow A'$ transforms values to a more or less precise type.
-An effect cast $\pm e : E \Rightarrow E'$ asserts that a computation with effect $E$
+Value casts and effect casts respectively cast the value type and the effect of a term.
+A value cast $[[pa : A => A']]$ transforms values to a more or less precise type.
+An effect cast $[[pe : E => E']]$ asserts that a computation with effect $E$
 only performs operations allowed by effect $E'$.
 
 A box is a value of the dynamic type. It contains a ground type $G$
 (which correspond to a type constructor) and a value of that type.
 To cast a function from a non-ground type, $A \to P$ to $\star$,
 we will first cast $A \to P$ to the ground type
-$\star \to \star\,!\,\effany$ (by casting the domain and codomain individually),
+$[[TYPE ( star -> star ! wstar )]]$ (by casting the domain and codomain individually),
 which can then be boxed.
 
 The $\mathbf{blame}$ constructor indicates a type error at run time.

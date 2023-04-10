@@ -33,11 +33,11 @@ draft_pdf := $(build_latex)/draft.pdf
 
 OTT_OPTS=-tex_suppress_category S -tex_suppress_category X -tex_wrap false -tex_show_meta false
 
-paper/geff.tex paper/geff_override.tex: paper/geff.ott paper/override.tex
-	ott $(OTT_OPTS) -tex_name_prefix GE -tex_filter paper/override.tex paper/geff_override.tex -i $< -o $@
+paper/geff.tex paper/geff_override.tex paper/core.tex: paper/geff.ott paper/override.tex paper/pre-core.tex
+	ott $(OTT_OPTS) -tex_name_prefix GE -tex_filter paper/override.tex paper/geff_override.tex -tex_filter paper/pre-core.tex paper/core.tex -i paper/geff.ott -o paper/geff.tex
 
 # main.pdf: # main.tex $(LATEX_DEPS) all_lagda_tex all_latex
-pdf: paper/geff.tex paper/geff_override.tex
+pdf: paper/geff.tex paper/geff_override.tex paper/core.tex main.tex
 	latexmk $(LATEXMK_OPTS) main.tex
 	cp $(main_pdf) main.pdf
 

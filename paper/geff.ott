@@ -46,7 +46,7 @@ A, B, C :: 'A_' ::= {{ com Value type }}
 | G :: M :: Ground
 
 G :: 'G_' ::= {{ com Ground type }}
-| star -> star ! wstar :: :: Arr
+| groundarrow :: :: Arr {{ tex \star \to \star \,!\, \mbox{\tiny\FiveStarOpen} }}
 | kappa :: :: Kappa
 | unit :: :: Unit
 
@@ -135,6 +135,10 @@ terminals :: 'terminals_' ::=
 | -+ :: :: MinusPlus {{ tex \mp }}
 | square :: :: Square {{ tex \square }}
 | ~~ :: :: TTilda {{ tex \sim }}
+| ! :: :: Bang {{ tex \,!\, }}
+
+top :: 'top_' ::=
+| TYPE ( A ) :: :: TYPE {{ tex [[A]] }}
 
 formula :: formula_ ::=
 | judgement :: :: judgement
@@ -462,3 +466,12 @@ gamma |- H <= H' : p ==> q :: ::hprec:: '' by
 
 defn
 gamma |- x : a :: ::varprec:: '' by
+
+  ----- :: varprec_here
+  gamma , x : a |- x : a
+
+  gamma |- x : a
+  x /= y
+  ----- :: varprec_there
+  gamma , y : b |- x : a
+
