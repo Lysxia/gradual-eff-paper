@@ -1,5 +1,3 @@
-\section{Gradual Eff}
-
 \newcommand\ruledef{::=}
 \newcommand\rulealt{\;|\;}
 \newcommand\tyarr[2]{#1 \to #2}
@@ -8,6 +6,7 @@
 \newcommand\tynat{\mathrm{nat}}
 \newcommand\tybool{\mathrm{bool}}
 \newcommand\tyunit{\mathrm{unit}}
+\newcommand\tystring{\mathrm{string}}
 \newcommand\effany{\mbox{\tiny\FiveStarOpen}}
 \newcommand\effop{\mathit{op}}
 \newcommand\app[2]{#1\,#2}
@@ -39,6 +38,105 @@
 
 \newcommand\Term[3]{#1 \vdash #2 : #3}
 \newcommand\TermP[4]{#1 \vdash #2 \le #3 : #4}
+
+\newcommand\dhandler{{\color{red}\texttt{library}}}
+\newcommand\shandler{{\color{blue}\texttt{library}}}
+\newcommand\dclient{{\color{red}\texttt{client}}}
+\newcommand\sclient{{\color{blue}\texttt{client}}}
+
+\newcommand\eflog{{\color{blue}\texttt{Log}}}
+\newcommand\efnone{\epsilon}
+
+\begin{figure}
+$$
+\begin{array}{l|l}
+  \dhandler : (\tyunit \to \tyunit) \to \tystring & \dclient : \tyunit \to \tyunit \\
+  \hphantom{\dhandler} : (\tyunit \to \tyunit\,!\,\effany) \to \tystring\,!\,\effany & \hphantom{\dclient} : \tyunit \to \tyunit\,!\,\effany \\
+  \shandler : (\tyunit \to \tyunit\,!\,\eflog) \to \tystring \,!\, \epsilon & \sclient : \tyunit \to \tyunit\,!\,\eflog
+\end{array}
+$$
+\caption{A library and a client with {\color{red}untyped} and {\color{blue}typed} effects}
+\label{fig:app-example}
+\end{figure}
+
+\begin{figure}
+$$
+\begin{array}{c|cc}
+  & \dhandler & \shandler \\
+  \hline
+  \dclient & \dhandler(\dclient) & \shandler(\dclient) \\
+  \sclient & \dhandler(\sclient) & \shandler(\sclient)
+\end{array}
+$$
+\caption{The four possible combinations of typed or untyped library and client}
+\label{fig:migration-example}
+\end{figure}
+
+\section{Introduction}
+
+Algebraic effects~\citep{plotkin2001semantics} and their handlers are an
+approach to computational effects that has seen rapid development in recent
+years, inspiring numerous libraries, experimental programming languages,
+and even features in industrial programming languages such as WebAssembly, OCaml,
+and Haskell.
+
+The problem of typing algebraic effects has been well studied, and solutions
+have been implemented in specialized languages with algebraic effects such as
+Links, Eff, Koka, and Frank. However, for bigger languages, it remains a
+challenge to integrate such \emph{effect systems} with a pre-existing type
+system.
+
+Gradual types~\citep{siek2015} provide a lens through which we may study how
+the programs using the untyped algebraic effects of today are to interact with
+the effect systems of tomorrow. We present a formalization of a
+calculus marrying gradual types with algebraic effects.
+% (using Core Eff~\citep{bauer2015programming}).
+
+\subsection{Migrating to more statically checked code}
+
+A key motivation for gradual types is to enable gradual migration
+towards more statically typed code.
+
+While Multicore OCaml features effect handlers, but lacks \emph{effect typing}:
+its type system does not keep track of effects yet.
+If a future version of OCaml is to feature effect typing,
+it may well become a challenge to migrate existing code that could
+not rely on effect typing. If the friction is too great, this may lead
+to a schism, splitting OCaml into OCaml-without-effect-typing and
+OCaml-with-effect-typing.
+
+For instance, imagine a logging library, implemented as a higher-order function
+which handles $\eflog$ effect from its client. Without effect typing, we could
+assign the library and the client the types shown at the top of \Cref{fig:app-example}.
+With effect typing, we could assign them the types shown at the bottom of that figure,
+making explicit the effects that the library consumes and produces.
+
+If the library and the client are large artifacts, it is desirable to
+perform this migration from untyped to typed code gradually.
+At any point during the migration, the program should remain compilable, and
+casts are inserted by the compiler at the interface between the dynamically
+typed and statically typed fragments. (\Cref{fig:migration-example})
+
+To ensure that such a migration goes smoothly, the addition of type annotations
+should not change the behavior of the program. This property
+is called \emph{the gradual guarantee}~\citep{siek2015} or \emph{graduality}.
+As we make the types in the program more precise, some type errors may be
+revealed, never hidden, and when the program does run successfully, the output
+should not change.
+
+\paragraph{Contributions}
+
+\begin{itemize}
+  \item We formalize a cast calculus with effect handlers.
+    Our work is mechanized in the Agda proof assistant.
+  \item We prove that this language satisfies the gradual guarantee
+    (\Cref{gradual-guarantee}).
+\end{itemize}
+
+% \paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
+% and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
+% is less precise than $V$ ($M' \to V' \wedge V \le V'$).
+\section{Gradual Eff}
 
 \GEall
 
