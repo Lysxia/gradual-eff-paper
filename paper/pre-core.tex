@@ -19,7 +19,7 @@
 \newcommand\fori[3]{(#3)_{#1=1\dots #2}}
 \newcommand\foriset[3]{\{#3\}_{#1=1\dots #2}}
 \newcommand\treturn[1]{\mathbf{return}\,#1}
-\newcommand\stepto{\rightsquigarrow}
+\newcommand\stepto{\longrightarrow}
 \newcommand\stepsto{\stepto^\ast}
 \newcommand\subst[3]{#1[#2/#3]}
 \newcommand\context[2]{#1[#2]}
@@ -44,18 +44,18 @@
 \newcommand\dclient{{\color{red}\texttt{client}}}
 \newcommand\sclient{{\color{blue}\texttt{client}}}
 
-\newcommand\eflog{{\color{blue}\texttt{Log}}}
-\newcommand\efnone{\epsilon}
+\newcommand\eflog{{[\texttt{Log}]}}
+\newcommand\efnone{[]}
 
 \begin{figure}
 $$
 \begin{array}{l|l}
   \dhandler : (\tyunit \to \tyunit) \to \tystring & \dclient : \tyunit \to \tyunit \\
   \hphantom{\dhandler} : (\tyunit \to \tyunit\,!\,\effany) \to \tystring\,!\,\effany & \hphantom{\dclient} : \tyunit \to \tyunit\,!\,\effany \\
-  \shandler : (\tyunit \to \tyunit\,!\,\eflog) \to \tystring \,!\, \epsilon & \sclient : \tyunit \to \tyunit\,!\,\eflog
+  \shandler : (\tyunit \to \tyunit\,!\,\eflog) \to \tystring \,!\, \efnone & \sclient : \tyunit \to \tyunit\,!\,\eflog
 \end{array}
 $$
-\caption{A library and a client with {\color{red}untyped} and {\color{blue}typed} effects}
+\caption{A library and a client with {\color{red}untyped} and {\color{blue}typed} effects. Unnanotated arrows implicitly produce the dynamic effect $\effany$}
 \label{fig:app-example}
 \end{figure}
 
@@ -256,6 +256,14 @@ Operations may be handled not only by handlers, but also by effect casts.
 \caption{Operations bound by evaluation contexts and by effect casts}
 \end{figure}
 
+\paragraph{Soundness} If $[[empty |- M : A ! E]]$, then one of the following holds:
+\begin{enumerate}
+ \item $[[M --> M']]$ and $[[empty |- M' : A ! E]]$ for some $[[M']]$,
+ \item $[[M]]$ is a value,
+ \item $[[M]] = [[Ex [ op ( V ) ] ]]$ for some $[[Ex]]$, $[[op in E]]$, and $[[V]]$,
+ \item $[[M]] = [[Ex [ blame ] ]]$ for some $[[Ex]]$.
+\end{enumerate}
+
 \section{Gradual guarantee}
 
 If a term $M^\prime$ is less precise than $M$ and $M$ evaluates to $V$,
@@ -287,6 +295,45 @@ to a value $V^\prime$ less precise than $V$.
 \begin{array}{rrcl}
   & \TermP{}{V}{M^\prime}{p} & &
 \\ \implies \exists V^\prime , & \TermP{}{V}{V^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
+\end{array}
+\]
+
+$\beta$ lemma:
+
+\[
+\begin{array}{rccccc}
+    & [[empty |- fun x . N <= fun x . N' : a0 ! e]]
+    & \wedge & [[empty |- V <= V' : a ! e]]
+    & \wedge & [[a0 ~~ ( a -> b ! e )]]
+\\ \implies \exists [[M']],
+    & [[empty |- N [ V / x ] <= M' : b ! e]]
+    & \wedge & [[N' [ V' / x ] -->* M']]
+    & &
+\end{array}
+\]
+
+cast lemma:
+\[
+\begin{array}{rccccc}
+    & [[empty |- M <= M' : a ! e]]
+    & \wedge & [[cast pa' M --> N]]
+    & \wedge & [[commutesl pa' a b]]
+\\ \implies \exists [[N']],
+    & [[empty |- N <= N' : b ! e]]
+    & \wedge & [[M' -->* N']]
+    & &
+\end{array}
+\]
+
+op lemma:
+\[
+\begin{array}{rccccc}
+    & [[empty |- Ex [ op ( V ) ] <= M' : p]]
+    & & & &
+\\ \implies \exists [[Ex']], [[V']], [[e]],
+    & \varnothing \vdash [[Ex]] \le [[Ex']]
+    & \wedge & [[empty |- V <= V' : id ! e]]
+    & \wedge & [[M' -->* Ex' [ op ( V' ) ] ]]
 \end{array}
 \]
 

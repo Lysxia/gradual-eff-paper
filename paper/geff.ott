@@ -23,7 +23,7 @@ M, N, L :: 'M_' ::= {{ com Terms }}
 | H ** op :: M :: HOpClause {{ tex [[H]]_{[[op]]} }}
 | H return :: M :: HReturnClause {{ tex [[H]]^{\mathbf{ret} } }}
 
-V :: V_ ::= {{ com Values }}
+V, W :: V_ ::= {{ com Values }}
 | fun x . M :: :: Lam {{ com Abstraction }}
 | k :: :: Kon {{ com Constant }}
 | V Up G :: :: Box {{ com Box }}
@@ -116,6 +116,7 @@ terminals :: 'terminals_' ::=
 | nil :: :: nil {{ tex \cdot }}
 | -> :: :: Arrow {{ tex \rightarrow }}
 | --> :: :: LongArrow {{ tex \longrightarrow }}
+| -->* :: :: LongArrowStar {{ tex \longrightarrow^* }}
 | => :: :: Bigarrow {{ tex \Rightarrow }}
 | ==> :: :: Biglongarrow {{ tex \Longrightarrow }}
 | ~> :: :: Sqgarrow {{ tex \leadsto }}
@@ -136,6 +137,7 @@ terminals :: 'terminals_' ::=
 | square :: :: Square {{ tex \square }}
 | ~~ :: :: TTilda {{ tex \sim }}
 | ! :: :: Bang {{ tex \,!\, }}
+| empty :: :: Empty {{ tex \varnothing }}
 
 top :: 'top_' ::=
 | TYPE ( A ) :: :: TYPE {{ tex [[A]] }}
@@ -371,6 +373,21 @@ M --> N :: ::red:: '' by
 
   ----- :: handle_return
   handle H V --> H return [ V / x ]
+
+defn
+M -->* N :: ::reds:: '' by
+
+  ----- :: reds_refl
+  M -->* M
+
+  L -->* M
+  M -->* N
+  ----- :: reds_trans
+  L -->* N
+
+  M --> N
+  ------- :: reds_red
+  M -->* N
 
 defn
   a0 ~~ ( a -> b ! e ) :: ::split:: '' by
