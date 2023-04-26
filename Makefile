@@ -38,8 +38,8 @@ paper/geff.tex paper/geff_override.tex paper/core.tex: paper/geff.ott paper/over
 
 # main.pdf: # main.tex $(LATEX_DEPS) all_lagda_tex all_latex
 pdf: paper/geff.tex paper/geff_override.tex paper/core.tex main.tex
-	latexmk $(LATEXMK_OPTS) main.tex
-	cp $(main_pdf) main.pdf
+	latexmk $(LATEXMK_OPTS) main2.tex
+	# cp $(main_pdf) main.pdf
 
 # draft.pdf: # draft.tex main.tex # $(LATEX_DEPS) all_lagda_tex all_latex 
 draft:

@@ -138,7 +138,9 @@ should not change.
 % is less precise than $V$ ($M' \to V' \wedge V \le V'$).
 \section{Gradual Eff}
 
-\GEall
+\GEmetavars\\[0pt]
+\GEgrammar\\[5.0mm]
+\GEdefnss
 
 \section{Cast calculus with handlers}
 
@@ -266,17 +268,17 @@ Operations may be handled not only by handlers, but also by effect casts.
 
 \section{Gradual guarantee}
 
-If a term $M^\prime$ is less precise than $M$ and $M$ evaluates to $V$,
-then $M^\prime$ evaluates to some $V^\prime$ less precise than $V$.
-
-\newcommand\wwedge{\quad\wedge\quad}
-
-\[
-\begin{array}{rrcl}
-  & \TermP{}{M}{M^\prime}{p} & \wedge & M \stepsto V
-\\ \implies \exists V^\prime , & \TermP{}{V}{V^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
-\end{array}
-\]
+% If a term $M^\prime$ is less precise than $M$ and $M$ evaluates to $V$,
+% then $M^\prime$ evaluates to some $V^\prime$ less precise than $V$.
+% 
+% \newcommand\wwedge{\quad\wedge\quad}
+% 
+% \[
+% \begin{array}{rrcl}
+%   & \TermP{}{M}{M^\prime}{p} & \wedge & M \stepsto V
+% \\ \implies \exists V^\prime , & \TermP{}{V}{V^\prime}{p} & \wedge & M^\prime \stepsto V^\prime
+% \end{array}
+% \]
 
 Simulation lemma (\Cref{fig:sim}): If $M^\prime$ is less precise than $M$, and $M$ takes one step to $N$,
 then $M^\prime$ steps (in possibly many steps) to some $N^\prime$ less precise than $N$.

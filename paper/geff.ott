@@ -29,7 +29,7 @@ V, W :: V_ ::= {{ com Values }}
 | V Up G :: :: Box {{ com Box }}
 
 H :: 'H_' ::= {{ com Handlers }}
-| return x . M ; opclause1 .. opclausen :: :: Handler
+| return x . M ; opclause1 .. opclausen :: :: Handler {{ com HH }}
 
 opclause :: 'opclause_' ::=
 | op x k . M :: :: OpClause
@@ -87,7 +87,7 @@ a, b, c :: 'a_' ::= {{ com Value cast }}
 
 e, f :: 'e_' ::= {{ com Effect cast }}
 | id :: :: Id
-| Up E :: :: Up {{ com Downcast ($[[E]] = \foriset{i}{n}{op_i}$) }}
+| Up E :: :: Up {{ com Upcast ($[[E]] = \foriset{i}{n}{op_i}$) }}
 | eff ( a ) :: X:: Eff {{ tex \mathbf{eff}([[a]]) }}
 
 Gamma {{ tex \Gamma }} :: 'G_' ::= {{ com Typing contexts }}

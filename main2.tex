@@ -1,0 +1,59 @@
+\documentclass[acmsmall,screen,prologue,dvipsnames,style=authoryear]{acmart}
+
+\bibliographystyle{ACM-Reference-Format}
+\setcitestyle{authoryear}
+
+\usepackage{colortbl}
+\usepackage{xargs}
+\usepackage{lipsum}
+\usepackage[textsize=tiny]{todonotes}
+\usepackage{xparse}
+\usepackage{xifthen, xstring}
+\usepackage[normalem]{ulem}
+\usepackage{xspace}
+\usepackage{marginnote}
+\usepackage{etoolbox}
+\usepackage{subcaption}
+\usepackage{bbding}
+\usepackage{pifont}
+\let\Cross\undefined % conflict because marvosym also defines it
+\usepackage{marvosym}
+\usepackage{bussproofs}
+\usepackage{supertabular}
+%\usepackage{xtab}
+\usepackage{ottlayout}
+
+\usepackage{tikz-cd}
+\usepackage{fancyvrb}
+
+\usepackage[capitalize, nameinlink]{cleveref}
+\newcommand{\crefrangeconjunction}{--}
+\newcommand{\creflastconjunction}{, and~}
+
+
+\author[L. Xia]{Li-yao Xia}
+\email{ly.xia@ed.ac.uk}
+\affiliation{
+  \institution{University of Edinburgh}
+  \city{Edinburgh}\country{United Kingdom}
+}
+
+% Latex seems to expect the author list abbreviation here...
+\author[P. Wadler]{Philip Wadler}
+\email{wadler@inf.ed.ac.uk}
+\affiliation{
+  \institution{University of Edinburgh}
+  \city{Edinburgh}\country{United Kingdom}
+}
+
+\title{Gradual types for effect handlers}
+
+\include{paper/geff}
+
+\begin{document}
+
+\maketitle
+
+\input{paper/core.tex}
+
+\end{document}
