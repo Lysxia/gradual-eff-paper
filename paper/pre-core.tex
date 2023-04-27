@@ -105,15 +105,15 @@ is straightforward.
 As type systems for algebraic effects with handlers emerge
 it will become crucial to soundly integrate legacy code without effect types
 with new code containing effect types. Of course the best solution would be
-to write all of our code in languages that support effect types.
-But that is unlikely to be feasible in practice.
+to write all of our code in languages that support effect types,
+but that is unlikely to be feasible in practice.
 Instead we will want to annotate legacy code with new types that reflect
-the effects used. We may want to dynamically check that these annotations
-are correct, so that the new code may rely on the annotations as sound.
+the effects used, and to dynamically check that these annotations
+are correct so that the new code may rely on the annotations as sound.
 
 For example,
 while Multicore OCaml features effect handlers, it lacks \emph{effect typing}:
-its type system does not keep track of effects yet.
+its type system does not yet keep track of effects.
 If a future version of OCaml is to feature effect typing,
 it may well become a challenge to migrate existing code that could
 not rely on effect typing. In the worst case there will be a
@@ -123,36 +123,72 @@ is that code in OCaml-without-effect-typing and
 code in OCaml-with-effect-typing can interact.
 
 For instance, imagine a logging library, implemented as a higher-order function
-which handles a $\eflog$ effect from its client. Without effect typing, we could
-assign the library and the client the types shown at the top of \Cref{fig:app-example}.
-With effect typing, we could assign them the types shown at the bottom of that figure,
-making explicit the effects that the library consumes and produces.
+which handles a $\eflog$ effect from its client and collects the logged output
+in a string. In a type system that does not keep track of effects, we could assign the
+library and the client the types shown in the first line of
+\Cref{fig:app-example}(TODO: move figure in text), making no distinction between pure and effectful
+functions.
+In a type system that keeps track of effects, the types in the first line
+expand to the types in the second line, making explicit the dynamic effect $\effany$
+associated with each arrow: the functions may have some effects, but we
+don't know which effects at compile time.
+We could then provide more precise types,
+shown in the third line of that figure,
+making explicit the effects that the library and client consume and produce.
 
 If the library and the client are large artifacts, it is desirable to
 perform this migration from untyped to typed code gradually.
 We may want to migrate the library first or the client first, so we
-may consider four possible combinations of typed/untyped client and library.
-At any point during the migration, the program should remain compilable, and
-casts are inserted by the compiler at the interface between the dynamically
-typed and statically typed fragments. (\Cref{fig:migration-example})
+may consider four possible combinations of typed/untyped client and library,
+each of which should compile and should yield the same answer when run.
+(\Cref{fig:migration-example}) (TODO: move figure in text)
+Casts are inserted as required. A cast from effect $\effany$ to a known effect $E$
+checks at runtime that the actual effects tracked by the runtime system are
+a subset of the effects specified by $E$. A cast in the other direction,
+from $E$ to $\effany$, requires no additional checks at runtime.
 
-To ensure that such a migration goes smoothly, the addition of type annotations
+To ensure that such a migration goes smoothly, the addition of correct type annotations
 should not change the behavior of the program. This property
 is called \emph{the gradual guarantee}~\citep{siek2015} or \emph{graduality}~\citep{new-ahmed-2018}.
 As we make the types in the program more precise, some type errors may be
 revealed, but when the program does run successfully, the output
 should not change.
 
-Beyond handlers, we believe that our work may be relevant for
-type systems for computational effects to coexist with untyped legacy code.
+Above we've assumed that all code, with or without effect types,
+makes use of algebraic effects and handlers.
+We may also need to integrate legacy code that has effects---but
+not algebraic effects and handlers---with new code which uses algebraic effects
+and handlers and has effect types.
+We hope that the techniques we develop might also be applicable to such a case,
+although we don't examine it here.
 
-\subsection{Related work}
+\paragraph{Contributions}
+
+\begin{itemize}
+  \item We formalize a cast calculus with effect handlers.
+    Our work is mechanized in the Agda proof assistant.
+  \item We define a novel proof-relevant precision: the precision relation
+    between terms is indexed by derivations of precision between their types.
+  \item We prove that this language satisfies the gradual guarantee
+    (\Cref{gradual-guarantee}).
+\end{itemize}
+
+\paragraph{Related work}
 
 TODO Give the citations for all the main things that people want to know, anything mentioned above.
 One sentence per relevant paper. Plotkin and Power for alg effects (Without handlers).
 
-\citep{bauer-pretnar-2014}
-\citep{plotkin-power-2001}
+Algebraic effects~\citep{plotkin-power-2001}
+Handlers~\citep{plotkin-pretnar-2009}
+
+Eff~\citep{bauer-pretnar-2014}
+
+OCaml Multicore~\citep{dolan-2015} adds effect handlers to OCaml with
+multicore concurrency as a primary application.
+GHC version 9.6 includes new primitives for delimited continuations,
+to enable efficient implementations of algebraic effects.
+There is an ongoing WebAssembly proposal for Typed Continuations,
+a minimal extension for structured non-local control-flow. (TODO citations)
 
 \citet{schwerter-2016} apply gradual types to the generic type-and-effect systems of \citet{marino-2009},
 which do not support effect handlers.
@@ -161,15 +197,6 @@ which do not support effect handlers.
 TODO look at Complement to blame, which describes a similar scenario
 TODO mention we don't handle polymorphic effects.
 people are still confused about how parametricity and graduality interact.
-
-\paragraph{Contributions}
-
-\begin{itemize}
-  \item We formalize a cast calculus with effect handlers.
-    Our work is mechanized in the Agda proof assistant.
-  \item We prove that this language satisfies the gradual guarantee
-    (\Cref{gradual-guarantee}).
-\end{itemize}
 
 % \paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
 % and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which
