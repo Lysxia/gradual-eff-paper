@@ -9,6 +9,22 @@
   publisher={Elsevier}
 }
 
+@article{bauer-pretnar-2014,
+	title = {An {Effect} {System} for {Algebraic} {Effects} and {Handlers}},
+	volume = {Volume 10, Issue 4},
+	issn = {1860-5974},
+	url = {https://lmcs.episciences.org/1153},
+	doi = {10.2168/LMCS-10(4:9)2014},
+	abstract = {We present an eﬀect system for core Eﬀ, a simpliﬁed variant of Eﬀ , which is an ML-style programming language with ﬁrst-class algebraic eﬀects and handlers. We deﬁne an expressive eﬀect system and prove safety of operational semantics with respect to it. Then we give a domain-theoretic denotational semantics of core Eﬀ , using Pitts’s theory of minimal invariant relations, and prove it adequate. We use this fact to develop tools for ﬁnding useful contextual equivalences, including an induction principle. To demonstrate their usefulness, we use these tools to derive the usual equations for mutable state, including a general commutativity law for computations using non-interfering references. We have formalized the eﬀect system, the operational semantics, and the safety theorem in Twelf.},
+	language = {en},
+	urldate = {2023-04-27},
+	journal = {Logical Methods in Computer Science},
+	author = {Bauer, Andrej and Pretnar, Matija},
+	month = dec,
+	year = {2014},
+	pages = {1153},
+}
+
 @inproceedings{siek2015,
   author    = {Jeremy G. Siek and
                Michael M. Vitousek and
@@ -52,7 +68,7 @@
   year={2019}
 }
 
-@article{schwerter2016gradual,
+@article{schwerter-2016,
   title={Gradual type-and-effect systems},
   author={Schwerter, Felipe Ba{\~n}ados and Garcia, Ronald and Tanter, {\'E}ric},
   journal={Journal of functional programming},
@@ -75,7 +91,7 @@
   year={2014}
 }
 
-@article{plotkin2001semantics,
+@article{plotkin-power-2001,
   title={Semantics for algebraic operations},
   author={Plotkin, Gordon and Power, John},
   journal={Electronic Notes in Theoretical Computer Science},
@@ -83,4 +99,64 @@
   pages={332--345},
   year={2001},
   publisher={Elsevier}
+}
+
+@inproceedings{plotkin-pretnar-2009,
+	address = {Berlin, Heidelberg},
+	series = {Lecture {Notes} in {Computer} {Science}},
+	title = {Handlers of {Algebraic} {Effects}},
+	isbn = {978-3-642-00590-9},
+	doi = {10.1007/978-3-642-00590-9_7},
+	abstract = {We present an algebraic treatment of exception handlers and, more generally, introduce handlers for other computational effects representable by an algebraic theory. These include nondeterminism, interactive input/output, concurrency, state, time, and their combinations; in all cases the computation monad is the free-model monad of the theory. Each such handler corresponds to a model of the theory for the effects at hand. The handling construct, which applies a handler to a computation, is based on the one introduced by Benton and Kennedy, and is interpreted using the homomorphism induced by the universal property of the free model. This general construct can be used to describe previously unrelated concepts from both theory and practice.},
+	language = {en},
+	booktitle = {Programming {Languages} and {Systems}},
+	publisher = {Springer},
+	author = {Plotkin, Gordon and Pretnar, Matija},
+	editor = {Castagna, Giuseppe},
+	year = {2009},
+	keywords = {Algebraic Theory, Base Signature, Base Type, Function Symbol, Relation Symbol},
+	pages = {80--94},
+}
+
+@inproceedings{siek-taha-2006,
+author = {Siek, Jeremy and Taha, Walid},
+year = {2006},
+month = {01},
+pages = {},
+title = {Gradual typing for functional languages},
+journal = {Scheme and Functional Programming}
+}
+
+@article{new-ahmed-2018,
+	title = {Graduality from embedding-projection pairs},
+	volume = {2},
+	issn = {2475-1421},
+	url = {https://dl.acm.org/doi/10.1145/3236768},
+	doi = {10.1145/3236768},
+	language = {en},
+	number = {ICFP},
+	urldate = {2023-04-27},
+	journal = {Proceedings of the ACM on Programming Languages},
+	author = {New, Max S. and Ahmed, Amal},
+	month = jul,
+	year = {2018},
+	pages = {1--30},
+}
+
+@inproceedings{marino-2009,
+	address = {Savannah GA USA},
+	title = {A generic type-and-effect system},
+	isbn = {978-1-60558-420-1},
+	url = {https://dl.acm.org/doi/10.1145/1481861.1481868},
+	doi = {10.1145/1481861.1481868},
+	abstract = {Type-and-effect systems are a natural approach for statically reasoning about a program’s execution. They have been used to track a variety of computational effects, for example memory manipulation, exceptions, and locking. However, each type-and-effect system is typically implemented as its own monolithic type system that hard-codes a particular syntax of effects along with particular rules to track and control those effects.},
+	language = {en},
+	urldate = {2023-04-27},
+	booktitle = {Proceedings of the 4th international workshop on {Types} in language design and implementation},
+	publisher = {ACM},
+	author = {Marino, Daniel and Millstein, Todd},
+	month = jan,
+	year = {2009},
+	pages = {39--50},
+	file = {Marino and Millstein - 2009 - A generic type-and-effect system.pdf:C\:\\Users\\sam\\Zotero\\storage\\WC2FHW6X\\Marino and Millstein - 2009 - A generic type-and-effect system.pdf:application/pdf},
 }
