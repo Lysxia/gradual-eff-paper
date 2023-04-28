@@ -47,31 +47,6 @@
 \newcommand\eflog{{[\texttt{Log}]}}
 \newcommand\efnone{[]}
 
-\begin{figure}
-$$
-\begin{array}{l|l}
-  \dhandler : (\tyunit \to \tyunit) \to \tystring & \dclient : \tyunit \to \tyunit \\
-  \hphantom{\dhandler} : (\tyunit \to \tyunit\,!\,\effany) \to \tystring\,!\,\effany & \hphantom{\dclient} : \tyunit \to \tyunit\,!\,\effany \\
-  \shandler : (\tyunit \to \tyunit\,!\,\eflog) \to \tystring \,!\, \efnone & \sclient : \tyunit \to \tyunit\,!\,\eflog
-\end{array}
-$$
-  \caption{A library and a client with {\color{red}untyped} and {\color{blue}typed} effects. Unnanotated arrows (first line) implicitly produce the dynamic effect $\effany$ (second line)}
-\label{fig:app-example}
-\end{figure}
-
-\begin{figure}
-$$
-\begin{array}{c|cc}
-  & \dhandler & \shandler \\
-  \hline
-  \dclient & \dhandler(\dclient) & \shandler(\dclient) \\
-  \sclient & \dhandler(\sclient) & \shandler(\sclient)
-\end{array}
-$$
-\caption{The four possible combinations of typed or untyped library and client}
-\label{fig:migration-example}
-\end{figure}
-
 \section{Introduction}
 
 Computational effects are everywhere: state, concurrency, probability,
@@ -136,16 +111,43 @@ We could then provide more precise types,
 shown in the third line of that figure,
 making explicit the effects that the library and client consume and produce.
 
+\begin{figure}[H]
+$$
+\begin{array}{l|l}
+  \dhandler : (\tyunit \to \tyunit) \to \tystring & \dclient : \tyunit \to \tyunit \\
+  \hphantom{\dhandler} : (\tyunit \to \tyunit\,!\,\effany) \to \tystring\,!\,\effany & \hphantom{\dclient} : \tyunit \to \tyunit\,!\,\effany \\
+  \shandler : (\tyunit \to \tyunit\,!\,\eflog) \to \tystring \,!\, \efnone & \sclient : \tyunit \to \tyunit\,!\,\eflog
+\end{array}
+$$
+  \caption{A library and a client with {\color{red}untyped} and {\color{blue}typed} effects. Unnanotated arrows (first line) implicitly produce the dynamic effect $\effany$ (second line)}
+\label{fig:app-example}
+\end{figure}
+
 If the library and the client are large artifacts, it is desirable to
-perform this migration from untyped to typed code gradually.
-We may want to migrate the library first or the client first, so we
-may consider four possible combinations of typed/untyped client and library,
-each of which should compile and should yield the same answer when run.
-(\Cref{fig:migration-example}) (TODO: move figure in text)
-Casts are inserted as required. A cast from effect $\effany$ to a known effect $E$
-checks at runtime that the actual effects tracked by the runtime system are
+perform this migration from untyped code $\dhandler(\dclient)$ to typed code $\shandler(\sclient)$ gradually.
+We may migrate the library first, yielding the intermediate program $\shandler(\dclient)$,
+or we may migrate the client first, yielding $\dhandler(\sclient)$.
+A desirable property for a gradual language to support such a migration is that all
+four of those combinations (\Cref{fig:migration-example})
+should compile and should yield the same answer when run.
+Casts are inserted as required between components where effects are unknown at compile time
+and components where effects are known. A cast from effect $\effany$ to a known effect $E$
+checks at run time that the actual effects performed by the computation at run time are
 a subset of the effects specified by $E$. A cast in the other direction,
-from $E$ to $\effany$, requires no additional checks at runtime.
+from $E$ to $\effany$, requires no additional checks at run time.
+
+\begin{figure}[H]
+$$
+\begin{array}{c|cc}
+  & \dhandler & \shandler \\
+  \hline
+  \dclient & \dhandler(\dclient) & \shandler(\dclient) \\
+  \sclient & \dhandler(\sclient) & \shandler(\sclient)
+\end{array}
+$$
+\caption{The four possible combinations of typed or untyped library and client}
+\label{fig:migration-example}
+\end{figure}
 
 To ensure that such a migration goes smoothly, the addition of correct type annotations
 should not change the behavior of the program. This property
@@ -165,12 +167,11 @@ although we don't examine it here.
 \paragraph{Contributions}
 
 \begin{itemize}
-  \item We formalize a cast calculus with effect handlers.
-    Our work is mechanized in the Agda proof assistant.
+  \item We present the first language combining algebraic effects with gradual typing.
+  \item We prove that this language satisfies the gradual guarantee.
   \item We define a novel proof-relevant precision: the precision relation
     between terms is indexed by derivations of precision between their types.
-  \item We prove that this language satisfies the gradual guarantee
-    (\Cref{gradual-guarantee}).
+  \item Our work is mechanized in the Agda proof assistant.
 \end{itemize}
 
 \paragraph{Related work}
@@ -185,16 +186,14 @@ Eff~\citep{bauer-pretnar-2014}
 
 OCaml Multicore~\citep{dolan-2015} adds effect handlers to OCaml with
 multicore concurrency as a primary application.
-GHC version 9.6 includes new primitives for delimited continuations,
+GHC version 9.6 includes new primitives for delimited continuations~\citep{ghc-delcont},
 to enable efficient implementations of algebraic effects.
-There is an ongoing WebAssembly proposal for Typed Continuations,
-a minimal extension for structured non-local control-flow. (TODO citations)
+There is an ongoing proposal to introduce effect handlers as a unified primitve
+for non-local control flow abstractions in WebAssembly~\citep{wasmfx}.
 
 \citet{schwerter-2016} apply gradual types to the generic type-and-effect systems of \citet{marino-2009},
 which do not support effect handlers.
 
-
-TODO look at Complement to blame, which describes a similar scenario
 TODO mention we don't handle polymorphic effects.
 people are still confused about how parametricity and graduality interact.
 
