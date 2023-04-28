@@ -76,7 +76,7 @@ until now noone has studied the combination of algebraic effects
 with handlers and gradual types. We show that in fact this combination
 is straightforward.
 
-\paragraph{Evolution not revolution}
+\paragraph{Gradual guarantee}
 As type systems for algebraic effects with handlers emerge
 it will become crucial to soundly integrate legacy code without effect types
 with new code containing effect types. Of course the best solution would be
@@ -154,7 +154,10 @@ should not change the behavior of the program. This property
 is called \emph{the gradual guarantee}~\citep{siek2015} or \emph{graduality}~\citep{new-ahmed-2018}.
 As we make the types in the program more precise, some type errors may be
 revealed, but when the program does run successfully, the output
-should not change.
+should not change. The proof follows the usual approach:
+we define an imprecision relation on types, extend it
+to an imprecision relation on terms, and show that the imprecision relation on
+terms is a simulation with regard to the reduction relation.
 
 Above we've assumed that all code, with or without effect types,
 makes use of algebraic effects and handlers.
@@ -164,13 +167,83 @@ and handlers and has effect types.
 We hope that the techniques we develop might also be applicable to such a case,
 although we don't examine it here.
 
+\newcommand{\imp}{\le}
+\newcommand{\pmi}{\ge}
+\newcommand{\comp}{\sim}
+
+\paragraph{Proof-relevant imprecision}
+If $A$ and $B$ are types, we write $A \imp B$ (TODO make it square)
+to indicate that $A$ is \emph{less imprecise} than $B$. (In the literature,
+$\imp$ is often referred to as \emph{precision}, but \emph{imprecision} is more
+accurate. It is also sometimes called \emph{naive subtyping}.)
+a cast from $A$ to $B$ is called an \emph{upcast} if $A \imp B$
+and a \emph{downcast} if $A \pmi B$.
+
+Here following the New Perspective of~\citet{castagna-et-al-TODO} we restrict
+all casts to be either upcasts or downcasts. Previous work instead permits
+a cast from $A$ to $B$ whenever $A$ is \emph{compatible} with $B$,
+written $A \comp B$. As is well known, $\imp$ is transitive whereas $\comp$
+is not transitive. The two relations are connected in that $A \comp B$
+if and only if there is a $C$ such that $A \pmi C$ and $C \imp B$.
+Expressiveness is not compromised because any cast between
+two compatible types can be rewritten as a downcast followed by an upcast.
+The restriction to upcasts and downcasts enormously simplifies the
+development: whereas previous proofs of blame safety need five
+relations---compatibility, positive subtyping, negative subtyping,
+subtyping, and imprecision---our development needs only imprecision
+and the proof of blame safety becomes immediate.
+
+\newcommand{\id}{\mathtt{id}}
+
+Most developments of imprecision for gradual typing are \emph{proof irrelevant}:
+for any $A$ and $B$, there is at most one proof that $A \imp B$.
+However there is some advantage to a proof relevant development.
+For instance the following two rules for imprecision overlap.
+\begin{verbatim}
+----------------
+\id_A : A \imp A
+\qquad
+a : A \imp A'
+b : B \imp B'
+---------
+(a \to b) : (A \to B) \imp (A' \to B')
+\end{verbatim}
+Hence the following two reduction rules for casts overlap.
+\begin{verbatim}
+cast \pm id_A V -> V
+cast (\pm (a \to b)) V -> fun x -> cast \pm b (V (cast \mp a x))
+\end{verbatim}
+In previous developments, in the rule for $\id_A$ type $A$ would be restricted
+to be a type other than a function type to avoid overlap with the rule for $a \to b$,
+and as a result one could not use the efficient identity reduction to cast
+a function type to itself. Here proof relevance enables us to use the
+identity cast at function types, which offers a slight bump to efficiency.
+More importantly we will also see that it introduces an interesting
+categorical structure to the development. In particular, at some places
+we will write (TODO)
+
+
+(TODO Paragraph about blame safety)
+
+(TODO paragraph about proof-relevant precision)
+
 \paragraph{Contributions}
 
 \begin{itemize}
-  \item We present the first language combining algebraic effects with gradual typing.
+  \item We present a calculus combining effect handlers with gradual typing,
+    demonstrating the marriage of these features for the first time.
+    We give the syntax, typing rules, and operational semantics,
+    and prove preservation and progress.
+  \item We also prove blame safety.
+    Whereas previous proofs of blame safety need five
+    relations---compatibility, positive subtyping, negative subtyping,
+    subtyping, and imprecision---our proof needs only imprecision.
+    (TODO did they make this remark in New Perspectives? probably no)
+    (TODO add blame labels in Agda formaliz.)
   \item We prove that this language satisfies the gradual guarantee.
   \item We define a novel proof-relevant precision: the precision relation
-    between terms is indexed by derivations of precision between their types.
+    between terms is indexed by derivations of precision between their types,
+    which helps simplify part of the proof of the gradual guarantee.
   \item Our work is mechanized in the Agda proof assistant.
 \end{itemize}
 
@@ -179,10 +252,15 @@ although we don't examine it here.
 TODO Give the citations for all the main things that people want to know, anything mentioned above.
 One sentence per relevant paper. Plotkin and Power for alg effects (Without handlers).
 
-Algebraic effects~\citep{plotkin-power-2001}
-Handlers~\citep{plotkin-pretnar-2009}
+Algebraic effects were proposed by~\citet{plotkin-power-2001} as a framework
+to represent effectful computations by operations and equations.
+\citet{plotkin-pretnar-2009} then introduced handlers as a principled way
+of interpreting such computations. Algebraic effects and handlers have been found
+to be a powerful tool for writing effectful programs, spawning implementations
+as libraries \citep{kammar2013handlers},
+experimental languages (Eff~\citep{bauer-pretnar-2014}, Koka~\citep{leijen04}, Frank~\citep{dobedo}, Links~\citep{hillerstrom2016}),
+and also as first-class features of industrial programming languages.
 
-Eff~\citep{bauer-pretnar-2014}
 
 OCaml Multicore~\citep{dolan-2015} adds effect handlers to OCaml with
 multicore concurrency as a primary application.
