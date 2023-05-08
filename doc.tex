@@ -1,0 +1,360 @@
+% Code borrowed from my compilers colleagues for building a draft version with comments in the margin
+\def\paperversiondraft{draft} \def\paperversionblind{normal}
+\def\paperversioncameraIEEE{cameraIEEE}
+
+% % If no draft paper-version is requested, compile in 'normal' mode
+\ifx\paperversion\paperversiondraft
+   \def\ClassReview{review,}
+\else
+  \ifx\paperversion\paperversioncameraIEEE
+  \else
+    \def\paperversion{normal}
+  \fi
+   \def\ClassReview{}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% JFP Specifics 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% save the original kernel definitions
+
+\let\latexdocument\document
+\let\latexenddocument\enddocument
+\documentclass[\ClassReview acmsmall,screen,prologue,dvipsnames,style=authoryear]{acmart}
+%%% recover the original definitions
+\let\document\latexdocument
+\let\enddocument\latexenddocument
+
+\bibliographystyle{ACM-Reference-Format}
+\setcitestyle{authoryear}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Agda tools
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% wrap texttt lines
+\sloppy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN draft version config
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{colortbl}
+\usepackage{xargs}
+\usepackage{lipsum}
+\usepackage[textsize=tiny]{todonotes}
+\usepackage{xparse}
+\usepackage{xifthen, xstring}
+\usepackage[normalem]{ulem}
+\usepackage{xspace}
+\usepackage{marginnote}
+\usepackage{etoolbox}
+\usepackage{subcaption}
+\usepackage{bbding}
+\usepackage{pifont}
+\let\Cross\undefined % conflict because marvosym also defines it
+\usepackage{marvosym}
+\usepackage{bussproofs}
+\usepackage{supertabular}
+%\usepackage{xtab}
+\usepackage{ottlayout}
+% \usepackage{algorithmicx}
+
+\include{paper/geff}
+% \include{paper/geff_override}
+\renewcommand{\GEpremise}[1]{ #1 \hspace{2em}}
+\renewcommand{\GEusedrule}[1]{\[#1\]\vspace{0.5em}}
+
+\makeatletter
+\font\uwavefont=lasyb10 scaled 652
+
+\newcommand\colorwave[1][blue]{\bgroup\markoverwith{\lower3\p@\hbox{\uwavefont\textcolor{#1}{\char58}}}\ULon}
+\makeatother
+
+\ifx\paperversion\paperversiondraft
+\newcommand\createtodoauthor[2]{%
+\def\tmpdefault{emptystring}
+\expandafter\newcommand\csname #1\endcsname[2][\tmpdefault]{\def\tmp{##1}\ifthenelse{\equal{\tmp}{\tmpdefault}}
+   {\todo[linecolor=#2,backgroundcolor=#2,bordercolor=#2]{\textbf{#1:} ##2}}
+   {\ifthenelse{\equal{##2}{}}{\colorwave[#2]{##1}\xspace}{\todo[linecolor=#2,backgroundcolor=#2,bordercolor=#2]{\textbf{#1:} ##2}\colorwave[#2]{##1}}}}
+\expandafter\newcommand\csname #1f\endcsname[2][\tmpdefault]{
+	\smash{\marginnote{
+		\todo[inline,linecolor=#2,backgroundcolor=#2,bordercolor=#2]{\textbf{#1 (Figure):} ##2}}}
+   }
+}
+%
+\else
+\newcommand\createtodoauthor[2]{%
+\expandafter\newcommand\csname #1\endcsname[2][]{##1}%
+\expandafter\newcommand\csname #1f\endcsname[2][]{##1}%
+}%
+\fi
+
+% Broaden margins to make room for todo notes
+\makeatletter
+\patchcmd{\@addmarginpar}{\ifodd\c@page}{\ifodd\c@page\@tempcnta\m@ne}{}{}
+\makeatother
+\ifx\paperversion\paperversiondraft
+  \makeatletter
+  \if@ACM@journal
+    \geometry{asymmetric}
+    \paperwidth=\dimexpr \paperwidth + 3.5cm\relax
+    \oddsidemargin=\dimexpr\oddsidemargin + 0cm\relax
+    \evensidemargin=\dimexpr\evensidemargin + 0cm\relax
+    \marginparwidth=\dimexpr \marginparwidth + 3cm\relax
+    \setlength{\marginparwidth}{4.6cm}
+    % This makeatletter box helps to move notes to the right
+    \makeatletter
+    \long\def\@mn@@@marginnote[#1]#2[#3]{%
+      \begingroup
+        \ifmmode\mn@strut\let\@tempa\mn@vadjust\else
+          \if@inlabel\leavevmode\fi
+          \ifhmode\mn@strut\let\@tempa\mn@vadjust\else\let\@tempa\mn@vlap\fi
+        \fi
+        \@tempa{%
+          \vbox to\z@{%
+            \vss
+            \@mn@margintest
+            \if@reversemargin\if@tempswa
+                \@tempswafalse
+              \else
+                \@tempswatrue
+            \fi\fi
+            %\if@tempswa
+              \rlap{%
+                \if@mn@verbose
+                  \PackageInfo{marginnote}{xpos seems to be \@mn@currxpos}%
+                \fi
+                \begingroup
+                  \ifx\@mn@currxpos\relax\else\ifx\@mn@currxpos\@empty\else
+                      \kern-\dimexpr\@mn@currxpos\relax
+                  \fi\fi
+                  \ifx\@mn@currpage\relax
+                    \let\@mn@currpage\@ne
+                  \fi
+                  \if@twoside\ifodd\@mn@currpage\relax
+                      \kern\oddsidemargin
+                    \else
+                      \kern\evensidemargin
+                    \fi
+                  \else
+                    \kern\oddsidemargin
+                  \fi
+                  \kern 1in
+                \endgroup
+                \kern\marginnotetextwidth\kern\marginparsep
+                \vbox to\z@{\kern\marginnotevadjust\kern #3
+                  \vbox to\z@{%
+                    \hsize\marginparwidth
+                    \linewidth\hsize
+                    \kern-\parskip
+                    \marginfont\raggedrightmarginnote\strut\hspace{\z@}%
+                    \ignorespaces#2\endgraf
+                    \vss}%
+                  \vss}%
+              }%
+          }%
+        }%
+      \endgroup
+    }
+    \makeatother
+  \else
+    \paperwidth=\dimexpr \paperwidth + 6cm\relax
+    \oddsidemargin=\dimexpr\oddsidemargin + 3cm\relax
+    \evensidemargin=\dimexpr\evensidemargin + 3cm\relax
+    \marginparwidth=\dimexpr \marginparwidth + 3cm\relax
+    \setlength{\marginparwidth}{4.6cm}
+  \fi
+  \makeatother
+\fi
+
+% We use the following color scheme
+%
+% This scheme is both print-friendly and colorblind safe for
+% up to four colors (including the red tones makes it not
+% colorblind safe any more)
+%
+% https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=4
+
+\definecolor{pairedNegOneLightGray}{HTML}{cacaca}
+\definecolor{pairedNegTwoDarkGray}{HTML}{827b7b}
+\definecolor{pairedOneLightBlue}{HTML}{a6cee3}
+\definecolor{pairedTwoDarkBlue}{HTML}{1f78b4}
+\definecolor{pairedThreeLightGreen}{HTML}{b2df8a}
+\definecolor{pairedFourDarkGreen}{HTML}{33a02c}
+\definecolor{pairedFiveLightRed}{HTML}{fb9a99}
+\definecolor{pairedSixDarkRed}{HTML}{e31a1c}
+\definecolor{yellow}{HTML}{ffcc80}
+\definecolor{lavender}{HTML}{e3aaec}
+
+\createtodoauthor{pw}{yellow}
+\createtodoauthor{lyx}{lavender}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END draft version config
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Choose the correct font for Unicode
+\usepackage{fontspec}
+
+\setmonofont[Scale=0.9]{DejaVu mononoki Symbola Droid}
+
+\usepackage{bbm}
+% \usepackage{ucs}
+
+\usepackage[capitalize, nameinlink]{cleveref}
+\newcommand{\crefrangeconjunction}{--}
+\newcommand{\creflastconjunction}{, and~}
+
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz-cd}
+\usepackage{fancyvrb}
+\usepackage{src_tex/agda}
+
+\setlength{\mathindent}{0.4cm} % Left margin of code blocks - also used by some math environments but I hope we don't care
+\fvset{xleftmargin=\mathindent}  % insert the left margin in verbatim
+\newenvironment{myDisplay}
+ {\VerbatimEnvironment
+ \begin{verbatim}
+ }
+ {\end{verbatim}
+ }
+
+\newenvironment{ignore}{}{}
+
+\def\tightlist{}  % pandoc output uses this command
+
+% Setup Agda fonts
+% https://lists.chalmers.se/pipermail/agda/2016/008662.html
+\renewcommand{\AgdaCodeStyle}{\small}
+% Use special font families without TeX ligatures for Agda code. (This
+% code is inspired by a comment by Enrico Gregorio/egreg:
+% https://tex.stackexchange.com/a/103078.)
+\newfontfamily{\AgdaSerifFont}{DejaVu Serif}
+\newfontfamily{\AgdaSansSerifFont}{DejaVu Sans}
+\newfontfamily{\AgdaMonoFont}{DejaVu Sans Mono}
+\newfontfamily{\AgdaTypewriterFont}{DejaVu mononoki Symbola Droid}
+\newfontfamily{\DejaVuSerif}{DejaVu Serif}
+\newfontfamily{\Cardo}{Cardo}
+
+% Fallbacks for unsupported planes
+% https://blog.michael.franzl.name/2014/12/10/xelatex-unicode-font-fallback-unsupported-characters/
+% \usepackage{ucharclasses}
+% \setTransitionTo{MathematicalAlphanumericSymbols}{\DejaVuSerif}
+% \setTransitionTo{MiscellaneousMathematicalSymbolsB}{\Cardo}
+
+\renewcommand{\AgdaSpace}{\texttt{\AgdaMonoFont{} }}
+\renewcommand{\AgdaFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaKeywordFontStyle}[1]{{\AgdaMonoFont{}#1}}
+\renewcommand{\AgdaStringFontStyle}[1]{{\AgdaMonoFont{}#1}}
+\renewcommand{\AgdaCommentFontStyle}[1]{{\AgdaTypewriterFont{}#1}}
+\renewcommand{\AgdaBoundFontStyle}[1]{\AgdaTypewriterFont{}#1}
+
+% hyperref should be loaded last
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, filecolor=black, urlcolor=black}
+
+\usepackage{etoolbox}
+
+\makeatletter
+
+% Patch case where name and year are separated by aysep
+\patchcmd{\NAT@citex}
+  {\@citea\NAT@hyper@{%
+     \NAT@nmfmt{\NAT@nm}%
+     \hyper@natlinkbreak{\NAT@aysep\NAT@spacechar}{\@citeb\@extra@b@citeb}%
+     \NAT@date}}
+  {\@citea\NAT@nmfmt{\NAT@nm}%
+   \NAT@aysep\NAT@spacechar\NAT@hyper@{\NAT@date}}{}{}
+
+% Patch case where name and year are separated by opening bracket
+\patchcmd{\NAT@citex}
+  {\@citea\NAT@hyper@{%
+     \NAT@nmfmt{\NAT@nm}%
+     \hyper@natlinkbreak{\NAT@spacechar\NAT@@open\if*#1*\else#1\NAT@spacechar\fi}%
+       {\@citeb\@extra@b@citeb}%
+     \NAT@date}}
+  {\@citea\NAT@nmfmt{\NAT@nm}%
+   \NAT@spacechar\NAT@@open\if*#1*\else#1\NAT@spacechar\fi\NAT@hyper@{\NAT@date}}
+  {}{}
+
+\makeatother
+
+\newcommand{\blue}[1]{{\color{blue}#1}}
+\newcommand{\red}[1]{{\color{red}#1}}
+\newcommand{\RubineRed}[1]{{\color{RubineRed}#1}}
+\newcommand{\WildStrawberry}[1]{{\color{WildStrawberry}#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\ie}{\textit{i.e.,}}
+\newcommand{\eg}{\textit{e.g.,}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\author[L. Xia]{Li-yao Xia}
+\email{ly.xia@ed.ac.uk}
+\affiliation{
+  \institution{University of Edinburgh}
+  \city{Edinburgh}\country{United Kingdom}
+}
+
+% Latex seems to expect the author list abbreviation here...
+\author[P. Wadler]{Philip Wadler}
+\email{wadler@inf.ed.ac.uk}
+\affiliation{
+  \institution{University of Edinburgh}
+  \city{Edinburgh}\country{United Kingdom}
+}
+
+\title{Gradual types for effect handlers}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Computational effects are everywhere: state, concurrency, probability,
+nondeterminism, input-output, exception handling. Algebraic effects with handlers,
+introduced by \citet{plotkin-pretnar-2009},
+% ^ TODO use this citation style everywhere
+have seen rapid development in recent years as a way to support a wide range
+of computational effects. They have inspired numerous libraries,
+% TODO: name some of them
+experimental programming languages including Links, Eff, Koka, and Frank, and features
+in programming languages including WebAssembly, OCaml, and Haskell.
+(We give citations for these later.)
+
+Type systems for tracking algebraic effects with handlers are a subject of intense study,
+with prototypes appearing in Links, Eff, Koka, and Frank.
+Meanwhile, the new features adopted in WebAssembly, OCaml, and Haskell
+use algebraic effects and handlers without reflecting effects in types.
+Further, virtually every program in existence makes some use of computational
+effects. In the future, it will become vital to have some way for legacy
+code with effects not reflected in the types to interact soundly with
+new code that does have effects reflected in the types.
+
+Gradual types, introduced by \citet{siek-taha-2006},
+provide a model of how code with less precise types can interface soundly with
+code with more precise types. Gradual types have been extensively studied for a wide
+range of features, including some forms of computational effects. However,
+until now noone has studied the combination of algebraic effects
+with handlers and gradual types. We show that in fact this combination
+is straightforward.
+
+% \input{paper/core.tex}
+\input{src_tex/Example}
+\input{src_tex/Type}
+\input{src_tex/Core}
+\input{src_tex/Progress}
+\input{src_tex/Prec}
+\input{src_tex/SimAux}
+\input{src_tex/Sim}
+
+% \appendix
+% \section{Appendix}
+% \label{sec:appendix}
+
+%\input{src_tex/Utils}
+
+\bibliography{references}
+
+\end{document}

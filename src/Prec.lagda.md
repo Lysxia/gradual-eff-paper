@@ -145,7 +145,6 @@ In addition, the cast `P =>ᶜ Q` and the precision relations
 `P ≤ᶜ P′` and `Q ≤ᶜ Q′` should form a commutative triangle.
 \lyx{explain motivation}
 
-TODO: Subtyping (`*_`)
 ```
 commute≤ᶜ : (±p : P =>ᶜ Q) (q : Q ≤ᶜ R)
             (r : P ≤ᶜ R) → Set
@@ -600,8 +599,6 @@ open _⊢_≤_⦂_⇒ʰ_ public
 Term precision is reflexive. Because term precision is indexed by context precision and type precision,
 its reflexivity proof will be indexed by their respective reflexivity proofs.
 
-TODO: unify `+≤+`, `-≤-`, `*≤*` here.
-
 \iffalse
 ```
 {-
@@ -661,6 +658,9 @@ castᵉ≤castᵉ {e = e} (square+ {q = q}) M≤M′ = castᵉ≤ {e = e ⨟ᵉ 
 castᵉ≤castᵉ {e = e} (square- {p = p}) M≤M′ = ≤castᵉ {e = p ⨟ᵉ e} (castᵉ≤ M≤M′)
 ```
 
+\iffalse
+TODO: The above is a refactoring of the code below,
+preserved for the associated comments.
 ```
 -- Upcast congruence:
 -- ```
@@ -728,6 +728,7 @@ castᵉ≤castᵉ {e = e} (square- {p = p}) M≤M′ = ≤castᵉ {e = p ⨟ᵉ 
 --       (cast (- p) M) : B ---→ (cast (- q) M′) : B′
 --                           t
 ```
+\fi
 
 ## Reflexivity of term precision
 
@@ -1205,10 +1206,14 @@ data _⊢_⇒ᶠ_∋_≤_ {Γ Γ′} (Γ≤ : Γ ≤ᴳ Γ′)
          ≤ ′handle H′ [ ℰ′ ]
 ```
 
+\iffalse
+
 TODO: three solutions to handle subtyping
 - only judgement-level effect subtyping _⊑ᶜ_ = _⊑ᵉ_ × _≡_
 - or treat all casts uniformly in cast≤ and ≤cast (requires indexing term precision by ≤⊑)
 - or introduce subtyping square A ⊑ B -> A ≤ A′ → B ≤ B′ → A′ ⊑ B′ → Set
+
+\fi
 
 \iffalse
 

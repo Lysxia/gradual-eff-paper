@@ -13,12 +13,12 @@ open import Progress
 open import Sugar
 ```
 
-\fi
-
 ```
 ⦅⦆ : ∀ {Γ E} → Γ ⊢ ⟨ E ⟩ $𝕌
 ⦅⦆ = $ tt
 ```
+
+\fi
 
 ## State
 
@@ -45,9 +45,8 @@ value that the operation was called with.
 state-handler : ∀ {Γ A}
   → Γ ⊢ ⟨ ¡ state ⟩ A ⇒ʰ ⟨ ε ⟩ (St ⇒ ⟨ ε ⟩ A)
 state-handler = record
-  { -- Hooks = "get" ∷ "put" ∷ []
-  -- ;
-    Hooks-handled = refl
+  { Hooks = "get" ∷ "put" ∷ []
+  ; Hooks-handled = refl
   ; on-return = return! x ⇒ fun _ ⇒ x
   ; on-perform
       = handle! "get" ⇒ (λ _ k → fun s ⇒ k · s · s)
@@ -68,13 +67,9 @@ state-handler☆ = record
   }
 ```
 
-We wrap the handler in the following `run-state` function.
-Note that this definition cannot be eta-reduced since
-`handle state-handler (lift M)` is not a value.
+We wrap the handler in the following `run-state` function
+which initializes the state to 0.
 ```
---           M : {get,put,E} A
--- ------------------------------
--- run-state M : {F} (St ⇒ {E} A)
 run-state : ∀ {Γ A}
   →  Γ ⊢ ⟨ ¡ state ⟩ A
   →  Γ ⊢ ⟨ ε ⟩       A
@@ -90,7 +85,7 @@ run-state☆ M =
   handle state-handler☆ M · $ 0
 ```
 
-Some computation that uses state:
+An example computation that uses state:
 ```
 infixl 4 _|>_
 pattern _|>_ N M = M · N

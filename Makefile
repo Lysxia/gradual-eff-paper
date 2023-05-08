@@ -1,9 +1,9 @@
 # To use the makefile, specify the path to source files under SRC
 # and the path to pandoc-filters under FILTERS
 
-.PHONY: default all pdf draft html clean clean_latex clean_html
+.PHONY: default all pdf draft html clean clean_latex clean_html doc archive check
 
-default: pdf
+default: check
 
 # path for lagda markdown source file
 SRC := src
@@ -18,6 +18,7 @@ src_lagda_tex:=$(build_latex)/src_lagda_tex
 src_tex:=$(build_latex)/src_tex
 lagda_md_files := $(shell find $(SRC) -name '*.lagda.md')
 transpiled_files := $(patsubst $(SRC)/%.md,$(src_lagda_tex)/%.tex,$(lagda_md_files))
+agdai_files := $(patsubst %.lagda.tex,%.agdai,$(transpiled_files))
 latex_files := $(patsubst $(SRC)/%.lagda.md,$(src_tex)/%.tex,$(lagda_md_files)) 
 html_files := $(patsubst $(SRC)/%.lagda.md,html/%.html,$(lagda_md_files))
 agda_sty := $(src_tex)/agda.sty
@@ -45,6 +46,12 @@ pdf: paper/geff.tex paper/geff_override.tex paper/core.tex main.tex
 draft:
 	latexmk $(LATEXMK_OPTS) draft.tex
 	cp $(draft_pdf) draft.pdf
+
+doc: doc.pdf
+
+doc.pdf: doc.tex $(LATEX_DEPS) all_lagda_tex all_latex
+	latexmk $(LATEXMK_OPTS) doc.tex
+	cp $(build_latex)/doc.pdf doc.pdf
 
 LATEXMK_OPTS := -quiet -outdir=$(build_latex)  -pdf -xelatex
 
@@ -103,6 +110,12 @@ $(src_lagda_tex)/%.lagda.tex : $(SRC)/%.lagda.md $(FILTERS)/codeblocks.lua
 		-o $@
 	sed -i 's/{verbatim}/{Verbatim}/' $@
 	sed -i 's/^\\textbackslash /\\/' $@
+	sed -i 's/\\textasciitilde{}/~/g' $@
+
+check: $(agdai_files)
+
+$(src_lagda_tex)/%.agdai: $(src_lagda_tex)/%.lagda.tex
+	$(AGDA) --include-path=$(src_lagda_tex) $<
 
 AGDA_LATEX_OPTS:=--latex --latex-dir=$(src_tex) --include-path=$(src_lagda_tex) --only-scope-checking
 
@@ -114,4 +127,7 @@ $(build_latex)/figures:
 	ln -sfT ../../figures $@
 
 clean:
-	$(RM) -rf _build main.pdf
+	$(RM) -rf _build src/_build main.pdf
+
+archive: doc
+	tar czf geff.tar.gz --transform='s:^:geff/:' src/ figures/ pandoc-filters/ Makefile doc.tex doc.pdf ottlayout.sty README.md references.bib

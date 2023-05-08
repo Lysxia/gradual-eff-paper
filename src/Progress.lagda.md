@@ -332,10 +332,6 @@ of the handler.
 ```
 
 ```
-postulate TODO : ∀ {a} {A : Set a} → A
-```
-
-```
 ¬handled-∈ : ∀ {e}
     (ℰ : Frame Γ (⟨ E ⟩ A) (⟨ F ⟩ B))
   → ¬ handled e ℰ → e ∈☆ E → e ∈☆ F
@@ -586,8 +582,8 @@ clause : Γ ▷ request e ▷ (response e ⇒ Q) ⊢ Q
           [ gvalue v ]
 ```
 
-TODO: explain the order of these substitutions and why the 2 lifts.
-TODO: we can avoid one lift by doing a simultaneous substitution, but there is still one left.
+\lyx{explain the order of these substitutions and why the 2 lifts.}
+\lyx{we can avoid one lift by doing a simultaneous substitution, but there is still one left.}
 
 The top-level reduction relation `_—↠_` allows reduction to happen under any
 frame. Again, we use fording to keep the frame substitution function out of the
@@ -1206,10 +1202,10 @@ inc★′   :  ∅ ⊢ ⟨ ☆ ⟩ ★
 inc★′   =  castᵉ (+ ¡≤☆) (cast (+ ℕ⇒ℕ≤★) inc)
 ```
 
--- The following are reductions of the statically typed `inc` and the dynamically
--- typed `inc★`, both applied to the constant `2`.
---
--- ```
+The following are reductions of the statically typed `inc` and the dynamically
+typed `inc★`, both applied to the constant `2`.
+
+```
 -- inc2—↠3  : inc · ($ 2) —↠ $ 3
 -- inc2—↠3  =
 --   begin
@@ -1337,5 +1333,5 @@ inc★′   =  castᵉ (+ ¡≤☆) (cast (+ ℕ⇒ℕ≤★) inc)
 --     blame ⦅ Nat._+_ ⦆ ($ℕ★ 1 ▷ (- ℕ≤★)) ▷ (+ ℕ≤★)
 --   ∎
 --   -}
--- ```
--- \fi
+```
+\fi

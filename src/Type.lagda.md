@@ -13,7 +13,7 @@ import Data.List.Relation.Unary.Any.Properties as Any
 \fi
 
 The module `Utils` reexports the standard library and exports some additional
-general lemmas. It is in the \Cref{sec:appendix}.
+general lemmas.
 
 ## Base types
 
@@ -199,7 +199,7 @@ private variable
 
 \iffalse
 
-(TODO) the base type ′𝔹 doesn't have eliminators ("if") yet. In the meantime here's Church encoded booleans
+The base type ′𝔹 doesn't have eliminators ("if") yet. In the meantime here's Church encoded booleans
 ```
 -- Church booleans
 pattern 𝟚 = ★ ⇒ ⟨ ☆ ⟩ ★ ⇒ ⟨ ☆ ⟩ ★
@@ -274,6 +274,11 @@ while less precise types give more flexibility in exchange for more
 run-time checks. We define precision in the rest of this section.
 
 ## Precision
+
+Types are ordered by *precision*---also known as
+*imprecision* (which better fits our notation),
+*materialization*~\citep{castagna2019},
+or *dynamism*~\citep{new-ahmed-2018}.
 
 ### Ground types
 
@@ -620,8 +625,8 @@ infix 4 _⊑ᵉ_ _⊑ᶜ_ _⊑_
 Static effects have a natural notion of subtyping:
 an effect `E` is a subeffect of `F` if `E` is a subset of `F`.
 We lift this notion to gradual effects by treating the dynamic
-effect `☆` as only a subeffect of itself.
-[TODO citations, New Perspective] We thus treat subtyping orthogonally to
+effect `☆` as only a subeffect of itself~\citep{castagna2019}.
+We thus treat subtyping orthogonally to
 gradual typing.
 
 ```
