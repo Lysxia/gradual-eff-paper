@@ -199,33 +199,35 @@ Most developments of imprecision for gradual typing are \emph{proof irrelevant}:
 for any $A$ and $B$, there is at most one proof that $A \imp B$.
 However there is some advantage to a proof relevant development.
 For instance the following two rules for imprecision overlap.
-\begin{verbatim}
-----------------
-\id_A : A \imp A
+\[
+{\GEdrule[#1]{%
+}{
+  [[ id : A <= A ]] }{%
+{}{}%
+}}
 \qquad
-a : A \imp A'
-b : B \imp B'
----------
-(a \to b) : (A \to B) \imp (A' \to B')
-\end{verbatim}
+{\GEdrule[#1]{%
+  \GEpremise{ [[ a : A <= A' ]] }%
+  \GEpremise{ [[ b : B <= B' ]] }%
+}{
+  [[ a ---> b : (A ---> B) <= (A' ---> B') ]] }{%
+{}{}%
+}}
+\]
 Hence the following two reduction rules for casts overlap.
-\begin{verbatim}
-cast \pm id_A V -> V
-cast (\pm (a \to b)) V -> fun x -> cast \pm b (V (cast \mp a x))
-\end{verbatim}
-In previous developments, in the rule for $\id_A$ type $A$ would be restricted
-to be a type other than a function type to avoid overlap with the rule for $a \to b$,
+\[
+  [[cast +- id V --> V]]
+  \qquad
+  [[cast +- (a ---> b) V --> fun x . cast +- b (V (cast -+ a x))]]
+\]
+In previous developments, in the rule for $[[ id ]]$ would be restricted
+to a type other than a function type to avoid overlap with the rule for $a \to b$,
 and as a result one could not use the efficient identity reduction to cast
 a function type to itself. Here proof relevance enables us to use the
 identity cast at function types, which offers a slight bump to efficiency.
 More importantly we will also see that it introduces an interesting
 categorical structure to the development. In particular, at some places
 we will write (TODO)
-
-
-(TODO Paragraph about blame safety)
-
-(TODO paragraph about proof-relevant precision)
 
 \paragraph{Contributions}
 
@@ -274,6 +276,9 @@ which do not support effect handlers.
 
 TODO mention we don't handle polymorphic effects.
 people are still confused about how parametricity and graduality interact.
+
+\paragraph{GrEff}
+\citet{greff-2023} have previously presented a language combining gradual typing and effect handlers.
 
 % \paragraph{Gradual guarantee} If $M$ is more precise than $M'$ ($M \le M'$),
 % and $M$ steps to a value $V$ ($M \to V$), then $M'$ steps to a value $V'$ which

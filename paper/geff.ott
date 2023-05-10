@@ -40,6 +40,7 @@ P, Q :: 'P_' ::= {{ com Computation type }}
 A, B, C :: 'A_' ::= {{ com Value type }}
 | star :: :: Any {{ com Dynamic type }}
 | A -> P :: :: Arr {{ com Function type }}
+| A ---> B :: X:: Arrr
 | kappa :: :: Kon {{ com Base type }}
 | unit :: :: Unit {{ com Unit type }}
 | ( A ) :: S:: Parens
@@ -80,6 +81,7 @@ p, q, r :: 'p_' ::= {{ com Computation cast }}
 a, b, c :: 'a_' ::= {{ com Value cast }}
 | id :: :: Id
 | a -> p :: :: Arr
+| a ---> b :: X:: Arrr
 | a Up G :: :: Box
 | ( a ) :: X:: Parens
 | dom ( a ) :: X:: Dom {{ tex \mathbf{dom}([[a]]) }}
@@ -115,6 +117,7 @@ terminals :: 'terminals_' ::=
 | fun :: :: lambda {{ tex \lambda }}
 | nil :: :: nil {{ tex \cdot }}
 | -> :: :: Arrow {{ tex \rightarrow }}
+| ---> :: :: Arrrow {{ tex \rightarrow }}
 | --> :: :: LongArrow {{ tex \longrightarrow }}
 | -->* :: :: LongArrowStar {{ tex \longrightarrow^* }}
 | => :: :: Bigarrow {{ tex \Rightarrow }}
