@@ -3,8 +3,6 @@
 
 .PHONY: default all pdf draft html clean clean_latex clean_html doc archive check
 
-default: check
-
 # path for lagda markdown source file
 SRC := src
 # path for lua-filters
@@ -25,7 +23,7 @@ agda_sty := $(src_tex)/agda.sty
 
 EXTRA_DIRS := $(build_latex)/figures
 
-all: pdf draft # html
+all: pdf # html
 all_lagda_tex: $(transpiled_files)
 all_latex: $(latex_files)
 
