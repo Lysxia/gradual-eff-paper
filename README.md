@@ -7,6 +7,12 @@ This development is written in Literate Agda;
 it can be read as a PDF document `doc.pdf` included in the archive,
 which also illustrates the proof of gradual guarantee with simulation diagrams.
 
+This development was authored by Li-yao Xia and Philip Wadler
+as part of the Huawei SAGE project,
+based on code originally written by Jeremy Siek, Peter Thiemann, and Philip Wadler.
+
+[Link to the code repository](http://github.com/Lysxia/gradual-eff-paper)
+
 Build
 -----
 
