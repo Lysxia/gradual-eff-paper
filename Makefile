@@ -125,7 +125,7 @@ $(build_latex)/figures:
 	ln -sfT ../../figures $@
 
 clean:
-	$(RM) -rf _build src/_build main.pdf doc.pdf draft.pdf src/core.tex src/geff.tex src/geff_override.tex
+	$(RM) -rf _build src/_build main.pdf doc.pdf draft.pdf paper/core.tex paper/geff.tex paper/geff_override.tex
 
 archive: doc
 	tar czf geff.tar.gz --transform='s:^:geff/:' src/ figures/ pandoc-filters/ Makefile doc.tex doc.pdf ottlayout.sty README.md references.bib
