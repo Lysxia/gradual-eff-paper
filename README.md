@@ -25,8 +25,9 @@ make doc
 The main dependencies are (latest versions as of May 2023):
 
 - Agda 2.6.3
-- standard-library 1.7.2
+- [standard-library 1.7.2](https://github.com/Agda/agda-stdlib)
 - pandoc 2.19.2
+- Python
 - [pandoc-latex-environment](https://github.com/chdemko/pandoc-latex-environment)
 
 Contents
