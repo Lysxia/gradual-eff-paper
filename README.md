@@ -1,17 +1,28 @@
 Gradual Effect Handlers
 =======================
 
-This project is a formalization of a language with effect handlers and gradual types in Agda.
-It consists of a core calculus with effect handlers and explicit casts, and its metatheory.
-This development is written in Literate Agda;
-it can be read as a PDF document `doc.pdf` included in the archive,
-which also illustrates the proof of gradual guarantee with simulation diagrams.
+This project is a formalization of a language with effect handlers and
+gradual types in Agda.  It consists of a core calculus with effect
+handlers and explicit casts, and its metatheory.  This development is
+written in Literate Agda; it can be read as a PDF document `doc.pdf`
+included in the archive, which also illustrates the proof of gradual
+guarantee with simulation diagrams.
 
-This development was authored by Li-yao Xia and Philip Wadler
-as part of the Huawei SAGE project,
-based on code originally written by Jeremy Siek, Peter Thiemann, and Philip Wadler.
+This development was authored by
+
+   [Li-yao Xia](https://poisson.chat/)
+   [Philip Wadler](https://homepages.inf.ed.ac.uk/wadler/)
+
+as part of the Huawei SAGE project at the University of Edinburgh.
+It is based on code originally written by
+
+   [Jeremy Siek](https://wphomes.soic.indiana.edu/jsiek/),
+   [Peter Thiemann](http://www2.informatik.uni-freiburg.de/~thiemann/),
+   and
+   [Philip Wadler](https://homepages.inf.ed.ac.uk/wadler/).
 
 [Link to the code repository](http://github.com/Lysxia/gradual-eff-paper)
+
 
 Build
 -----
