@@ -125,7 +125,7 @@ $(build_latex)/figures:
 	ln -sfT ../../figures $@
 
 clean:
-	$(RM) -rf _build src/_build main.pdf
+	$(RM) -rf _build src/_build main.pdf doc.pdf draft.pdf
 
 archive: doc
 	tar czf geff.tar.gz --transform='s:^:geff/:' src/ figures/ pandoc-filters/ Makefile doc.tex doc.pdf ottlayout.sty README.md references.bib
